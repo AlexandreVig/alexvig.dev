@@ -1,0 +1,58 @@
+---
+import type { CollectionEntry } from "astro:content";
+import TechBadge from "./TechBadge.astro";
+
+interface Props {
+  project: CollectionEntry<"projects">;
+  featured?: boolean;
+}
+
+const { project, featured = false } = Astro.props;
+const { title, description, heroImage, technologies, liveUrl, repoUrl } =
+  project.data;
+---
+
+<article class={`group ${featured ? "md:col-span-2" : ""}`}>
+  <a
+    href={`/projects/${project.id}`}
+    class="block h-full bg-surface border border-border rounded-large overflow-hidden hover:border-border-hover hover:shadow-soft transition-all duration-300"
+  >
+    {
+      heroImage && (
+        <div
+          class={`overflow-hidden ${featured ? "aspect-21/9" : "aspect-video"}`}
+        >
+          <img
+            src={heroImage}
+            alt={title}
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+      )
+    }
+    <div class="p-6">
+      <h3
+        class={`font-semibold text-text-primary group-hover:text-accent transition-colors mb-3 ${featured ? "text-2xl" : "text-xl"}`}
+      >
+        {title}
+      </h3>
+      <p class="text-text-secondary text-sm mb-4 line-clamp-2">
+        {description}
+      </p>
+      <div class="flex flex-wrap gap-2 mb-4">
+        {technologies.slice(0, 4).map((tech) => <TechBadge name={tech} />)}
+        {
+          technologies.length > 4 && (
+            <span class="px-3 py-1 text-xs font-medium text-text-muted">
+              +{technologies.length - 4} more
+            </span>
+          )
+        }
+      </div>
+      <div class="flex gap-3 text-sm">
+        {liveUrl && <span class="text-accent">View Live →</span>}
+        {repoUrl && <span class="text-text-secondary">Source Code</span>}
+      </div>
+    </div>
+  </a>
+</article>

@@ -1,0 +1,20 @@
+{
+  "name": "steadfast-star",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/vue": "^5.1.4",
+    "@tailwindcss/vite": "^4.1.18",
+    "astro": "^5.16.12",
+    "motion": "^12.28.1",
+    "tailwindcss": "^4.1.18",
+    "vue": "^3.5.27"
+  }
+}

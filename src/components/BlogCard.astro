@@ -1,0 +1,45 @@
+---
+import type { CollectionEntry } from "astro:content";
+import FormattedDate from "./FormattedDate.astro";
+import TagList from "./TagList.astro";
+
+interface Props {
+  post: CollectionEntry<"blog">;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, heroImage, tags } = post.data;
+---
+
+<article class="group">
+  <a
+    href={`/blog/${post.id}`}
+    class="block bg-surface border border-border rounded-large overflow-hidden hover:border-border-hover hover:shadow-soft transition-all duration-300"
+  >
+    {
+      heroImage && (
+        <div class="aspect-video overflow-hidden">
+          <img
+            src={heroImage}
+            alt={title}
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+      )
+    }
+    <div class="p-6">
+      <div class="mb-3">
+        <FormattedDate date={pubDate} />
+      </div>
+      <h3
+        class="text-xl font-semibold text-text-primary group-hover:text-accent transition-colors mb-3 line-clamp-2"
+      >
+        {title}
+      </h3>
+      <p class="text-text-secondary text-sm mb-4 line-clamp-3">
+        {description}
+      </p>
+      {tags.length > 0 && <TagList tags={tags.slice(0, 3)} />}
+    </div>
+  </a>
+</article>

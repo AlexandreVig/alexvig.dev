@@ -1,0 +1,195 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import TechBadge from "../components/TechBadge.astro";
+
+const skills = {
+  Frontend: [
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Vue",
+    "Astro",
+    "Next.js",
+    "Tailwind CSS",
+  ],
+  Backend: [
+    "Node.js",
+    "Python",
+    "PostgreSQL",
+    "MongoDB",
+    "REST APIs",
+    "GraphQL",
+  ],
+  "Tools & Platforms": [
+    "Git",
+    "Docker",
+    "AWS",
+    "Cloudflare",
+    "Vercel",
+    "Figma",
+  ],
+};
+---
+
+<BaseLayout
+  title="About"
+  description="Learn more about Alex Vig - developer, creator, and problem solver"
+>
+  <section class="container-custom py-12 md:py-20">
+    <PageHeader
+      title="About Me"
+      subtitle="Developer, creator, and eternal learner passionate about building for the web"
+    />
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-12">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="prose prose-lg max-w-none">
+          <p class="text-text-secondary text-lg leading-relaxed">
+            Hey there! I'm Alex, a full-stack developer with a passion for
+            creating beautiful, performant web applications. With over 5 years
+            of experience, I've had the privilege of working on projects ranging
+            from small startups to large enterprise applications.
+          </p>
+
+          <p class="text-text-secondary text-lg leading-relaxed">
+            My journey in tech started when I built my first website at 14.
+            Since then, I've been constantly learning and evolving with the
+            ever-changing landscape of web development. I believe in writing
+            clean, maintainable code and creating experiences that are both
+            functional and delightful.
+          </p>
+
+          <p class="text-text-secondary text-lg leading-relaxed">
+            When I'm not coding, you can find me exploring new technologies,
+            contributing to open-source projects, or sharing my knowledge
+            through blog posts and community talks. I'm always excited to take
+            on new challenges and collaborate on interesting projects.
+          </p>
+        </div>
+
+        <!-- Experience Timeline -->
+        <div class="mt-12">
+          <h2 class="text-2xl font-bold text-text-primary mb-8">Experience</h2>
+          <div class="space-y-8">
+            <div class="relative pl-8 border-l-2 border-border">
+              <div
+                class="absolute left-0 top-0 w-3 h-3 bg-accent rounded-full -translate-x-1.75"
+              >
+              </div>
+              <h3 class="text-lg font-semibold text-text-primary">
+                Senior Developer
+              </h3>
+              <p class="text-accent mb-2">Tech Company • 2022 - Present</p>
+              <p class="text-text-secondary">
+                Leading frontend architecture and mentoring junior developers.
+                Building scalable applications with modern frameworks.
+              </p>
+            </div>
+
+            <div class="relative pl-8 border-l-2 border-border">
+              <div
+                class="absolute left-0 top-0 w-3 h-3 bg-surface border-2 border-border rounded-full -translate-x-1.75"
+              >
+              </div>
+              <h3 class="text-lg font-semibold text-text-primary">
+                Full Stack Developer
+              </h3>
+              <p class="text-text-muted mb-2">Startup Inc • 2020 - 2022</p>
+              <p class="text-text-secondary">
+                Built and shipped multiple product features. Worked closely with
+                design and product teams.
+              </p>
+            </div>
+
+            <div class="relative pl-8 border-l-2 border-border">
+              <div
+                class="absolute left-0 top-0 w-3 h-3 bg-surface border-2 border-border rounded-full -translate-x-1.75"
+              >
+              </div>
+              <h3 class="text-lg font-semibold text-text-primary">
+                Junior Developer
+              </h3>
+              <p class="text-text-muted mb-2">Agency XYZ • 2019 - 2020</p>
+              <p class="text-text-secondary">
+                Developed websites and web applications for various clients.
+                Gained experience with diverse tech stacks.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-8">
+        <!-- Profile Image -->
+        <div
+          class="aspect-square bg-surface rounded-large border border-border overflow-hidden"
+        >
+          <div
+            class="w-full h-full flex items-center justify-center text-text-muted"
+          >
+            <svg
+              class="w-32 h-32"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Skills -->
+        <div class="bg-surface border border-border rounded-large p-6">
+          <h3 class="text-lg font-semibold text-text-primary mb-6">
+            Skills & Technologies
+          </h3>
+          <div class="space-y-6">
+            {
+              Object.entries(skills).map(([category, items]) => (
+                <div>
+                  <h4 class="text-sm font-medium text-text-muted uppercase tracking-wider mb-3">
+                    {category}
+                  </h4>
+                  <div class="flex flex-wrap gap-2">
+                    {items.map((skill) => (
+                      <TechBadge name={skill} />
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <!-- Quick Facts -->
+        <div class="bg-surface border border-border rounded-large p-6">
+          <h3 class="text-lg font-semibold text-text-primary mb-4">
+            Quick Facts
+          </h3>
+          <ul class="space-y-3 text-text-secondary">
+            <li class="flex items-center gap-3">
+              <span class="text-accent">📍</span> Based in San Francisco
+            </li>
+            <li class="flex items-center gap-3">
+              <span class="text-accent">💼</span> Open for freelance
+            </li>
+            <li class="flex items-center gap-3">
+              <span class="text-accent">🎓</span> CS Degree
+            </li>
+            <li class="flex items-center gap-3">
+              <span class="text-accent">☕</span> Coffee enthusiast
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

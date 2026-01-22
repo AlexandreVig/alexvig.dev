@@ -1,0 +1,113 @@
+---
+import { ClientRouter } from "astro:transitions";
+import "../styles/global.css";
+import NavBar from "@/components/NavBar.vue";
+
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: "website" | "article";
+  publishedTime?: Date;
+}
+
+const {
+  title,
+  description = "Developer portfolio showcasing projects and thoughts on web development.",
+  image = "/og-image.png",
+  type = "website",
+  publishedTime,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const socialImageURL = new URL(image, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Primary Meta Tags -->
+    <title>{title} | Alex Vig</title>
+    <meta name="title" content={`${title} | Alex Vig`} />
+    <meta name="description" content={description} />
+    <meta name="author" content="Alex Vig" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={socialImageURL} />
+    <meta property="og:site_name" content="Alex Vig" />
+    {
+      publishedTime && (
+        <meta
+          property="article:published_time"
+          content={publishedTime.toISOString()}
+        />
+      )
+    }
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={socialImageURL} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- View Transitions -->
+    <ClientRouter />
+  </head>
+  <body class="min-h-screen">
+    <!-- Skip to content link for accessibility -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-100 focus:px-4 focus:py-2 focus:bg-amber-400 focus:text-black focus:rounded-md focus:font-medium"
+    >
+      Skip to content
+    </a>
+
+    <!-- Hero Top Part - Name -->
+    <section
+      class="flex flex-col justify-end items-center text-center h-[45vh] px-4 md:px-8 bg-black overflow-hidden"
+    >
+      <h1
+        class="font-display font-black uppercase text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl"
+      >
+        Alexandre Vigneau
+      </h1>
+    </section>
+
+    <!-- Sticky NavBar -->
+    <!-- <NavBar /> -->
+    <NavBar client:load currentPath={Astro.url.pathname} />
+
+    <!-- Hero Bottom Part - Decorative bars -->
+    <section
+      class="flex flex-col justify-start items-center h-[calc(55vh-68px)] px-4 md:px-12 bg-black"
+      aria-hidden="true"
+    >
+      <div class="flex flex-col gap-3 w-full">
+        <div class="w-full h-1.5 bg-white"></div>
+        <div class="w-full h-4 bg-white"></div>
+        <div class="w-full h-8 bg-white"></div>
+        <div class="w-full h-16 bg-white"></div>
+        <div class="w-full h-32 bg-white"></div>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <main id="main-content" class="flex-1">
+      <slot />
+    </main>
+  </body>
+</html>
