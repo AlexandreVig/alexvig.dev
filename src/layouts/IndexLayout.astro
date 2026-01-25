@@ -78,18 +78,24 @@ const socialImageURL = new URL(image, Astro.site);
 
     <!-- Hero Top Part - Name -->
     <section
-      class="flex flex-col justify-end items-center text-center h-[45vh] px-4 md:px-8 bg-black overflow-hidden"
+      class="flex flex-col justify-end items-center text-center h-[45vh] px-4 md:px-8 pb-8 bg-black"
     >
       <h1
         class="font-display font-black uppercase text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl"
       >
-        Alexandre Vigneau
+        <span class="hero-word inline-block opacity-0 translate-y-8"
+          >Alexandre</span
+        >
+        <span class="hero-word inline-block opacity-0 translate-y-8"
+          >Vigneau</span
+        >
       </h1>
     </section>
 
     <!-- Sticky NavBar -->
-    <!-- <NavBar /> -->
-    <NavBar client:load currentPath={Astro.url.pathname} />
+    <div id="navbar-container" class="opacity-0 sticky top-0 z-50">
+      <NavBar client:load currentPath={Astro.url.pathname} />
+    </div>
 
     <!-- Hero Bottom Part - Decorative bars -->
     <section
@@ -97,11 +103,11 @@ const socialImageURL = new URL(image, Astro.site);
       aria-hidden="true"
     >
       <div class="flex flex-col gap-3 w-full">
-        <div class="w-full h-1.5 bg-white"></div>
-        <div class="w-full h-4 bg-white"></div>
-        <div class="w-full h-8 bg-white"></div>
-        <div class="w-full h-16 bg-white"></div>
-        <div class="w-full h-32 bg-white"></div>
+        <div class="hero-bar opacity-0 w-full h-1.5 bg-white"></div>
+        <div class="hero-bar opacity-0 w-full h-4 bg-white"></div>
+        <div class="hero-bar opacity-0 w-full h-8 bg-white"></div>
+        <div class="hero-bar opacity-0 w-full h-16 bg-white"></div>
+        <div class="hero-bar opacity-0 w-full h-32 bg-white"></div>
       </div>
     </section>
 
@@ -109,5 +115,49 @@ const socialImageURL = new URL(image, Astro.site);
     <main id="main-content" class="flex-1">
       <slot />
     </main>
+
+    <script>
+      import { animate, stagger } from "motion";
+
+      const runHeroAnimations = async () => {
+        const words = document.querySelectorAll(".hero-word");
+        const navbar = document.getElementById("navbar-container");
+        const bars = document.querySelectorAll(".hero-bar");
+
+        if (!words.length) return;
+
+        // Sequence: words → navbar → bars
+        // 1. Animate words with stagger
+        await animate(
+          words,
+          { opacity: [0, 1], y: [32, 0] },
+          { duration: 0.6, delay: stagger(0.15), easing: "ease-out" },
+        ).finished;
+
+        // 2. Animate navbar
+        if (navbar) {
+          await animate(
+            navbar,
+            { opacity: 1 },
+            { duration: 0.4, easing: "ease-out" },
+          ).finished;
+        }
+
+        // 3. Animate bars with stagger
+        if (bars.length) {
+          await animate(
+            bars,
+            { opacity: 1 },
+            { duration: 0.3, delay: stagger(0.08), easing: "ease-out" },
+          ).finished;
+        }
+      };
+
+      // Run on initial load
+      runHeroAnimations();
+
+      // Run on View Transitions navigation
+      document.addEventListener("astro:page-load", runHeroAnimations);
+    </script>
   </body>
 </html>

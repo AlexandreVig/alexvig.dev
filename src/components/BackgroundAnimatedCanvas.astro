@@ -1,0 +1,184 @@
+---
+interface Props {
+  src: string;
+  frames?: number;
+  fps?: number;
+  pixelated?: boolean;
+}
+
+const { src, frames = 4, fps = 8, pixelated = false } = Astro.props;
+const canvasId = `sprite-canvas-${Math.random().toString(36).slice(2, 9)}`;
+---
+
+<canvas
+  id={canvasId}
+  data-src={src}
+  data-frames={frames}
+  data-fps={fps}
+  data-pixelated={pixelated}
+  style="
+    position: absolute;
+    z-index: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+  "
+></canvas>
+
+<script type="module" define:vars={{ canvasId }}>
+  function setupCanvasAnimation(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    const src = canvas.dataset.src;
+    const FRAME_COUNT = Number(canvas.dataset.frames);
+    const FPS = Number(canvas.dataset.fps);
+    const PIXELATED = canvas.dataset.pixelated === "true";
+    const FRAME_DURATION = 1000 / FPS;
+
+    let dpr = window.devicePixelRatio || 1;
+    let frame = 0;
+    let accumulator = 0;
+    let lastTime = 0;
+    let rafId = null;
+    let running = false;
+    let needsRedraw = true;
+
+    const sprite = new Image();
+
+    function applyContextSettings() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (PIXELATED) {
+        ctx.imageSmoothingEnabled = false;
+      }
+    }
+
+    function resize() {
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      applyContextSettings();
+      needsRedraw = true;
+
+      // Redraw immediately if not animating (ensures canvas isn't blank)
+      if (!running && sprite.complete && sprite.naturalWidth > 0) {
+        draw();
+      }
+    }
+
+    function draw() {
+      if (!sprite.complete || sprite.naturalWidth === 0) return;
+
+      const frameWidth = sprite.width / FRAME_COUNT;
+      const frameHeight = sprite.height;
+
+      const canvasW = canvas.width / dpr;
+      const canvasH = canvas.height / dpr;
+
+      // background-size: cover
+      const scale = Math.max(canvasW / frameWidth, canvasH / frameHeight);
+      const drawW = frameWidth * scale;
+      const drawH = frameHeight * scale;
+      const dx = (canvasW - drawW) / 2;
+      const dy = (canvasH - drawH) / 2;
+
+      ctx.clearRect(0, 0, canvasW, canvasH);
+      ctx.drawImage(
+        sprite,
+        frame * frameWidth,
+        0,
+        frameWidth,
+        frameHeight,
+        dx,
+        dy,
+        drawW,
+        drawH,
+      );
+
+      needsRedraw = false;
+    }
+
+    function loop(time) {
+      if (!running) return;
+
+      const delta = time - lastTime;
+      lastTime = time;
+      accumulator += delta;
+
+      // Advance frames based on accumulated time (prevents drift)
+      let frameChanged = false;
+      while (accumulator >= FRAME_DURATION) {
+        frame = (frame + 1) % FRAME_COUNT;
+        accumulator -= FRAME_DURATION;
+        frameChanged = true;
+      }
+
+      // Only draw when frame changed or a redraw is needed (e.g., after resize)
+      if (frameChanged || needsRedraw) {
+        draw();
+      }
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (running) return;
+      running = true;
+      lastTime = performance.now();
+      accumulator = 0;
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function stop() {
+      running = false;
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+
+    function cleanup() {
+      observer.disconnect();
+      stop();
+      window.removeEventListener("resize", resize);
+    }
+
+    // Intersection Observer
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          start();
+        } else {
+          stop();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    sprite.onload = () => {
+      resize();
+      draw();
+      observer.observe(canvas);
+    };
+
+    sprite.onerror = () => {
+      console.error(`Failed to load spritesheet: ${src}`);
+    };
+
+    sprite.src = src;
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("beforeunload", cleanup);
+    // Cleanup on SPA navigation (Astro View Transitions)
+    document.addEventListener("astro:before-swap", cleanup, { once: true });
+  }
+
+  setupCanvasAnimation(canvasId);
+
+  // Run on View Transitions navigation
+  document.addEventListener("astro:page-load", () => {
+    setupCanvasAnimation(canvasId);
+  });
+</script>

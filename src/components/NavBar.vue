@@ -16,6 +16,7 @@ const navLinks = [
 // Reactive state
 const isOpen = ref(false);
 const isStuck = ref(props.isStuck ?? false);
+const isFlashing = ref(false);
 let ticking = false;
 
 // Check if link is active
@@ -44,12 +45,14 @@ const menuClasses = computed(() => [
 
 const openIconClasses = computed(() => [
   'w-7 h-7 absolute inset-0 transition-all duration-300 ease-out',
-  isOpen.value ? 'opacity-0 -rotate-90 scale-75' : 'opacity-100 rotate-0 scale-100'
+  isOpen.value ? 'opacity-0 scale-75' : 'opacity-100 scale-100',
+  isFlashing.value ? 'text-accent' : ''
 ]);
 
 const closeIconClasses = computed(() => [
   'w-7 h-7 absolute inset-0 transition-all duration-300 ease-out',
-  isOpen.value ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-75'
+  isOpen.value ? 'opacity-100 scale-100' : 'opacity-0 scale-75',
+  isFlashing.value ? 'text-accent' : ''
 ]);
 
 // Scroll handler for sticky detection
@@ -70,7 +73,11 @@ const onScroll = () => {
 
 // Toggle menu
 const toggleMenu = () => {
+  isFlashing.value = true;
   isOpen.value = !isOpen.value;
+  setTimeout(() => {
+    isFlashing.value = false;
+  }, 150);
 };
 
 // Close menu (for link clicks)

@@ -4,6 +4,11 @@ import Button from "../components/Button.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import BlogCard from "../components/BlogCard.astro";
 import { getCollection } from "astro:content";
+import ConsolePresentation, {
+  type AuthorPresentation,
+} from "@/components/ConsolePresentation.vue";
+import * as presentation from "../content/me.md";
+import BackgroundAnimatedCanvas from "@/components/BackgroundAnimatedCanvas.astro";
 
 // Get featured projects and recent blog posts
 const allProjects = await getCollection("projects");
@@ -22,141 +27,97 @@ const recentPosts = allPosts
   title="Home"
   description="Developer portfolio of Alex Vig - Building modern web experiences"
 >
-  <!-- Hero Section -->
-  <section class="container-custom py-20 md:py-32 relative bg-white">
-    <div class="max-w-4xl">
-      <div class="animate-slide-up">
-        <span class="text-accent font-medium mb-4 block">Hello, I'm</span>
-        <h1
-          class="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight"
-        >
-          Alex <span class="gradient-text">Vig</span>
-        </h1>
-        <p
-          class="text-xl md:text-2xl text-text-secondary mb-8 max-w-2xl leading-relaxed"
-        >
-          A passionate developer crafting beautiful, performant web experiences.
-          I specialize in modern JavaScript frameworks and love turning complex
-          problems into elegant solutions.
-        </p>
-        <div class="flex flex-wrap gap-4">
-          <Button href="/projects" variant="primary" size="lg">
-            View My Work
-            <svg
-              class="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-            </svg>
-          </Button>
-          <Button href="/contact" variant="secondary" size="lg">
-            Get in Touch
-          </Button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Decorative element -->
-    <div
-      class="absolute top-1/2 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -translate-y-1/2 pointer-events-none hidden lg:block"
+  <!-- Presentation Section -->
+  <section
+    class="presentation-section bg-white h-screen flex flex-col items-center text-center justify-center px-4 gap-8 md:gap-24 overflow-x-hidden"
+  >
+    <h1
+      class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-sans text-black font-bold z-10"
     >
+      <span class="presentation-word inline-block opacity-0 translate-y-8"
+        >Welcome</span
+      >
+      <span class="presentation-word inline-block opacity-0 translate-y-8"
+        >to</span
+      >
+      <span class="presentation-word inline-block opacity-0 translate-y-8"
+        >my</span
+      >
+      <span class="presentation-word inline-block opacity-0 translate-y-8"
+        >Portfolio</span
+      >
+    </h1>
+    <div class="presentation-console opacity-0 translate-y-8 z-10">
+      <ConsolePresentation
+        client:load
+        class="mx-auto shadow-2xl text-left"
+        presentation={presentation.frontmatter as AuthorPresentation}
+        manualStart={true}
+      />
     </div>
+    <BackgroundAnimatedCanvas
+      src="/images/scramble-text.webp"
+      frames={4}
+      fps={6}
+      pixelated={true}
+    />
   </section>
 
-  <!-- Featured Projects Section -->
-  {
-    featuredProjects.length > 0 && (
-      <section class="container-custom py-20 border-t border-border">
-        <div class="flex items-end justify-between mb-12">
-          <div>
-            <span class="text-accent font-medium mb-2 block">
-              Featured Work
-            </span>
-            <h2 class="text-3xl md:text-4xl font-bold text-text-primary">
-              Selected Projects
-            </h2>
-          </div>
-          <Button href="/projects" variant="ghost">
-            View All →
-          </Button>
-        </div>
+  <script>
+    import { animate, stagger } from "motion";
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {featuredProjects.map((project, index) => (
-            <ProjectCard project={project} featured={index === 0} />
-          ))}
-        </div>
-      </section>
-    )
-  }
+    const runPresentationAnimations = async () => {
+      const words = document.querySelectorAll(".presentation-word");
+      const consoleWrapper = document.querySelector(".presentation-console");
 
-  <!-- Recent Blog Posts Section -->
-  {
-    recentPosts.length > 0 && (
-      <section class="container-custom py-20 border-t border-border">
-        <div class="flex items-end justify-between mb-12">
-          <div>
-            <span class="text-accent font-medium mb-2 block">
-              From the Blog
-            </span>
-            <h2 class="text-3xl md:text-4xl font-bold text-text-primary">
-              Latest Articles
-            </h2>
-          </div>
-          <Button href="/blog" variant="ghost">
-            View All →
-          </Button>
-        </div>
+      if (!words.length) return;
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {recentPosts.map((post) => (
-            <BlogCard post={post} />
-          ))}
-        </div>
-      </section>
-    )
-  }
+      // 1. Animate H1 words with stagger
+      await animate(
+        words,
+        { opacity: [0, 1], y: [32, 0] },
+        { duration: 0.5, delay: stagger(0.12), easing: "ease-out" },
+      ).finished;
 
-  <!-- CTA Section -->
-  <section class="container-custom py-20 border-t border-border">
-    <div class="text-center max-w-2xl mx-auto">
-      <h2 class="text-3xl md:text-4xl font-bold text-text-primary mb-6">
-        Let's Work Together
-      </h2>
-      <p class="text-xl text-text-secondary mb-8">
-        Have a project in mind? I'd love to hear about it. Let's create
-        something amazing together.
-      </p>
-      <Button href="/contact" variant="primary" size="lg">
-        Start a Conversation
-      </Button>
-    </div>
-  </section>
+      // 2. Animate console wrapper (slide up + fade)
+      if (consoleWrapper) {
+        await animate(
+          consoleWrapper,
+          { opacity: [0, 1], y: [32, 0] },
+          { duration: 0.6, easing: "ease-out" },
+        ).finished;
+
+        // 3. Signal console to start typing
+        window.dispatchEvent(new CustomEvent("console:start-typing"));
+      }
+    };
+
+    const setupPresentationObserver = () => {
+      const section = document.querySelector(".presentation-section");
+      if (!section) return;
+
+      let hasAnimated = false;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !hasAnimated) {
+              hasAnimated = true;
+              runPresentationAnimations();
+              observer.disconnect();
+            }
+          });
+        },
+        { threshold: 0.25 },
+      );
+
+      observer.observe(section);
+    };
+
+    // Setup observer on initial load
+    setupPresentationObserver();
+
+    // Re-setup on View Transitions navigation
+    document.addEventListener("astro:page-load", setupPresentationObserver);
+  </script>
 </IndexLayout>
-
-<script>
-  // Motion One animations for the hero section
-  import { animate } from "motion";
-
-  function initAnimations() {
-    const heroElements = document.querySelectorAll(".animate-slide-up");
-
-    animate(
-      heroElements,
-      { opacity: [0, 1], y: [20, 0] },
-      { duration: 0.6, easing: "ease-out" },
-    );
-  }
-
-  // Run on initial load
-  initAnimations();
-
-  // Re-run after view transitions
-  document.addEventListener("astro:page-load", initAnimations);
-</script>
