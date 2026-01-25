@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { onMounted, onUnmounted, ref, computed, nextTick } from "vue";
 
 const props = defineProps<{
   presentation: AuthorPresentation;
@@ -46,7 +46,7 @@ const asciiArt = `
      |    |    |
      |____|____|
      (____(____)
-      | |_ | |__
+      | |__| |__
       (____)____)
 `;
 
@@ -67,22 +67,24 @@ let observer: IntersectionObserver | null = null;
 
 // Generate full text once
 const fullText = computed(() => {
-  let result = '';
-  result += props.presentation.name + '\n';
-  props.presentation.description.forEach(line => {
+  let result = "";
+  result += props.presentation.name + "\n";
+  props.presentation.description.forEach((line) => {
     result += `  > ${line}\n`;
   });
-  result += '\n';
-  result += 'Contacts:\n';
-  props.presentation.contacts.forEach(contact => {
+  result += "\n";
+  result += "Contacts:\n";
+  props.presentation.contacts.forEach((contact) => {
     result += `  > ${contact.title}: <a href="${contact.link}" target="_blank" rel="noopener noreferrer">${contact.value}</a>\n`;
   });
-  result += '\n';
-  result += 'Skills:\n';
-  props.presentation.skills.forEach(skill => {
+  result += "\n";
+  result += "Skills:\n";
+  props.presentation.skills.forEach((skill) => {
     result += `  > ${skill.title}:\n`;
-    result += `    ${skill.list.join(', ')}\n`;
+    result += `    ${skill.list.join(", ")}\n`;
   });
+  result +=
+    '\n<div id="cursor-portal" style="display: flex; justify-content: center"><a href="/about" target="_self" rel="noopener noreferrer">Read more about me...</a><span class="cursor cursor-idle">█</span></div>';
   return result;
 });
 
@@ -114,9 +116,9 @@ function startTypingAnimation() {
 
     // Check if we're about to type a '<' (start of any HTML tag)
     const currentChar = text[charCount.value];
-    if (currentChar === '<') {
+    if (currentChar === "<") {
       // Find the end of this tag (the closing '>')
-      const tagEnd = text.indexOf('>', charCount.value);
+      const tagEnd = text.indexOf(">", charCount.value);
       if (tagEnd !== -1) {
         // Skip the entire tag (opening or closing), show it instantly
         nextCount = tagEnd + 1;
@@ -146,20 +148,26 @@ const handleManualStart = () => {
 onMounted(() => {
   if (props.manualStart) {
     // Wait for custom event to start typing
-    window.addEventListener('console:start-typing', handleManualStart, { once: true });
+    window.addEventListener("console:start-typing", handleManualStart, {
+      once: true,
+    });
   } else {
     // Start typing animation only when component is visible
     if (consoleRef.value) {
       observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting && !isAnimating && !isTypingComplete.value) {
+            if (
+              entry.isIntersecting &&
+              !isAnimating &&
+              !isTypingComplete.value
+            ) {
               startTypingAnimation();
               observer?.disconnect();
             }
           });
         },
-        { threshold: 0.25 }
+        { threshold: 0.25 },
       );
       observer.observe(consoleRef.value);
     }
@@ -177,30 +185,51 @@ onUnmounted(() => {
     observer = null;
   }
   // Clean up manual start listener if it hasn't fired
-  window.removeEventListener('console:start-typing', handleManualStart);
+  window.removeEventListener("console:start-typing", handleManualStart);
 });
 </script>
 
 <template>
-  <div ref="consoleRef" class="flex flex-col border border-zinc-300 rounded-3xl text-[#0F0] w-full max-w-4xl lg:w-fit" @click="skipTyping">
-    <div id="console-controls" class="p-2.5 md:p-3.5 w-full flex gap-2.5 md:gap-3.5 bg-white rounded-t-3xl">
+  <div
+    ref="consoleRef"
+    class="flex flex-col border border-zinc-300 rounded-3xl text-[#0F0] w-full max-w-4xl lg:w-fit"
+    @click="skipTyping"
+  >
+    <div
+      id="console-controls"
+      class="p-2.5 md:p-3.5 w-full flex gap-2.5 md:gap-3.5 bg-white rounded-t-3xl"
+    >
       <span class="w-4 h-4 md:w-5 md:h-5 bg-red-400 rounded-full block"></span>
-      <span class="w-4 h-4 md:w-5 md:h-5 bg-yellow-400 rounded-full block"></span>
-      <span class="w-4 h-4 md:w-5 md:h-5 bg-green-400 rounded-full block"></span>
+      <span
+        class="w-4 h-4 md:w-5 md:h-5 bg-yellow-400 rounded-full block"
+      ></span>
+      <span
+        class="w-4 h-4 md:w-5 md:h-5 bg-green-400 rounded-full block"
+      ></span>
     </div>
-    <div id="console-content"
+    <div
+      id="console-content"
       class="flex flex-col md:flex-row p-4 md:p-6 border-t border-zinc-300 bg-slate-950 rounded-b-3xl text-xs md:text-sm items-center gap-4 md:gap-8 cursor-pointer"
-      :title="isTypingComplete ? '' : 'Click to skip typing animation'">
+      :title="isTypingComplete ? '' : 'Click to skip typing animation'"
+    >
       <div id="console-img" class="leading-none glow">
         <pre class="hidden lg:block">{{ asciiArt }}</pre>
         <pre class="block lg:hidden">{{ asciiArtSmall }}</pre>
       </div>
       <!-- Container uses invisible text for natural sizing, no JS measurement needed -->
-      <div id="console-text" class="relative flex flex-col text-wrap glow w-full">
+      <div
+        id="console-text"
+        class="relative flex flex-col text-wrap glow w-full"
+      >
         <!-- Invisible full text establishes container dimensions -->
-        <pre class="invisible whitespace-pre-wrap md:whitespace-pre" aria-hidden="true"><span v-html="fullText"></span>█</pre>
+        <pre
+          class="invisible whitespace-pre-wrap md:whitespace-pre"
+          aria-hidden="true"
+        ><span v-html="fullText"></span>█</pre>
         <!-- Visible animated text positioned over it -->
-        <pre class="absolute inset-0 whitespace-pre-wrap md:whitespace-pre"><span v-html="displayText"></span><span id="cursor" :class="{ 'cursor-idle': isTypingComplete }">█</span></pre>
+        <pre
+          class="absolute inset-0 whitespace-pre-wrap md:whitespace-pre"
+        ><span v-html="displayText"></span><span v-if="!isTypingComplete" class="cursor">█</span></pre>
       </div>
     </div>
   </div>
@@ -209,11 +238,13 @@ onUnmounted(() => {
 <style>
 .glow {
   animation: subtleGlow 3s infinite alternate;
-  text-shadow: 0 0 2px #0f0, 0 0 5px rgba(0, 255, 0, .3);
+  text-shadow:
+    0 0 2px #0f0,
+    0 0 5px rgba(0, 255, 0, 0.3);
 }
 
 #console-text {
-  font-family: 'Source Code Pro', monospace;
+  font-family: "Source Code Pro", monospace;
 }
 
 #console-text a {
@@ -224,25 +255,29 @@ onUnmounted(() => {
 
 @keyframes subtleGlow {
   0% {
-    text-shadow: 0 0 2px #0f0, 0 0 4px rgba(0, 255, 0, .2);
+    text-shadow:
+      0 0 2px #0f0,
+      0 0 4px rgba(0, 255, 0, 0.2);
   }
 
   to {
-    text-shadow: 0 0 3px #0f0, 0 0 6px rgba(0, 255, 0, .4);
+    text-shadow:
+      0 0 3px #0f0,
+      0 0 6px rgba(0, 255, 0, 0.4);
   }
 }
 
-#cursor {
-  animation: blink .8s infinite;
+.cursor {
+  animation: blink 0.8s infinite;
 }
 
-#cursor.cursor-idle {
+.cursor.cursor-idle {
   animation: blink 1.2s infinite;
 }
 
 @keyframes blink {
   50% {
-    opacity: 0
+    opacity: 0;
   }
 }
 </style>
