@@ -75,7 +75,7 @@ const fullText = computed(() => {
   result += "\n";
   result += "Contacts:\n";
   props.presentation.contacts.forEach((contact) => {
-    result += `  > ${contact.title}: <a href="${contact.link}" target="_blank" rel="noopener noreferrer">${contact.value}</a>\n`;
+    result += `  > ${contact.title}: <a href="${contact.link}" target="_blank" rel="noopener noreferrer" aria-label="${contact.title}: ${contact.value} (opens in new tab)">${contact.value}</a>\n`;
   });
   result += "\n";
   result += "Skills:\n";
@@ -84,7 +84,7 @@ const fullText = computed(() => {
     result += `    ${skill.list.join(", ")}\n`;
   });
   result +=
-    '\n<div id="cursor-portal" style="display: flex; justify-content: center"><a href="/about" target="_self" rel="noopener noreferrer">Read more about me...</a><span class="cursor cursor-idle">█</span></div>';
+    '\n<div id="cursor-portal" style="display: flex; justify-content: center"><a href="/about" target="_self" rel="noopener noreferrer" aria-label="Read more about me on the about page">Read more about me...</a><span class="cursor cursor-idle">█</span></div>';
   return result;
 });
 
