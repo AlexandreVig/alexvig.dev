@@ -78,7 +78,7 @@ const socialImageURL = new URL(image, Astro.site);
 
     <!-- Hero Top Part - Name -->
     <section
-      class="flex flex-col justify-end items-center text-center h-[45vh] px-4 md:px-8 bg-black pb-1 md:pb-0"
+      class="flex flex-col justify-end items-center text-center h-[45vh] px-4 md:px-8 bg-black"
     >
       <h1
         class="font-display font-black uppercase text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl flex flex-wrap justify-center gap-x-[0.3em] gap-y-2"
@@ -113,7 +113,7 @@ const socialImageURL = new URL(image, Astro.site);
     </main>
 
     <script>
-      import { animate, stagger } from "motion";
+      import gsap from "gsap";
 
       const runHeroAnimations = async () => {
         const words = document.querySelectorAll(".hero-word");
@@ -124,28 +124,44 @@ const socialImageURL = new URL(image, Astro.site);
 
         // Sequence: words → navbar → bars
         // 1. Animate words with stagger
-        await animate(
-          words,
-          { opacity: [0, 1], y: [32, 0] },
-          { duration: 0.6, delay: stagger(0.15), easing: "ease-out" },
-        ).finished;
+        await new Promise<void>((resolve) => {
+          gsap.fromTo(
+            words,
+            { opacity: 0, y: 32 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.6,
+              stagger: 0.15,
+              ease: "power2.out",
+              onComplete: resolve,
+            },
+          );
+        });
 
         // 2. Animate navbar
         if (navbar) {
-          await animate(
-            navbar,
-            { opacity: 1 },
-            { duration: 0.4, easing: "ease-out" },
-          ).finished;
+          await new Promise<void>((resolve) => {
+            gsap.to(navbar, {
+              opacity: 1,
+              duration: 0.4,
+              ease: "power2.out",
+              onComplete: resolve,
+            });
+          });
         }
 
         // 3. Animate bars with stagger
         if (bars.length) {
-          await animate(
-            bars,
-            { opacity: 1 },
-            { duration: 0.3, delay: stagger(0.08), easing: "ease-out" },
-          ).finished;
+          await new Promise<void>((resolve) => {
+            gsap.to(bars, {
+              opacity: 1,
+              duration: 0.3,
+              stagger: 0.08,
+              ease: "power2.out",
+              onComplete: resolve,
+            });
+          });
         }
       };
 

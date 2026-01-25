@@ -2,7 +2,8 @@
 title: "WeatherVue - Weather Dashboard"
 description: "A sleek weather dashboard with beautiful visualizations, location-based forecasts, and historical data analysis."
 pubDate: 2025-09-20
-heroImage: "/images/projects/weathervue.jpg"
+heroImage: "/images/projects/weathervue.png"
+heroColor: ["#00bc7d", "#fff"]
 technologies: ["Vue.js", "D3.js", "OpenWeather API", "Cloudflare Workers"]
 liveUrl: "https://weathervue.example.com"
 repoUrl: "https://github.com/alexvig/weathervue"

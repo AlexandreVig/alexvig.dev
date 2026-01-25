@@ -25,6 +25,7 @@ const projects = defineCollection({
     description: z.string(),
     pubDate: z.coerce.date(),
     heroImage: z.string().optional(),
+    heroColor: z.array(z.string()).default(["#fd9a00", "#000000"]),
     technologies: z.array(z.string()).default([]),
     liveUrl: z.string().url().optional(),
     repoUrl: z.string().url().optional(),

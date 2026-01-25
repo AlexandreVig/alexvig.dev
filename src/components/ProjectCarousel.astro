@@ -1,0 +1,442 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  projects: CollectionEntry<"projects">[];
+}
+
+const { projects } = Astro.props;
+---
+
+<div class="project-carousel relative w-full" data-carousel>
+  <!-- Carousel container -->
+  <div class="carousel-viewport relative flex items-center justify-center h-52 sm:h-64 md:h-96 lg:h-[450px]">
+    <!-- Carousel track -->
+    <div class="carousel-track relative w-full max-w-6xl mx-auto" style="perspective: 1200px;">
+      {projects.map((project, index) => (
+        <article
+          class="carousel-item absolute left-1/2 top-1/2 cursor-pointer transition-all duration-500 ease-out"
+          data-index={index}
+          data-project-id={project.id}
+          data-project-colors={project.data.heroColor.join(",")}
+        >
+          <a href={`/projects/${project.id}`} class="carousel-link block" draggable="false">
+            <div class="card relative">
+              <!-- Project image -->
+              <div class="card-image relative rounded-lg overflow-hidden shadow-2xl bg-gray-900 w-64 h-40 sm:w-80 sm:h-52 md:w-[500px] md:h-80 lg:w-[600px] lg:h-96">
+                {project.data.heroImage ? (
+                  <img
+                    src={project.data.heroImage}
+                    alt={`${project.data.title} preview`}
+                    class="w-full h-full object-cover"
+                    draggable="false"
+                  />
+                ) : (
+                  <div class="w-full h-full bg-linear-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                    <span class="text-gray-400 text-lg">{project.data.title}</span>
+                  </div>
+                )}
+                <!-- Title with gradient overlay -->
+                <div class="title-overlay absolute inset-x-0 bottom-0 px-4 pb-4 pt-16 pointer-events-none transition-opacity duration-500">
+                  <h3 class="card-title text-center text-sm md:text-lg font-bold font-display text-white">
+                    {project.data.title}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          </a>
+        </article>
+      ))}
+    </div>
+  </div>
+
+
+  <!-- Show all projects link -->
+  <div class="text-center mt-2">
+    <a
+      href="/projects"
+      class="inline-block font-bold text-lg underline underline-offset-4 decoration-2 hover:no-underline"
+    >
+      show me all projects
+    </a>
+  </div>
+
+  <!-- Navigation dots -->
+  <div class="flex justify-center gap-2 mt-4">
+    {projects.map((_, index) => (
+      <button
+        class="carousel-dot w-2 h-2 rounded-full"
+        data-dot-index={index}
+        aria-label={`Go to project ${index + 1}`}
+      />
+    ))}
+  </div>
+</div>
+
+<style>
+  .project-carousel {
+    touch-action: pan-y pinch-zoom;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .carousel-track {
+    transform-style: preserve-3d;
+  }
+
+  .carousel-item {
+    transform-style: preserve-3d;
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .card {
+    transform-style: preserve-3d;
+  }
+
+  .card-image {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: filter 0.5s ease-out, opacity 0.5s ease-out;
+  }
+
+  /* Grayscale and reduced opacity for inactive cards */
+  .carousel-item:not(.active) .card-image {
+    filter: grayscale(100%);
+  }
+
+  .carousel-item.active .card-image {
+    filter: grayscale(0%);
+    opacity: 1;
+  }
+
+  /* Title gradient overlay */
+  .title-overlay {
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      transparent 100%
+    );
+  }
+
+  /* Hide title overlay on inactive cards */
+  .carousel-item:not(.active) .title-overlay {
+    opacity: 0;
+  }
+
+  /* Dot styling using currentColor to inherit text color */
+  .carousel-dot {
+    background-color: currentColor;
+    opacity: 0.3;
+  }
+
+  .carousel-dot:hover {
+    opacity: 0.5;
+  }
+
+  .carousel-dot.active {
+    opacity: 0.8;
+    transform: scale(1.25);
+  }
+</style>
+
+<script>
+  import gsap from "gsap";
+
+  interface CarouselState {
+    currentIndex: number;
+    itemCount: number;
+    isAnimating: boolean;
+  }
+
+  function mouseFollowerSetup() {
+    // Create follower element and append to body to avoid transform issues
+    let follower = document.getElementById('mouse-follower');
+
+    if (!follower) {
+      follower = document.createElement('div');
+      follower.id = 'mouse-follower';
+      follower.textContent = 'WATCH';
+      follower.className = 'hidden md:flex';
+      Object.assign(follower.style, {
+        position: 'fixed',
+        left: '0',
+        top: '0',
+        width: '75px',
+        height: '75px',
+        borderRadius: '50%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontSize: '1.25rem',
+        color: 'black',
+        fontFamily: 'var(--font-sans)',
+        fontWeight: '500',
+        pointerEvents: 'none',
+        zIndex: '9999',
+        transform: 'scale(0)',
+        background: 'rgb(245, 208, 254)',
+        fontVariationSettings: '"wdth" 75, "GRAD" 88',
+      });
+      document.body.appendChild(follower);
+    }
+
+    const offset = 37.5;
+
+    // Use left/top for positioning
+    const leftTo = gsap.quickTo(follower, "x", { duration: 0.35, ease: "power2.out" });
+    const topTo = gsap.quickTo(follower, "y", { duration: 0.35, ease: "power2.out" });
+
+    const onEnter = (e: MouseEvent) => {
+      gsap.set(follower, { x: e.clientX - offset, y: e.clientY - offset });
+      gsap.to(follower, { scale: 1, duration: 0.2, ease: "power2.out" });
+    };
+
+    const onLeave = () => {
+      gsap.to(follower, { scale: 0, duration: 0.2, ease: "power2.out" });
+    };
+
+    const onMove = (e: MouseEvent) => {
+      leftTo(e.clientX - offset);
+      topTo(e.clientY - offset);
+    };
+
+    return {
+      onEnter,
+      onLeave,
+      onMove,
+    };
+  }
+
+  function initCarousel(carousel: HTMLElement) {
+    const items = carousel.querySelectorAll<HTMLElement>('.carousel-item');
+    const dots = carousel.querySelectorAll<HTMLElement>('.carousel-dot');
+    const mouseFollower = mouseFollowerSetup();
+
+    if (items.length === 0) return;
+
+    const state: CarouselState = {
+      currentIndex: 0,
+      itemCount: items.length,
+      isAnimating: false,
+    };
+
+    function updateCarousel() {
+      items.forEach((item, index) => {
+        const offset = index - state.currentIndex;
+        const absOffset = Math.abs(offset);
+
+        // Remove/add active class
+        item.classList.toggle('active', offset === 0);
+
+        // Calculate transforms
+        let translateX: number;
+        let translateZ: number;
+        let scale: number;
+        let opacity: number;
+        let zIndex: number;
+
+        let rotateY: number;
+
+        if (offset === 0) {
+          // Active/center item
+          translateX = -50;
+          translateZ = 0;
+          scale = 1;
+          opacity = 1;
+          zIndex = 10;
+          rotateY = 0;
+        } else if (absOffset === 1) {
+          // Adjacent items - more spacing
+          translateX = offset > 0 ? 55 : -155;
+          translateZ = -300;
+          scale = 0.7;
+          opacity = 1;
+          zIndex = 5;
+          rotateY = offset > 0 ? -35 : 35;
+        } else if (absOffset === 2) {
+          // Second adjacent items
+          translateX = offset > 0 ? 100 : -200;
+          translateZ = -500;
+          scale = 0.5;
+          opacity = 0.5;
+          zIndex = 2;
+          rotateY = offset > 0 ? -45 : 45;
+        } else {
+          // Hidden items
+          translateX = offset > 0 ? 130 : -230;
+          translateZ = -700;
+          scale = 0.4;
+          opacity = 0;
+          zIndex = 0;
+          rotateY = offset > 0 ? -50 : 50;
+        }
+
+        item.style.transform = `translate(${translateX}%, -50%) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        item.style.opacity = String(opacity);
+        item.style.zIndex = String(zIndex);
+
+        // Disable link click for non-active items
+        const link = item.querySelector<HTMLAnchorElement>('.carousel-link');
+        if (link) {
+          if (offset === 0) {
+            link.style.pointerEvents = 'auto';
+          } else {
+            link.style.pointerEvents = 'none';
+          }
+        }
+      });
+
+      // Update dots
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === state.currentIndex);
+      });
+
+      // Send event to notify about active project change
+      const activeItem = items[state.currentIndex];
+      const projectId = activeItem?.dataset.projectId;
+      const colors = activeItem?.dataset.projectColors?.split(",") || [];
+      if (projectId) {
+        window.dispatchEvent(new CustomEvent("carousel:project-change", { detail: { projectId, colors } }));
+      }
+    }
+
+    function goTo(index: number) {
+      if (state.isAnimating) return;
+      if (index < 0 || index >= state.itemCount) return;
+      if (index === state.currentIndex) return;
+
+      // Hide mouse follower when changing cards
+      if (mouseFollower) {
+        mouseFollower.onLeave();
+      }
+
+      state.isAnimating = true;
+      state.currentIndex = index;
+      updateCarousel();
+
+      setTimeout(() => {
+        state.isAnimating = false;
+      }, 500);
+    }
+
+    function next() {
+      const newIndex = (state.currentIndex + 1) % state.itemCount;
+      goTo(newIndex);
+    }
+
+    function prev() {
+      const newIndex = (state.currentIndex - 1 + state.itemCount) % state.itemCount;
+      goTo(newIndex);
+    }
+
+    // Click handlers for items
+    items.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        const index = parseInt(item.dataset.index || '0', 10);
+        if (index !== state.currentIndex) {
+          e.preventDefault();
+          goTo(index);
+        }
+      });
+      // Add listeners for mouse enter/leave for the mouse follower
+      if (mouseFollower) {
+        item.addEventListener('mouseenter', (e) => {
+          const itemIndex = parseInt(item.dataset.index || '0', 10);
+          if (itemIndex !== state.currentIndex) return;
+          mouseFollower.onEnter(e);
+        });
+        item.addEventListener('mouseleave', () => {
+          const itemIndex = parseInt(item.dataset.index || '0', 10);
+          if (itemIndex !== state.currentIndex) return;
+          mouseFollower.onLeave();
+        });
+        item.addEventListener('mousemove', (e) => {
+          const itemIndex = parseInt(item.dataset.index || '0', 10);
+          if (itemIndex !== state.currentIndex) return;
+          mouseFollower.onMove(e);
+        });
+      }
+    });
+
+    // Click handlers for dots
+    dots.forEach((dot) => {
+      dot.addEventListener('click', () => {
+        const index = parseInt(dot.dataset.dotIndex || '0', 10);
+        goTo(index);
+      });
+    });
+
+    // Keyboard navigation
+    carousel.setAttribute('tabindex', '0');
+    carousel.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        next();
+      } else if (e.key === 'ArrowLeft') {
+        prev();
+      }
+    });
+
+    // Touch/swipe support with better mobile handling
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let isSwiping = false;
+
+    carousel.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      isSwiping = false;
+    }, { passive: true });
+
+    carousel.addEventListener('touchmove', (e) => {
+      if (!touchStartX) return;
+
+      const touchCurrentX = e.touches[0].clientX;
+      const touchCurrentY = e.touches[0].clientY;
+      const diffX = Math.abs(touchCurrentX - touchStartX);
+      const diffY = Math.abs(touchCurrentY - touchStartY);
+
+      // If horizontal swipe is dominant, mark as swiping
+      if (diffX > diffY && diffX > 10) {
+        isSwiping = true;
+      }
+    }, { passive: true });
+
+    carousel.addEventListener('touchend', (e) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndTime = Date.now();
+      const diff = touchStartX - touchEndX;
+      const timeDiff = touchEndTime - touchStartTime;
+
+      // Swipe threshold: 50px or fast swipe (30px in under 300ms)
+      const isSwipe = Math.abs(diff) > 50 || (Math.abs(diff) > 30 && timeDiff < 300);
+
+      if (isSwipe && isSwiping) {
+        if (diff > 0) {
+          next();
+        } else {
+          prev();
+        }
+      }
+
+      touchStartX = 0;
+      touchStartY = 0;
+      isSwiping = false;
+    }, { passive: true });
+
+    // Initial render
+    updateCarousel();
+  }
+
+  // Initialize on load
+  function initAllCarousels() {
+    document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(initCarousel);
+  }
+
+  initAllCarousels();
+  document.addEventListener('astro:page-load', initAllCarousels);
+</script>

@@ -3,6 +3,7 @@ import IndexLayout from "../layouts/IndexLayout.astro";
 import Button from "../components/Button.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import BlogCard from "../components/BlogCard.astro";
+import ProjectCarousel from "../components/ProjectCarousel.astro";
 import { getCollection } from "astro:content";
 import ConsolePresentation, {
   type AuthorPresentation,
@@ -57,31 +58,49 @@ const recentPosts = allPosts
 
   <!-- Projects Section -->
   <section
-    class="projects-section bg-amber-500 h-screen flex flex-col items-center text-center justify-center px-4 gap-8 md:gap-24 overflow-x-hidden"
+    style={"background-color: " + allProjects[0]?.data.heroColor[0] ||
+      "#ffffff; color: " + allProjects[0]?.data.heroColor[1] ||
+      "#000000"}
+    class="projects-section flex flex-col items-center text-center justify-center px-4 py-16 md:py-32 gap-8 overflow-x-hidden"
   >
     <h1
-      class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-sans text-white font-bold z-10 flex flex-wrap justify-center gap-x-[0.3em] gap-y-2"
+      class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-sans font-bold z-10 flex flex-wrap justify-center gap-x-[0.3em] gap-y-2 mb-2"
     >
       <span class="title-word opacity-0">Watch</span>
       <span class="title-word opacity-0">My</span>
       <span class="title-word opacity-0">Magic</span>
       <span class="title-word opacity-0">Tricks</span>
     </h1>
+
+    <div class="carousel-wrapper opacity-0 w-full">
+      <ProjectCarousel
+        projects={allProjects.sort((a, b) => a.data.order - b.data.order)}
+      />
+    </div>
   </section>
 
   <script>
-    import { animate, stagger } from "motion";
+    import gsap from "gsap";
 
-    const animateTitleWords = async (section: Element) => {
+    const animateTitleWords = (section: Element): Promise<void> => {
       const words = section.querySelectorAll(".title-word");
 
-      if (!words.length) return;
+      if (!words.length) return Promise.resolve();
 
-      return animate(
-        words,
-        { opacity: [0, 1], y: [32, 0] },
-        { duration: 0.5, delay: stagger(0.12), easing: "ease-out" },
-      ).finished;
+      return new Promise((resolve) => {
+        gsap.fromTo(
+          words,
+          { opacity: 0, y: 32 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            stagger: 0.12,
+            ease: "power2.out",
+            onComplete: resolve,
+          },
+        );
+      });
     };
 
     const runPresentationAnimations = async (section: Element) => {
@@ -91,11 +110,19 @@ const recentPosts = allPosts
       // 2. Animate console wrapper (slide up + fade)
       const consoleWrapper = section.querySelector(".presentation-console");
       if (consoleWrapper) {
-        await animate(
-          consoleWrapper,
-          { opacity: [0, 1], y: [32, 0] },
-          { duration: 0.6, easing: "ease-out" },
-        ).finished;
+        await new Promise<void>((resolve) => {
+          gsap.fromTo(
+            consoleWrapper,
+            { opacity: 0, y: 32 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.6,
+              ease: "power2.out",
+              onComplete: resolve,
+            },
+          );
+        });
 
         // 3. Signal console to start typing
         window.dispatchEvent(new CustomEvent("console:start-typing"));
@@ -132,6 +159,24 @@ const recentPosts = allPosts
 
     const runProjectsAnimations = async (section: Element) => {
       await animateTitleWords(section);
+
+      // Animate carousel wrapper
+      const carouselWrapper = section.querySelector(".carousel-wrapper");
+      if (carouselWrapper) {
+        await new Promise<void>((resolve) => {
+          gsap.fromTo(
+            carouselWrapper,
+            { opacity: 0, y: 40 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.7,
+              ease: "power2.out",
+              onComplete: resolve,
+            },
+          );
+        });
+      }
     };
 
     const setupProjectsObserver = () => {
@@ -158,6 +203,19 @@ const recentPosts = allPosts
 
     // Setup observer on initial load
     setupProjectsObserver();
+
+    // Listen for carousel change events to trigger animations
+    window.addEventListener("carousel:project-change", (event: Event) => {
+      console.log("Received carousel-change event:", event);
+      const detail = (event as CustomEvent).detail;
+      const colors = detail.colors || ["#ffffff", "#000000"];
+      gsap.to(".projects-section", {
+        backgroundColor: colors[0],
+        color: colors[1],
+        duration: 1,
+        ease: "power2.out",
+      });
+    });
 
     // Re-setup on View Transitions navigation
     document.addEventListener("astro:page-load", setupProjectsObserver);
