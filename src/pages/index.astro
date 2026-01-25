@@ -34,16 +34,12 @@ const recentPosts = allPosts
     <h1
       class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-sans text-black font-bold z-10"
     >
-      <span class="presentation-word inline-block opacity-0 translate-y-8"
+      <span class="title-word inline-block opacity-0 translate-y-8"
         >Welcome</span
       >
-      <span class="presentation-word inline-block opacity-0 translate-y-8"
-        >to</span
-      >
-      <span class="presentation-word inline-block opacity-0 translate-y-8"
-        >my</span
-      >
-      <span class="presentation-word inline-block opacity-0 translate-y-8"
+      <span class="title-word inline-block opacity-0 translate-y-8">To</span>
+      <span class="title-word inline-block opacity-0 translate-y-8">My</span>
+      <span class="title-word inline-block opacity-0 translate-y-8"
         >Portfolio</span
       >
     </h1>
@@ -63,23 +59,42 @@ const recentPosts = allPosts
     />
   </section>
 
+  <!-- Projects Section -->
+  <section
+    class="projects-section bg-amber-500 h-screen flex flex-col items-center text-center justify-center px-4 gap-8 md:gap-24 overflow-x-hidden"
+  >
+    <h1
+      class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-sans text-white font-bold z-10"
+    >
+      <span class="title-word inline-block opacity-0 translate-y-8">Watch</span>
+      <span class="title-word inline-block opacity-0 translate-y-8">My</span>
+      <span class="title-word inline-block opacity-0 translate-y-8">Magic</span>
+      <span class="title-word inline-block opacity-0 translate-y-8">Tricks</span
+      >
+    </h1>
+  </section>
+
   <script>
     import { animate, stagger } from "motion";
 
-    const runPresentationAnimations = async () => {
-      const words = document.querySelectorAll(".presentation-word");
-      const consoleWrapper = document.querySelector(".presentation-console");
+    const animateTitleWords = async (section: Element) => {
+      const words = section.querySelectorAll(".title-word");
 
       if (!words.length) return;
 
-      // 1. Animate H1 words with stagger
-      await animate(
+      return animate(
         words,
         { opacity: [0, 1], y: [32, 0] },
         { duration: 0.5, delay: stagger(0.12), easing: "ease-out" },
       ).finished;
+    };
+
+    const runPresentationAnimations = async (section: Element) => {
+      // 1. Animate title words
+      await animateTitleWords(section);
 
       // 2. Animate console wrapper (slide up + fade)
+      const consoleWrapper = section.querySelector(".presentation-console");
       if (consoleWrapper) {
         await animate(
           consoleWrapper,
@@ -103,7 +118,7 @@ const recentPosts = allPosts
           entries.forEach((entry) => {
             if (entry.isIntersecting && !hasAnimated) {
               hasAnimated = true;
-              runPresentationAnimations();
+              runPresentationAnimations(section);
               observer.disconnect();
             }
           });
@@ -119,5 +134,37 @@ const recentPosts = allPosts
 
     // Re-setup on View Transitions navigation
     document.addEventListener("astro:page-load", setupPresentationObserver);
+
+    const runProjectsAnimations = async (section: Element) => {
+      await animateTitleWords(section);
+    };
+
+    const setupProjectsObserver = () => {
+      const section = document.querySelector(".projects-section");
+      if (!section) return;
+
+      let hasAnimated = false;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !hasAnimated) {
+              hasAnimated = true;
+              runProjectsAnimations(section);
+              observer.disconnect();
+            }
+          });
+        },
+        { threshold: 0.25 },
+      );
+
+      observer.observe(section);
+    };
+
+    // Setup observer on initial load
+    setupProjectsObserver();
+
+    // Re-setup on View Transitions navigation
+    document.addEventListener("astro:page-load", setupProjectsObserver);
   </script>
 </IndexLayout>
