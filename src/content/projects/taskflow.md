@@ -2,7 +2,7 @@
 title: "TaskFlow - Project Management App"
 description: "A modern project management application built with React, TypeScript, and a real-time backend. Features include kanban boards, team collaboration, and analytics."
 pubDate: 2026-01-01
-heroImage: "/images/projects/taskflow.png"
+heroImage: "/images/projects/taskflow.webp"
 heroColor: ["#2b7fff", "#FFFFFF"]
 technologies:
   ["React", "TypeScript", "Node.js", "PostgreSQL", "Socket.io", "Tailwind CSS"]

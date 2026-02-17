@@ -42,7 +42,7 @@ const recentPosts = allPosts
     </h1>
     <div class="presentation-console opacity-0 z-10">
       <ConsolePresentation
-        client:load
+        client:visible
         class="mx-auto shadow-2xl text-left"
         presentation={presentation.frontmatter as AuthorPresentation}
         manualStart={true}
@@ -206,7 +206,6 @@ const recentPosts = allPosts
 
     // Listen for carousel change events to trigger animations
     window.addEventListener("carousel:project-change", (event: Event) => {
-      console.log("Received carousel-change event:", event);
       const detail = (event as CustomEvent).detail;
       const colors = detail.colors || ["#ffffff", "#000000"];
       gsap.to(".projects-section", {

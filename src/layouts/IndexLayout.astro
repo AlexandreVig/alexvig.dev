@@ -1,7 +1,7 @@
 ---
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
-import NavBar from "@/components/NavBar.vue";
+import NavBar from "@/components/NavBar.astro";
 
 interface Props {
   title: string;
@@ -63,6 +63,26 @@ const socialImageURL = new URL(image, Astro.site);
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bitcount+Single:slnt,wght,CRSV,ELSH,ELXP@-8..0,100..900,0..1,0..100,0..100&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Unbounded:wght@200..900&display=swap"
+    />
+
+    <!-- Critical CSS for above-the-fold hero (inlined to render in first packet) -->
+    <style is:inline>
+      body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        min-height: 100vh;
+      }
+      .hero-word,
+      .hero-bar,
+      #navbar-container,
+      .opacity-0 {
+        opacity: 0;
+      }
+    </style>
 
     <!-- View Transitions -->
     <ClientRouter />
@@ -90,7 +110,7 @@ const socialImageURL = new URL(image, Astro.site);
 
     <!-- Sticky NavBar -->
     <div id="navbar-container" class="opacity-0 sticky top-0 z-50">
-      <NavBar client:load currentPath={Astro.url.pathname} />
+      <NavBar currentPath={Astro.url.pathname} />
     </div>
 
     <!-- Hero Bottom Part - Decorative bars -->

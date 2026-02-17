@@ -2,7 +2,7 @@
 title: "CodeSnippet - Code Sharing Platform"
 description: "A beautiful code sharing platform with syntax highlighting, collaboration features, and instant sharing. Think GitHub Gists meets design."
 pubDate: 2025-11-15
-heroImage: "/images/projects/codesnippet.png"
+heroImage: "/images/projects/codesnippet.webp"
 heroColor: ["#fd9a00", "#fff"]
 technologies: ["Next.js", "Prisma", "PostgreSQL", "Monaco Editor", "Vercel"]
 liveUrl: "https://codesnippet.example.com"

@@ -1,0 +1,210 @@
+---
+interface Props {
+  currentPath: string;
+  isStuck?: boolean;
+}
+
+const { currentPath, isStuck = false } = Astro.props;
+
+const navLinks = [
+  { href: "/", label: "Home" },
+  { href: "/projects", label: "Projects" },
+  { href: "/blog", label: "Blog" },
+  { href: "/about", label: "About" },
+];
+
+const isActive = (href: string) => {
+  return currentPath === href || (href !== "/" && currentPath.startsWith(href));
+};
+---
+
+<nav
+  id="main-nav"
+  class:list={[
+    "bg-black sticky top-0 z-50 text-white font-bit w-full transition-all duration-300",
+    isStuck ? "shadow-lg" : "px-4 md:px-12",
+  ]}
+  data-initial-stuck={isStuck}
+>
+  <div
+    class:list={[
+      "nav-inner flex justify-between items-center border-t-2 border-b-2 border-white px-2 py-3 md:py-0 transition-all duration-300",
+      isStuck && "px-8 sm:px-12 md:px-16 xl:px-32",
+    ]}
+  >
+    <!-- Brand -->
+    <a
+      href="/"
+      class="text-lg sm:text-xl md:text-2xl hover:text-sky-400 transition-colors"
+    >
+      Full-Stack Developer
+    </a>
+
+    <!-- Desktop Navigation -->
+    <ul class="hidden md:flex gap-6 lg:gap-12 text-xl lg:text-2xl">
+      {
+        navLinks.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class:list={[
+                "py-4 inline-block transition-colors",
+                isActive(link.href) ? "text-accent" : "hover:text-accent",
+              ]}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <!-- Mobile Menu Button -->
+    <button
+      id="nav-toggle"
+      class="md:hidden p-2 -mr-2 hover:text-accent transition-colors"
+      aria-label="Toggle menu"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+      <div class="relative w-7 h-7">
+        <!-- Open Icon (Pixel-art Hamburger) -->
+        <svg
+          class="nav-icon-open w-7 h-7 absolute inset-0 transition-all duration-300 ease-out opacity-100 scale-100"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M22 7H2V6H1V2h1V1h20v1h1v4h-1v1ZM3 6h18V5h1V3h-1V2H3v1H2v2h1v1Zm19 9H2v-1H1v-4h1V9h20v1h1v4h-1v1ZM3 14h18v-1h1v-2h-1v-1H3v1H2v2h1v1Zm19 9H2v-1H1v-4h1v-1h20v1h1v4h-1v1ZM3 22h18v-1h1v-2h-1v-1H3v1H2v2h1v1Z" />
+        </svg>
+        <!-- Close Icon (Pixel-art X) -->
+        <svg
+          class="nav-icon-close w-7 h-7 absolute inset-0 transition-all duration-300 ease-out opacity-0 scale-75"
+          fill="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path d="M3 23v-1H2v-1H1v-3h1v-1h1v-1h1v-1h1v-1h1v-1h1v-2H6v-1H5V9H4V8H3V7H2V6H1V3h1V2h1V1h3v1h1v1h1v1h1v1h1v1h1v1h2V6h1V5h1V4h1V3h1V2h1V1h3v1h1v1h1v3h-1v1h-1v1h-1v1h-1v1h-1v1h-1v2h1v1h1v1h1v1h1v1h1v1h1v3h-1v1h-1v1h-3v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-2v1h-1v1H9v1H8v1H7v1H6v1H3Zm1-1h1v-1h1v-1h1v-1h1v-1h1v-1h1v-1h1v-1h2v1h1v1h1v1h1v1h1v1h1v1h1v1h1v-1h1v-1h1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-2h1v-1h1V9h1V8h1V7h1V6h1V5h1V4h-1V3h-1V2h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-1v1h-2V8h-1V7H9V6H8V5H7V4H6V3H5V2H4v1H3v1H2v1h1v1h1v1h1v1h1v1h1v1h1v1h1v2H8v1H7v1H6v1H5v1H4v1H3v1H2v1h1v1h1v1Z" />
+        </svg>
+      </div>
+    </button>
+  </div>
+
+  <!-- Mobile Navigation Menu -->
+  <div
+    id="mobile-menu"
+    class="md:hidden absolute left-0 right-0 top-full bg-black border-b-2 border-white transition-all duration-300 ease-out opacity-0 -translate-y-2 pointer-events-none"
+  >
+    <ul class="flex flex-col">
+      {
+        navLinks.map((link) => (
+          <li class="border-b border-white/20 last:border-b-0">
+            <a
+              href={link.href}
+              class:list={[
+                "nav-mobile-link block px-6 py-4 text-xl transition-colors",
+                isActive(link.href)
+                  ? "bg-white/10 text-accent"
+                  : "hover:bg-white/5 hover:text-accent",
+              ]}
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</nav>
+
+<script>
+  function initNav() {
+    const nav = document.getElementById("main-nav");
+    const toggle = document.getElementById("nav-toggle");
+    const menu = document.getElementById("mobile-menu");
+    const openIcon = nav?.querySelector(".nav-icon-open");
+    const closeIcon = nav?.querySelector(".nav-icon-close");
+
+    if (!nav || !toggle || !menu) return;
+
+    let isOpen = false;
+    let ticking = false;
+
+    // Sticky detection
+    const checkSticky = () => {
+      const stuck = nav.getBoundingClientRect().top <= 0;
+      if (stuck) {
+        nav.classList.add("shadow-lg");
+        nav.classList.remove("px-4", "md:px-12");
+        nav
+          .querySelector(".nav-inner")
+          ?.classList.add("px-8", "sm:px-12", "md:px-16", "xl:px-32");
+      } else {
+        nav.classList.remove("shadow-lg");
+        if (nav.dataset.initialStuck !== "true") {
+          nav.classList.add("px-4", "md:px-12");
+          nav
+            .querySelector(".nav-inner")
+            ?.classList.remove("px-8", "sm:px-12", "md:px-16", "xl:px-32");
+        }
+      }
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(checkSticky);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    checkSticky();
+
+    // Toggle menu
+    toggle.addEventListener("click", () => {
+      isOpen = !isOpen;
+      toggle.setAttribute("aria-expanded", String(isOpen));
+
+      if (isOpen) {
+        menu.classList.remove(
+          "opacity-0",
+          "-translate-y-2",
+          "pointer-events-none",
+        );
+        menu.classList.add(
+          "opacity-100",
+          "translate-y-0",
+          "pointer-events-auto",
+        );
+        openIcon?.classList.remove("opacity-100", "scale-100");
+        openIcon?.classList.add("opacity-0", "scale-75");
+        closeIcon?.classList.remove("opacity-0", "scale-75");
+        closeIcon?.classList.add("opacity-100", "scale-100");
+      } else {
+        menu.classList.add(
+          "opacity-0",
+          "-translate-y-2",
+          "pointer-events-none",
+        );
+        menu.classList.remove(
+          "opacity-100",
+          "translate-y-0",
+          "pointer-events-auto",
+        );
+        openIcon?.classList.add("opacity-100", "scale-100");
+        openIcon?.classList.remove("opacity-0", "scale-75");
+        closeIcon?.classList.add("opacity-0", "scale-75");
+        closeIcon?.classList.remove("opacity-100", "scale-100");
+      }
+    });
+
+    // Close menu on link click
+    menu.querySelectorAll(".nav-mobile-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (isOpen) toggle.click();
+      });
+    });
+  }
+
+  initNav();
+  document.addEventListener("astro:page-load", initNav);
+</script>

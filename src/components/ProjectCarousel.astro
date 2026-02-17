@@ -29,6 +29,10 @@ const { projects } = Astro.props;
                     src={project.data.heroImage}
                     alt={`${project.data.title} preview`}
                     class="w-full h-full object-cover"
+                    width="600"
+                    height="384"
+                    loading="lazy"
+                    decoding="async"
                     draggable="false"
                   />
                 ) : (

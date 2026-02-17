@@ -1,7 +1,7 @@
 ---
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
-import NavBar from "@/components/NavBar.vue";
+import NavBar from "@/components/NavBar.astro";
 import Footer from "../components/Footer.astro";
 
 interface Props {
@@ -64,12 +64,16 @@ const socialImageURL = new URL(image, Astro.site);
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bitcount+Single:slnt,wght,CRSV,ELSH,ELXP@-8..0,100..900,0..1,0..100,0..100&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Unbounded:wght@200..900&display=swap"
+    />
 
     <!-- View Transitions -->
     <ClientRouter />
   </head>
   <body class="min-h-screen flex flex-col">
-    <NavBar client:load currentPath={Astro.url.pathname} isStuck={true} />
+    <NavBar currentPath={Astro.url.pathname} isStuck={true} />
     <main class="flex-1">
       <slot />
     </main>
