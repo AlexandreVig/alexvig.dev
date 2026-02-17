@@ -279,3 +279,61 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Gradient button */
+.gradient-button {
+  font-variation-settings: '"wdth" 90, "opsz" 96';
+  background-color: #f5d0fe;
+  border: 0;
+  border-radius: 0;
+  color: #000;
+  cursor: pointer;
+  display: inline-block;
+  line-height: 1.25em;
+  max-width: 100%;
+  position: relative;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all .5s ease-in-out;
+}
+
+.gradient-button:hover {
+  animation: gradient-move-animation 2s ease infinite;
+  background-image: linear-gradient(-45deg,#f5d0fe,#58caf2);
+  background-size: 250% 250%;
+  transform: scale(1.1);
+}
+
+@keyframes gradient-move-animation {
+  0% {
+    background-position:0 0
+  }
+  50% {
+    background-position:100% 100%
+  }
+  to {
+    background-position:0 0
+  }
+}
+
+/* Footer Grid */
+.footer-grid {
+  background-size: 256px 256px;
+  background-position: center;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--color-slate-500) 30%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--color-slate-500) 30%, transparent) 1px, transparent 1px);
+}
+
+/* noise overlay */
+.footer-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url(/images/noise.svg);
+  opacity: .4;
+  pointer-events: none;
+
+  /* magic */
+  mix-blend-mode: soft-light;
+}
