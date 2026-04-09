@@ -1,4 +1,6 @@
-import type { CreateWindowOptions } from './types';
+import type { CreateWindowOptions, WindowControl } from './types';
+
+const DEFAULT_CONTROLS: WindowControl[] = ['minimize', 'maximize', 'close'];
 
 /**
  * Imperatively builds a window DOM tree matching the old Window.astro template.
@@ -8,9 +10,14 @@ export function createWindowElement(opts: CreateWindowOptions): {
   root: HTMLElement;
   body: HTMLElement;
 } {
+  const showIcon = opts.showIcon !== false;
+  const resizable = opts.resizable !== false;
+  const controlList = opts.controls ?? DEFAULT_CONTROLS;
+
   const root = document.createElement('div');
   root.className = 'window';
   root.dataset.windowId = opts.instanceId;
+  root.dataset.resizable = String(resizable);
   root.style.width = `${opts.width}px`;
   root.style.height = `${opts.height}px`;
   root.style.display = 'flex';
@@ -26,8 +33,9 @@ export function createWindowElement(opts: CreateWindowOptions): {
   // Title bar
   const titleBar = document.createElement('div');
   titleBar.className = 'title-bar';
+  if (!showIcon || !opts.icon) titleBar.classList.add('title-bar--no-icon');
 
-  if (opts.icon) {
+  if (opts.icon && showIcon) {
     const icon = document.createElement('img');
     icon.src = opts.icon;
     icon.alt = '';
@@ -43,7 +51,7 @@ export function createWindowElement(opts: CreateWindowOptions): {
 
   const controls = document.createElement('div');
   controls.className = 'title-bar-controls';
-  for (const action of ['minimize', 'maximize', 'close'] as const) {
+  for (const action of controlList) {
     const btn = document.createElement('button');
     btn.setAttribute('aria-label', action[0].toUpperCase() + action.slice(1));
     btn.dataset.action = action;

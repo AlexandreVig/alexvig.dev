@@ -1,0 +1,112 @@
+/* ── About dialog ─────────────────────────────────────────────────────────── */
+.about {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ece9d8;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+  user-select: none;
+}
+
+.about__body {
+  flex: 1;
+  padding: 16px 18px 8px;
+  overflow: auto;
+}
+
+.about__header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.about__icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.about__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+  min-width: 0;
+}
+
+.about__title {
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.about__line {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Etched horizontal rule — XP-style groove (dark top, light bottom). */
+.about__rule {
+  height: 0;
+  border: none;
+  border-top: 1px solid #aca899;
+  border-bottom: 1px solid #ffffff;
+  margin: 14px 0;
+}
+
+.about__description {
+  font-size: 11px;
+  line-height: 1.55;
+  user-select: text;
+}
+
+.about__description a {
+  color: #0033aa;
+  text-decoration: underline;
+}
+
+.about__description a:hover {
+  color: #d06000;
+}
+
+.about__footer {
+  font-size: 11px;
+  user-select: text;
+}
+
+/* ── Button row ───────────────────────────────────────────────────────────── */
+.about__buttons {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 14px 12px;
+}
+
+.about__ok {
+  min-width: 75px;
+  height: 23px;
+  padding: 0 12px;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+  background: linear-gradient(to bottom, #f5f4ea 0%, #e8e4d3 45%, #d7d2be 100%);
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  cursor: default;
+}
+
+.about__ok:hover {
+  background: linear-gradient(to bottom, #fefcf2 0%, #efeadb 45%, #e0dbc6 100%);
+}
+
+.about__ok:active {
+  background: linear-gradient(to bottom, #d7d2be 0%, #e8e4d3 55%, #f5f4ea 100%);
+}
+
+.about__ok:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}

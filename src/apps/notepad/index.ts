@@ -1,29 +1,96 @@
+import { launch } from '../../shell/launcher';
 import type { AppModule } from '../types';
+import { createMenu } from './menu';
 import { escapeHtml, renderMarkdown } from './render';
 import './notepad.css';
 
 const mod: AppModule = {
-  async mount({ root, file, host }) {
+  async mount({ root, file, host, signal }) {
     root.classList.add('notepad');
 
+    let statusBarVisible = false;
+
+    const body = document.createElement('div');
+    body.className = 'notepad__body';
+
+    const statusBar = document.createElement('div');
+    statusBar.className = 'notepad__statusbar';
+    statusBar.hidden = true;
+
+    const menuBar = createMenu(
+      {
+        isChecked: (action) =>
+          action === 'toggle-status-bar' ? statusBarVisible : false,
+        onAction: (action) => {
+          switch (action) {
+            case 'exit':
+              host.close();
+              break;
+            case 'select-all': {
+              const range = document.createRange();
+              range.selectNodeContents(body);
+              const sel = window.getSelection();
+              sel?.removeAllRanges();
+              sel?.addRange(range);
+              break;
+            }
+            case 'copy': {
+              const text = window.getSelection()?.toString() ?? '';
+              if (text) void navigator.clipboard?.writeText(text);
+              break;
+            }
+            case 'toggle-status-bar':
+              statusBarVisible = !statusBarVisible;
+              statusBar.hidden = !statusBarVisible;
+              break;
+            case 'about':
+              void launch({
+                appId: 'about',
+                args: {
+                  path: 'about:notepad',
+                  icon: '/icons/notepad.png',
+                  appIcon: '/icons/notepad.png',
+                  appTitle: 'Notepad',
+                  version: 'Version 1.0',
+                  copyright: '© 2026 Alexandre Vigneau',
+                  description:
+                    'A tiny Windows XP–style markdown viewer, built as part of this portfolio. ' +
+                    'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
+                  footer: 'Built with Astro and TypeScript.',
+                },
+              });
+              break;
+          }
+        },
+      },
+      signal,
+    );
+
+    root.appendChild(menuBar);
+    root.appendChild(body);
+    root.appendChild(statusBar);
+
     if (!file) {
-      root.innerHTML =
-        '<div class="notepad__menu"><span>File</span><span>Edit</span><span>Format</span><span>View</span><span>Help</span></div>' +
-        '<div class="notepad__body"><div class="notepad__empty">Untitled</div></div>';
-      return {};
+      body.innerHTML = '<div class="notepad__empty">Untitled</div>';
+      statusBar.textContent = 'Untitled';
+      return {
+        unmount() {
+          root.classList.remove('notepad');
+          root.innerHTML = '';
+        },
+      };
     }
 
     host.setTitle(`${file.name} — Notepad`);
 
     const source = await file.read();
-    const html =
+    body.innerHTML =
       file.ext === '.md'
         ? await renderMarkdown(source)
         : `<pre>${escapeHtml(source)}</pre>`;
 
-    root.innerHTML =
-      '<div class="notepad__menu"><span>File</span><span>Edit</span><span>Format</span><span>View</span><span>Help</span></div>' +
-      `<div class="notepad__body">${html}</div>`;
+    const lines = source.split('\n').length;
+    statusBar.textContent = `${file.path}    Ln ${lines}, Col 1`;
 
     return {
       unmount() {

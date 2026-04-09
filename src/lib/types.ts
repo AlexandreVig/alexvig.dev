@@ -1,3 +1,5 @@
+export type WindowControl = 'minimize' | 'maximize' | 'close';
+
 export interface CreateWindowOptions {
   instanceId: string;
   title: string;
@@ -6,6 +8,14 @@ export interface CreateWindowOptions {
   height: number;
   x?: number;
   y?: number;
+  /** Which title-bar control buttons to render. Default: all three. */
+  controls?: WindowControl[];
+  /** Show the icon on the left of the title bar. Default: true. */
+  showIcon?: boolean;
+  /** Allow edge-drag resize and maximize. Default: true. */
+  resizable?: boolean;
+  /** Show a button for this window in the taskbar. Default: true. */
+  showInTaskbar?: boolean;
 }
 
 export interface WindowState {
@@ -22,6 +32,8 @@ export interface WindowState {
   width: number;
   height: number;
   openedAt?: number;
+  resizable: boolean;
+  showInTaskbar: boolean;
 }
 
 export interface XpEventDetail {

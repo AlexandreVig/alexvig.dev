@@ -102,6 +102,11 @@
   text-overflow: ellipsis;
 }
 
+/* When the title bar has no icon, give the text some breathing room on the left. */
+.title-bar--no-icon .title-bar-text {
+  padding-left: 8px;
+}
+
 /* ── Header buttons container ──────────────────────────────────────────────── */
 .title-bar-controls {
   display: flex;

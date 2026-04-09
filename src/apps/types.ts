@@ -1,4 +1,5 @@
 import type { FileHandle } from '../fs/types';
+import type { WindowControl } from '../lib/types';
 
 export type AppKind = 'singleton' | 'document' | 'multi';
 
@@ -18,6 +19,14 @@ export interface AppManifest {
   acceptsFileTypes?: string[];
   /** Optional: show in Start menu's left pane. */
   showInStartMenu?: boolean;
+  /** Which title-bar buttons to show. Default: ['minimize','maximize','close']. */
+  controls?: WindowControl[];
+  /** Show the icon on the left of the title bar. Default: true. */
+  showWindowIcon?: boolean;
+  /** Allow edge-drag resize and maximize. Default: true. */
+  resizable?: boolean;
+  /** Show a button for this window in the taskbar. Default: true. */
+  showInTaskbar?: boolean;
   /** Dynamic import — each app ships as its own chunk. */
   loader: () => Promise<{ default: AppModule }>;
 }

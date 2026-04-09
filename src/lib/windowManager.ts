@@ -41,6 +41,8 @@ class WindowManager {
       width: opts.width,
       height: opts.height,
       openedAt: ++this.openCounter,
+      resizable: opts.resizable !== false,
+      showInTaskbar: opts.showInTaskbar !== false,
     };
     this.windows.set(opts.instanceId, state);
 
@@ -94,6 +96,7 @@ class WindowManager {
   maximize(id: string): void {
     const state = this.windows.get(id);
     if (!state || !state.isOpen) return;
+    if (!state.resizable) return;
     state.isMaximized = !state.isMaximized;
     this.applyState(id);
     this.focus(id);
@@ -228,8 +231,9 @@ class WindowManager {
     el.addEventListener('mousemove', (e) => {
       if (isDragging || isResizing) return;
       const state = this.windows.get(id);
-      if (state?.isMaximized) {
+      if (state?.isMaximized || !state?.resizable) {
         el.style.cursor = '';
+        cursorPos = '';
         return;
       }
       cursorPos = getCursorPosition(e);
@@ -327,7 +331,7 @@ class WindowManager {
 
   private syncTaskbar(): void {
     const openWindows = Array.from(this.windows.values())
-      .filter((s) => s.isOpen)
+      .filter((s) => s.isOpen && s.showInTaskbar)
       .sort((a, b) => (a.openedAt ?? 0) - (b.openedAt ?? 0));
     document.dispatchEvent(
       new CustomEvent('xp:taskbar-update', {

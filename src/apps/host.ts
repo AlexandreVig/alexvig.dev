@@ -109,7 +109,11 @@ class AppHost {
       const title = req.file
         ? `${req.file.name} — ${manifest.title}`
         : manifest.title;
-      const icon = req.file?.icon || manifest.icon;
+      // Window chrome icon precedence: explicit args.icon > file icon > manifest icon.
+      // Lets apps (e.g. the templated About dialog) adopt their parent app's icon.
+      const argsIcon =
+        typeof req.args?.icon === 'string' ? (req.args.icon as string) : null;
+      const icon = argsIcon ?? req.file?.icon ?? manifest.icon;
 
       const body = windowManager.create({
         instanceId,
@@ -117,6 +121,10 @@ class AppHost {
         icon,
         width: manifest.defaultWidth,
         height: manifest.defaultHeight,
+        controls: manifest.controls,
+        showIcon: manifest.showWindowIcon,
+        resizable: manifest.resizable,
+        showInTaskbar: manifest.showInTaskbar,
       });
 
       const controller = new AbortController();

@@ -51,7 +51,7 @@ import Desktop from '../components/Desktop.astro';
       );
     });
 
-    // Double-click title bar → toggle maximize.
+    // Double-click title bar → toggle maximize (only for resizable windows).
     document.addEventListener('dblclick', (e) => {
       const titleBar = (e.target as Element).closest<HTMLElement>('.title-bar');
       if (!titleBar) return;
@@ -59,6 +59,7 @@ import Desktop from '../components/Desktop.astro';
       if ((e.target as Element).closest('.title-bar-icon')) return;
       const win = titleBar.closest<HTMLElement>('[data-window-id]');
       if (!win) return;
+      if (win.dataset.resizable === 'false') return;
       const id = win.dataset.windowId!;
       document.dispatchEvent(
         new CustomEvent('xp:maximize', { detail: { id } }),
