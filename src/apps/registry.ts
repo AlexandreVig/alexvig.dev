@@ -1,3 +1,4 @@
+import { findExplorerInstanceAt } from './explorer/instances';
 import type { AppManifest } from './types';
 
 export const apps: AppManifest[] = [
@@ -7,9 +8,18 @@ export const apps: AppManifest[] = [
     icon: '/icons/my-computer.png',
     defaultWidth: 640,
     defaultHeight: 440,
-    kind: 'document',
+    // multi + findExistingInstance: each launch creates a new explorer window,
+    // unless one is already showing the requested folder — in which case we
+    // focus it. Lets users open the same folder twice intentionally (start
+    // menu / desktop) while still deduping by *current* path, not by the path
+    // it was originally opened at.
+    kind: 'multi',
     showInStartMenu: true,
     loader: () => import('./explorer'),
+    findExistingInstance: (args) => {
+      const target = typeof args.path === 'string' ? args.path : '/';
+      return findExplorerInstanceAt(target);
+    },
   },
   {
     id: 'notepad',

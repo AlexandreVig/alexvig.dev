@@ -76,25 +76,13 @@ class AppHost {
       return;
     }
 
-    const instanceId = this.computeInstanceId(manifest, req.file, req.args);
+    // Manifest-driven dedup hook (e.g. explorer matching by current folder).
+    // Runs before instance-key computation so multi-kind apps can short-circuit.
+    const hookedId = manifest.findExistingInstance?.(req.args ?? {}) ?? null;
+    if (hookedId && this.focusExisting(hookedId, req.args)) return;
 
-    // Already mounted → restore + focus, forward args if supplied.
-    const existing = this.mounted.get(instanceId);
-    if (existing) {
-      if (windowManager.getState(instanceId)?.isMinimized) {
-        windowManager.restore(instanceId);
-      } else {
-        windowManager.focus(instanceId);
-      }
-      if (req.args) {
-        try {
-          existing.instance.onLaunchArgs?.(req.args);
-        } catch (err) {
-          console.error(`[appHost] onLaunchArgs failed for "${instanceId}":`, err);
-        }
-      }
-      return;
-    }
+    const instanceId = this.computeInstanceId(manifest, req.file, req.args);
+    if (this.focusExisting(instanceId, req.args)) return;
 
     // Guard against rapid double-launch while the loader is in flight.
     if (this.loading.has(instanceId)) return;
@@ -130,6 +118,7 @@ class AppHost {
       const controller = new AbortController();
       const api: AppHostAPI = {
         setTitle: (t) => windowManager.setTitle(instanceId, t),
+        setIcon: (i) => windowManager.setIcon(instanceId, i),
         close: () =>
           document.dispatchEvent(
             new CustomEvent('xp:close', { detail: { id: instanceId } }),
@@ -172,6 +161,31 @@ class AppHost {
     } finally {
       this.loading.delete(instanceId);
     }
+  }
+
+  /**
+   * If `id` is mounted, restore/focus it and forward `args` via onLaunchArgs.
+   * Returns true if the launch was satisfied by an existing instance.
+   */
+  private focusExisting(
+    id: string,
+    args: Record<string, unknown> | undefined,
+  ): boolean {
+    const existing = this.mounted.get(id);
+    if (!existing) return false;
+    if (windowManager.getState(id)?.isMinimized) {
+      windowManager.restore(id);
+    } else {
+      windowManager.focus(id);
+    }
+    if (args) {
+      try {
+        existing.instance.onLaunchArgs?.(args);
+      } catch (err) {
+        console.error(`[appHost] onLaunchArgs failed for "${id}":`, err);
+      }
+    }
+    return true;
   }
 
   private handleClose(id: string): void {

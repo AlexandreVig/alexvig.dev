@@ -1,41 +1,147 @@
 import { iconForNode, listChildren, parentPath, pathOf, resolve } from '../../fs/api';
 import type { FsNode } from '../../fs/types';
+import {
+  buildLocationTree,
+  displayPathFor,
+  iconFor,
+  parseAddress,
+} from './address';
 import { launch } from '../../shell/launcher';
 import type { AppModule } from '../types';
+import { explorerInstances } from './instances';
+import { createMenu } from './menu';
 import './explorer.css';
 
 const mod: AppModule = {
-  mount({ root, args, host }) {
+  mount({ root, args, host, signal, instanceId }) {
     const initialPath =
       typeof args.path === 'string' && resolve(args.path) ? (args.path as string) : '/';
 
     let currentPath = initialPath;
     const history: string[] = [];
+    const forwardStack: string[] = [];
+
+    // Live-path registration so external launches can find this window by its
+    // *current* folder rather than the path it was originally opened at.
+    explorerInstances.set(instanceId, () => currentPath);
 
     root.classList.add('explorer');
     root.innerHTML = `
-      <div class="explorer__toolbar">
-        <button class="explorer__btn" data-action="back" disabled>&larr; Back</button>
-        <button class="explorer__btn" data-action="up">&uarr; Up</button>
+      <div class="explorer__menubar">
+        <div class="explorer__menu-host"></div>
+        <img class="explorer__menubar-logo" src="/icons/explorer/windows.png" alt="" />
       </div>
+
+      <div class="explorer__toolbar">
+        <button class="explorer__tbtn" data-action="back" disabled>
+          <img src="/icons/explorer/back.png" alt="" />
+          <span>Back</span>
+          <span class="explorer__tbtn-caret"></span>
+        </button>
+        <button class="explorer__tbtn explorer__tbtn--icon" data-action="forward" disabled>
+          <img src="/icons/explorer/forward.png" alt="" />
+          <span class="explorer__tbtn-caret"></span>
+        </button>
+        <button class="explorer__tbtn explorer__tbtn--icon" data-action="up" disabled title="Up">
+          <img src="/icons/explorer/up.png" alt="" />
+        </button>
+        <div class="explorer__tsep"></div>
+        <button class="explorer__tbtn" data-action="search">
+          <img src="/icons/explorer/search.png" alt="" />
+          <span>Search</span>
+        </button>
+        <button class="explorer__tbtn" data-action="folders">
+          <img src="/icons/explorer/folder.png" alt="" />
+          <span>Folders</span>
+        </button>
+        <div class="explorer__tsep"></div>
+        <button class="explorer__tbtn explorer__tbtn--icon" data-action="views" title="Views">
+          <img src="/icons/explorer/views.png" alt="" />
+          <span class="explorer__tbtn-caret"></span>
+        </button>
+      </div>
+
       <div class="explorer__address">
         <span class="explorer__address-label">Address</span>
-        <input class="explorer__address-input" type="text" readonly />
+        <div class="explorer__address-combo">
+          <img class="explorer__address-icon" alt="" />
+          <input class="explorer__address-input" type="text" spellcheck="false" />
+          <button class="explorer__address-caret" data-action="address-dropdown" tabindex="-1" aria-label="Address history"></button>
+        </div>
+        <button class="explorer__address-go" data-action="go">
+          <img src="/icons/explorer/forward.png" alt="" />
+          <span>Go</span>
+        </button>
       </div>
+
       <div class="explorer__body"></div>
       <div class="explorer__status"></div>
     `;
 
+    const menuHost = root.querySelector<HTMLElement>('.explorer__menu-host')!;
+    menuHost.appendChild(
+      createMenu(
+        {
+          onAction: (action) => {
+            if (action === 'exit') host.close();
+            else if (action === 'refresh') render();
+            else if (action === 'about-windows') {
+              void launch({
+                appId: 'about',
+                args: {
+                  path: 'about:explorer',
+                  icon: '/icons/my-computer.png',
+                  appIcon: '/icons/my-computer.png',
+                  appTitle: 'Windows Explorer',
+                  version: 'Version 1.0',
+                  copyright: '\u00a9 2026 Alexandre Vigneau',
+                  description:
+                    'A Windows XP\u2013style file explorer, part of this portfolio. ' +
+                    'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
+                  footer: 'Built with Astro and TypeScript.',
+                },
+              });
+            }
+          },
+        },
+        signal,
+      ),
+    );
+
     const backBtn = root.querySelector<HTMLButtonElement>('[data-action="back"]')!;
+    const forwardBtn = root.querySelector<HTMLButtonElement>('[data-action="forward"]')!;
     const upBtn = root.querySelector<HTMLButtonElement>('[data-action="up"]')!;
+    const goBtn = root.querySelector<HTMLButtonElement>('[data-action="go"]')!;
+    const addressCombo = root.querySelector<HTMLElement>('.explorer__address-combo')!;
+    const addressCaret = root.querySelector<HTMLButtonElement>(
+      '[data-action="address-dropdown"]',
+    )!;
     const addressInput = root.querySelector<HTMLInputElement>('.explorer__address-input')!;
+    const addressIcon = root.querySelector<HTMLImageElement>('.explorer__address-icon')!;
     const body = root.querySelector<HTMLElement>('.explorer__body')!;
     const status = root.querySelector<HTMLElement>('.explorer__status')!;
 
+    /** Recently typed paths, newest first. Backed by the dropdown. */
+    const typedHistory: string[] = [];
+
     function render() {
-      addressInput.value = currentPath;
+      const node = resolve(currentPath);
+      const title = currentPath === '/' ? 'My Computer' : node?.name ?? currentPath;
+
+      addressInput.value = displayPathFor(currentPath);
+      addressIcon.src = iconFor(currentPath);
       backBtn.disabled = history.length === 0;
+      forwardBtn.disabled = forwardStack.length === 0;
       upBtn.disabled = currentPath === '/';
+
+      // Mirror the current location into the title-bar / taskbar icon.
+      host.setIcon(
+        currentPath === '/'
+          ? '/icons/my-computer.png'
+          : node?.kind === 'file' || node?.kind === 'shortcut'
+            ? iconForNode(node)
+            : '/icons/folder-32.png',
+      );
 
       const children = listChildren(currentPath);
       body.innerHTML = '';
@@ -46,15 +152,12 @@ const mod: AppModule = {
         empty.textContent = 'This folder is empty.';
         body.appendChild(empty);
       } else {
-        for (const node of children) {
-          body.appendChild(renderItem(node));
+        for (const child of children) {
+          body.appendChild(renderItem(child));
         }
       }
 
       status.textContent = `${children.length} item${children.length === 1 ? '' : 's'}`;
-
-      const node = resolve(currentPath);
-      const title = currentPath === '/' ? 'My Computer' : node?.name ?? currentPath;
       host.setTitle(title);
     }
 
@@ -105,12 +208,25 @@ const mod: AppModule = {
       } else if (node.kind === 'file') {
         void launch({ path: pathOf(currentPath, node) });
       } else if (node.kind === 'shortcut') {
+        // A shortcut to a folder in *this* explorer should navigate in place
+        // rather than spawning another window.
+        if (
+          node.target.appId === 'explorer' &&
+          typeof node.target.path === 'string'
+        ) {
+          const targetNode = resolve(node.target.path);
+          if (targetNode?.kind === 'folder') {
+            navigateTo(node.target.path);
+            return;
+          }
+        }
         void launch({ appId: node.target.appId, path: node.target.path });
       }
     }
 
     function navigateTo(path: string) {
       history.push(currentPath);
+      forwardStack.length = 0;
       currentPath = path;
       render();
     }
@@ -118,7 +234,17 @@ const mod: AppModule = {
     backBtn.addEventListener('click', () => {
       const prev = history.pop();
       if (prev !== undefined) {
+        forwardStack.push(currentPath);
         currentPath = prev;
+        render();
+      }
+    });
+
+    forwardBtn.addEventListener('click', () => {
+      const next = forwardStack.pop();
+      if (next !== undefined) {
+        history.push(currentPath);
+        currentPath = next;
         render();
       }
     });
@@ -126,6 +252,7 @@ const mod: AppModule = {
     upBtn.addEventListener('click', () => {
       if (currentPath === '/') return;
       history.push(currentPath);
+      forwardStack.length = 0;
       currentPath = parentPath(currentPath);
       render();
     });
@@ -138,6 +265,134 @@ const mod: AppModule = {
       }
     });
 
+    // ── Address bar editing ────────────────────────────────────────────────
+    function commitAddress() {
+      const raw = addressInput.value;
+      const resolved = parseAddress(raw);
+      if (resolved !== null && resolved !== currentPath) {
+        // Remember the typed entry (display form, deduped, newest first).
+        const display = displayPathFor(resolved);
+        const idx = typedHistory.indexOf(display);
+        if (idx !== -1) typedHistory.splice(idx, 1);
+        typedHistory.unshift(display);
+        if (typedHistory.length > 10) typedHistory.length = 10;
+        navigateTo(resolved);
+      } else {
+        // Bad path or unchanged — revert display so user sees the truth.
+        addressInput.value = displayPathFor(currentPath);
+      }
+    }
+
+    addressInput.addEventListener('focus', () => {
+      addressInput.select();
+    });
+    addressInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitAddress();
+        addressInput.blur();
+      } else if (e.key === 'Escape') {
+        addressInput.value = displayPathFor(currentPath);
+        addressInput.blur();
+      }
+    });
+    goBtn.addEventListener('click', () => commitAddress());
+
+    // ── Address dropdown (caret) ───────────────────────────────────────────
+    let openDropdown: HTMLElement | null = null;
+
+    function closeDropdown() {
+      if (openDropdown) {
+        openDropdown.remove();
+        openDropdown = null;
+        addressCaret.classList.remove('is-active');
+      }
+    }
+
+    function toggleDropdown() {
+      if (openDropdown) {
+        closeDropdown();
+        return;
+      }
+      const panel = document.createElement('div');
+      panel.className = 'explorer__address-dropdown';
+      panel.addEventListener('mousedown', (e) => e.stopPropagation());
+
+      const addRow = (
+        path: string,
+        display: string,
+        icon: string,
+        depth: number,
+      ) => {
+        const row = document.createElement('div');
+        row.className = 'explorer__address-dropdown-row';
+        if (path === currentPath) row.classList.add('is-current');
+        row.style.paddingLeft = `${6 + depth * 16}px`;
+        const img = document.createElement('img');
+        img.src = icon;
+        img.alt = '';
+        const label = document.createElement('span');
+        label.textContent = display;
+        row.appendChild(img);
+        row.appendChild(label);
+        row.addEventListener('click', () => {
+          closeDropdown();
+          if (path !== currentPath) navigateTo(path);
+        });
+        panel.appendChild(row);
+      };
+
+      // Typed history at the top, flat (no indent).
+      const seenTyped = new Set<string>();
+      let historyShown = 0;
+      for (const display of typedHistory) {
+        const p = parseAddress(display);
+        if (!p || seenTyped.has(p)) continue;
+        seenTyped.add(p);
+        addRow(p, display, iconFor(p), 0);
+        historyShown++;
+      }
+      if (historyShown > 0) {
+        const sep = document.createElement('div');
+        sep.className = 'explorer__address-dropdown-separator';
+        panel.appendChild(sep);
+      }
+
+      // Hierarchical folder tree of the VFS.
+      for (const entry of buildLocationTree()) {
+        addRow(entry.path, entry.display, entry.icon, entry.depth);
+      }
+
+      addressCombo.appendChild(panel);
+      openDropdown = panel;
+      addressCaret.classList.add('is-active');
+    }
+
+    addressCaret.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDropdown();
+    });
+    document.addEventListener(
+      'mousedown',
+      (e) => {
+        if (
+          openDropdown &&
+          !addressCombo.contains(e.target as Node)
+        ) {
+          closeDropdown();
+        }
+      },
+      { signal },
+    );
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key === 'Escape') closeDropdown();
+      },
+      { signal },
+    );
+
     render();
 
     return {
@@ -149,12 +404,11 @@ const mod: AppModule = {
           newArgs.path !== currentPath &&
           resolve(newArgs.path)
         ) {
-          history.push(currentPath);
-          currentPath = newArgs.path;
-          render();
+          navigateTo(newArgs.path);
         }
       },
       unmount() {
+        explorerInstances.delete(instanceId);
         root.classList.remove('explorer');
         root.innerHTML = '';
       },

@@ -134,6 +134,18 @@ class WindowManager {
     this.syncTaskbar();
   }
 
+  setIcon(id: string, icon: string): void {
+    const state = this.windows.get(id);
+    if (!state) return;
+    state.icon = icon;
+    const el = this.getElement(id);
+    if (el) {
+      const iconEl = el.querySelector<HTMLImageElement>('.title-bar-icon');
+      if (iconEl) iconEl.src = icon;
+    }
+    this.syncTaskbar();
+  }
+
   getState(id: string): WindowState | undefined {
     return this.windows.get(id);
   }

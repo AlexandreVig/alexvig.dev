@@ -29,6 +29,13 @@ export interface AppManifest {
   showInTaskbar?: boolean;
   /** Dynamic import — each app ships as its own chunk. */
   loader: () => Promise<{ default: AppModule }>;
+  /**
+   * Optional pre-launch hook. Given the launch args, return the instanceId of
+   * an already-open instance to focus, or null to fall through to the normal
+   * instance-keying flow. Used by `multi`-kind apps that want to dedupe based
+   * on live runtime state (e.g. explorer matching its current folder).
+   */
+  findExistingInstance?(args: Record<string, unknown>): string | null;
 }
 
 export interface AppModule {
@@ -61,5 +68,6 @@ export interface AppInstance {
 
 export interface AppHostAPI {
   setTitle(title: string): void;
+  setIcon(icon: string): void;
   close(): void;
 }
