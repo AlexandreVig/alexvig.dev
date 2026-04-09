@@ -1,16 +1,22 @@
 ---
 interface Props {
-  windowId: string;
   label: string;
   icon: string;
+  /** File path (for files) or start path (for explorer shortcuts). */
+  path?: string | null;
+  /** App to launch. If omitted, path drives default-app resolution. */
+  appId?: string | null;
+  /** When true, overlay the shortcut badge on the icon. */
+  isShortcut?: boolean;
 }
 
-const { windowId, label, icon } = Astro.props;
+const { label, icon, path = null, appId = null, isShortcut = false } = Astro.props;
 ---
 
 <button
-  class="desktop-icon"
-  data-open-window={windowId}
+  class:list={['desktop-icon', { 'is-shortcut': isShortcut }]}
+  data-launch-app={appId ?? ''}
+  data-launch-path={path ?? ''}
   aria-label={`Open ${label}`}
 >
   <span class="desktop-icon__img-wrap">
@@ -21,23 +27,24 @@ const { windowId, label, icon } = Astro.props;
 </button>
 
 <script>
-  // Double-click → open window. Single-click → select.
+  // Double-click → dispatch xp:launch. Single-click → select.
   const icons = document.querySelectorAll<HTMLElement>('.desktop-icon');
 
   icons.forEach((icon) => {
     let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
     icon.addEventListener('click', () => {
-      // Deselect all, select this one
       icons.forEach((i) => i.classList.remove('is-selected'));
       icon.classList.add('is-selected');
 
       if (clickTimer) {
-        // Second click within 400ms = double-click
         clearTimeout(clickTimer);
         clickTimer = null;
-        const id = icon.dataset.openWindow!;
-        document.dispatchEvent(new CustomEvent('xp:open', { detail: { id } }));
+        const appId = icon.dataset.launchApp || undefined;
+        const path = icon.dataset.launchPath || undefined;
+        document.dispatchEvent(
+          new CustomEvent('xp:launch', { detail: { appId, path } }),
+        );
       } else {
         clickTimer = setTimeout(() => {
           clickTimer = null;

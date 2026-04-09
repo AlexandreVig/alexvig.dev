@@ -8,19 +8,61 @@ import Desktop from '../components/Desktop.astro';
 </BaseLayout>
 
 <script>
+  import { appHost } from '../apps/host';
+  import { apps } from '../apps/registry';
   import { windowManager } from '../lib/windowManager';
-  import { apps } from '../config/apps';
+  import { launch } from '../shell/launcher';
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Register all apps with the window manager
-    apps.forEach((app) => windowManager.register(app));
+    // Wire the app content lifecycle.
+    appHost.init(apps);
 
-    // Route custom events → window manager
-    document.addEventListener('xp:open',     (e) => windowManager.open((e as CustomEvent).detail.id));
-    document.addEventListener('xp:close',    (e) => windowManager.close((e as CustomEvent).detail.id));
-    document.addEventListener('xp:minimize', (e) => windowManager.minimize((e as CustomEvent).detail.id));
-    document.addEventListener('xp:maximize', (e) => windowManager.maximize((e as CustomEvent).detail.id));
-    document.addEventListener('xp:restore',  (e) => windowManager.restore((e as CustomEvent).detail.id));
-    document.addEventListener('xp:focus',    (e) => windowManager.focus((e as CustomEvent).detail.id));
+    // Shell launcher entry point — every opening action flows through here.
+    document.addEventListener('xp:launch', (e) => {
+      const detail = (e as CustomEvent<{ appId?: string; path?: string; args?: Record<string, unknown> }>).detail;
+      void launch(detail);
+    });
+
+    // Window manager event routing (instance-id keyed).
+    // Note: xp:close is handled by appHost, which calls windowManager.destroy.
+    document.addEventListener('xp:minimize', (e) =>
+      windowManager.minimize((e as CustomEvent).detail.id),
+    );
+    document.addEventListener('xp:maximize', (e) =>
+      windowManager.maximize((e as CustomEvent).detail.id),
+    );
+    document.addEventListener('xp:restore', (e) =>
+      windowManager.restore((e as CustomEvent).detail.id),
+    );
+    document.addEventListener('xp:focus', (e) =>
+      windowManager.focus((e as CustomEvent).detail.id),
+    );
+
+    // Title-bar button delegation (previously lived inside Window.astro).
+    document.addEventListener('click', (e) => {
+      const btn = (e.target as Element).closest<HTMLElement>(
+        '[data-action][data-window-target]',
+      );
+      if (!btn) return;
+      const action = btn.dataset.action as string;
+      const id = btn.dataset.windowTarget as string;
+      document.dispatchEvent(
+        new CustomEvent(`xp:${action}`, { detail: { id } }),
+      );
+    });
+
+    // Double-click title bar → toggle maximize.
+    document.addEventListener('dblclick', (e) => {
+      const titleBar = (e.target as Element).closest<HTMLElement>('.title-bar');
+      if (!titleBar) return;
+      if ((e.target as Element).closest('.title-bar-controls')) return;
+      if ((e.target as Element).closest('.title-bar-icon')) return;
+      const win = titleBar.closest<HTMLElement>('[data-window-id]');
+      if (!win) return;
+      const id = win.dataset.windowId!;
+      document.dispatchEvent(
+        new CustomEvent('xp:maximize', { detail: { id } }),
+      );
+    });
   });
 </script>

@@ -1,4 +1,5 @@
-import type { AppConfig, WindowState } from './types';
+import type { CreateWindowOptions, WindowState } from './types';
+import { createWindowElement } from './windowDom';
 
 const CASCADE_BASE_X = 60;
 const CASCADE_BASE_Y = 40;
@@ -7,64 +8,67 @@ const CASCADE_STEP = 30;
 class WindowManager {
   private windows = new Map<string, WindowState>();
   private zCounter = 100;
-  private registrationOrder = 0;
+  private cascadeIndex = 0;
   private focusedId: string | null = null;
   private openCounter = 0;
 
   // ─── Public API ────────────────────────────────────────────────────────────
 
-  register(config: AppConfig): void {
-    const index = this.registrationOrder++;
-    const x = config.defaultX ?? CASCADE_BASE_X + index * CASCADE_STEP;
-    const y = config.defaultY ?? CASCADE_BASE_Y + index * CASCADE_STEP;
+  /** Creates a new window DOM node, inserts it into #desktop, wires interactions. */
+  create(opts: CreateWindowOptions): HTMLElement {
+    if (this.windows.has(opts.instanceId)) {
+      // Shouldn't happen — caller should check .has() first and restore/focus.
+      const existing = document.querySelector<HTMLElement>(
+        `[data-window-id="${CSS.escape(opts.instanceId)}"] .window-body`,
+      );
+      if (existing) return existing;
+    }
+
+    const x = opts.x ?? CASCADE_BASE_X + (this.cascadeIndex % 8) * CASCADE_STEP;
+    const y = opts.y ?? CASCADE_BASE_Y + (this.cascadeIndex % 8) * CASCADE_STEP;
+    this.cascadeIndex++;
 
     const state: WindowState = {
-      id: config.id,
-      title: config.title,
-      icon: config.icon,
-      isOpen: false,
+      id: opts.instanceId,
+      title: opts.title,
+      icon: opts.icon,
+      isOpen: true,
       isMinimized: false,
       isMaximized: false,
-      zIndex: this.zCounter,
+      zIndex: ++this.zCounter,
       x,
       y,
-      width: config.defaultWidth,
-      height: config.defaultHeight,
+      width: opts.width,
+      height: opts.height,
+      openedAt: ++this.openCounter,
     };
+    this.windows.set(opts.instanceId, state);
 
-    this.windows.set(config.id, state);
+    const { root, body } = createWindowElement(opts);
+    const desktop = document.getElementById('desktop') ?? document.body;
+    desktop.appendChild(root);
 
-    const el = this.getElement(config.id);
-    if (el) {
-      this.applyState(config.id);
-      this.setupInteraction(el, config.id);
-    }
-  }
-
-  open(id: string): void {
-    const state = this.windows.get(id);
-    if (!state) return;
-    if (!state.isOpen) state.openedAt = ++this.openCounter;
-    state.isOpen = true;
-    state.isMinimized = false;
-    this.applyState(id);
-    this.focus(id);
+    this.applyState(opts.instanceId);
+    this.setupInteraction(root, opts.instanceId);
+    this.focus(opts.instanceId);
     this.syncTaskbar();
+
+    return body;
   }
 
-  close(id: string): void {
+  /** Removes the window DOM node and all tracked state. */
+  destroy(id: string): void {
     const state = this.windows.get(id);
     if (!state) return;
-    state.isOpen = false;
-    state.isMinimized = false;
-    state.isMaximized = false;
     const el = this.getElement(id);
-    if (el) {
-      el.classList.remove('is-focused', 'is-unfocused');
-    }
+    if (el) el.remove();
     if (this.focusedId === id) this.focusedId = null;
-    this.applyState(id);
+    this.windows.delete(id);
     this.syncTaskbar();
+  }
+
+  has(id: string): boolean {
+    return this.windows.has(id);
   }
 
   minimize(id: string): void {
@@ -72,9 +76,7 @@ class WindowManager {
     if (!state || !state.isOpen) return;
     state.isMinimized = true;
     const el = this.getElement(id);
-    if (el) {
-      el.classList.remove('is-focused', 'is-unfocused');
-    }
+    if (el) el.classList.remove('is-focused', 'is-unfocused');
     if (this.focusedId === id) this.focusedId = null;
     this.applyState(id);
     this.syncTaskbar();
@@ -83,7 +85,6 @@ class WindowManager {
   restore(id: string): void {
     const state = this.windows.get(id);
     if (!state) return;
-    state.isOpen = true;
     state.isMinimized = false;
     this.applyState(id);
     this.focus(id);
@@ -93,12 +94,7 @@ class WindowManager {
   maximize(id: string): void {
     const state = this.windows.get(id);
     if (!state || !state.isOpen) return;
-
-    // Just toggle the flag — CSS handles the sizing via .is-maximized.
-    // The pre-maximize geometry (state.x/y/width/height) is preserved
-    // so restore returns to the original position/size automatically.
     state.isMaximized = !state.isMaximized;
-
     this.applyState(id);
     this.focus(id);
   }
@@ -123,6 +119,18 @@ class WindowManager {
     this.syncTaskbar();
   }
 
+  setTitle(id: string, title: string): void {
+    const state = this.windows.get(id);
+    if (!state) return;
+    state.title = title;
+    const el = this.getElement(id);
+    if (el) {
+      const textEl = el.querySelector<HTMLElement>('.title-bar-text');
+      if (textEl) textEl.textContent = title;
+    }
+    this.syncTaskbar();
+  }
+
   getState(id: string): WindowState | undefined {
     return this.windows.get(id);
   }
@@ -134,7 +142,9 @@ class WindowManager {
   // ─── Internals ──────────────────────────────────────────────────────────────
 
   private getElement(id: string): HTMLElement | null {
-    return document.querySelector<HTMLElement>(`[data-window-id="${id}"]`);
+    return document.querySelector<HTMLElement>(
+      `[data-window-id="${CSS.escape(id)}"]`,
+    );
   }
 
   private applyState(id: string): void {
@@ -143,12 +153,10 @@ class WindowManager {
     if (!state || !el) return;
 
     const visible = state.isOpen && !state.isMinimized;
-
     el.style.display = visible ? 'flex' : 'none';
     el.style.zIndex = String(state.zIndex);
 
     if (state.isMaximized) {
-      // Let CSS handle sizing/position so it follows viewport resizes
       el.style.width = '';
       el.style.height = '';
       el.style.transform = '';
@@ -177,9 +185,9 @@ class WindowManager {
     let startW = 0;
     let startH = 0;
 
-    // Cover div to capture mouse events during drag/resize
     const cover = document.createElement('div');
-    cover.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;';
+    cover.style.cssText =
+      'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;';
 
     const getCursorPosition = (e: MouseEvent): string => {
       if (e.target !== el) return '';
@@ -188,7 +196,6 @@ class WindowManager {
       const y = e.clientY - rect.top;
       const w = rect.width;
       const h = rect.height;
-
       if (x < RESIZE_THRESHOLD) {
         if (y < RESIZE_THRESHOLD) return 'topLeft';
         if (h - y < RESIZE_THRESHOLD) return 'bottomLeft';
@@ -218,11 +225,13 @@ class WindowManager {
       return map[pos] || '';
     };
 
-    // Hover cursor
     el.addEventListener('mousemove', (e) => {
       if (isDragging || isResizing) return;
       const state = this.windows.get(id);
-      if (state?.isMaximized) { el.style.cursor = ''; return; }
+      if (state?.isMaximized) {
+        el.style.cursor = '';
+        return;
+      }
       cursorPos = getCursorPosition(e);
       el.style.cursor = getCursorStyle(cursorPos);
     });
@@ -247,21 +256,17 @@ class WindowManager {
         let newW = startW;
         let newH = startH;
 
-        // Right edge
         if (cursorPos.includes('right') || cursorPos.includes('Right')) {
           newW = Math.max(MIN_WIDTH, startW + dx);
         }
-        // Left edge
         if (cursorPos.includes('left') || cursorPos.includes('Left')) {
           const w = Math.max(MIN_WIDTH, startW - dx);
           newX = startX + (startW - w);
           newW = w;
         }
-        // Bottom edge
         if (cursorPos.includes('bottom') || cursorPos.includes('Bottom')) {
           newH = Math.max(MIN_HEIGHT, startH + dy);
         }
-        // Top edge
         if (cursorPos.includes('top') || cursorPos.includes('Top')) {
           const h = Math.max(MIN_HEIGHT, startH - dy);
           newY = startY + (startH - h);
@@ -298,7 +303,6 @@ class WindowManager {
       startW = state.width;
       startH = state.height;
 
-      // Check if clicking on title bar for drag
       const titleBar = (e.target as Element).closest('.title-bar');
       const isButton = (e.target as Element).closest('.title-bar-controls');
 
@@ -311,7 +315,6 @@ class WindowManager {
         return;
       }
 
-      // Check if on edge for resize
       if (cursorPos && !state.isMaximized && e.target === el) {
         isResizing = true;
         document.body.appendChild(cover);

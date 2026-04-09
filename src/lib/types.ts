@@ -1,14 +1,15 @@
-export interface AppConfig {
-  id: string;
+export interface CreateWindowOptions {
+  instanceId: string;
   title: string;
-  icon: string; // public path e.g. "/icons/folder.png"
-  defaultWidth: number;
-  defaultHeight: number;
-  defaultX?: number; // omit → auto-cascade
-  defaultY?: number;
+  icon: string;
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
 }
 
 export interface WindowState {
+  /** Unique per-window-instance id (e.g. "explorer", "notepad:/Desktop/About.md"). */
   id: string;
   title: string;
   icon: string;
@@ -20,18 +21,18 @@ export interface WindowState {
   y: number;
   width: number;
   height: number;
-  openedAt?: number; // incremental counter — determines taskbar button order
+  openedAt?: number;
 }
 
-// Custom event payload types
 export interface XpEventDetail {
   id: string;
 }
 
 export type XpEventName =
-  | 'xp:open'
+  | 'xp:launch'
   | 'xp:close'
   | 'xp:minimize'
   | 'xp:maximize'
   | 'xp:focus'
+  | 'xp:restore'
   | 'xp:taskbar-update';

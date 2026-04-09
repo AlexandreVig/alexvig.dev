@@ -1,0 +1,148 @@
+/* ── File Explorer app styles ─────────────────────────────────────────────── */
+.explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ece9d8;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+}
+
+.explorer__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #a7a6aa;
+  background: #ece9d8;
+}
+
+.explorer__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  cursor: default;
+  user-select: none;
+}
+
+.explorer__btn:not([disabled]):hover {
+  border: 1px solid #0a246a;
+  background: #dff0ff;
+}
+
+.explorer__btn[disabled] {
+  opacity: 0.45;
+}
+
+.explorer__address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #a7a6aa;
+  background: #ece9d8;
+}
+
+.explorer__address-label {
+  color: #555;
+}
+
+.explorer__address-input {
+  flex: 1;
+  padding: 2px 6px;
+  border: 1px solid #7f9db9;
+  background: #fff;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+}
+
+.explorer__body {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px 4px;
+  align-content: start;
+}
+
+.explorer__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  cursor: default;
+  user-select: none;
+  text-align: center;
+}
+
+.explorer__item:hover .explorer__item-label {
+  text-decoration: underline;
+}
+
+.explorer__item.is-selected .explorer__item-label {
+  background: #316ac5;
+  color: #fff;
+  text-decoration: none;
+}
+
+.explorer__item-icon-wrap {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.explorer__item-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  display: block;
+}
+
+/* Shortcut badge — matches the desktop icon overlay */
+.explorer__item.is-shortcut .explorer__item-icon-wrap::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  bottom: -2px;
+  width: 16px;
+  height: 16px;
+  background-image: url('/icons/shortcut-16.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.explorer__item-label {
+  margin-top: 4px;
+  max-width: 86px;
+  padding: 1px 3px;
+  word-break: break-word;
+  line-height: 1.25;
+  color: #000;
+}
+
+.explorer__empty {
+  grid-column: 1 / -1;
+  padding: 24px;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+}
+
+.explorer__status {
+  padding: 3px 8px;
+  border-top: 1px solid #a7a6aa;
+  background: #ece9d8;
+  color: #333;
+}

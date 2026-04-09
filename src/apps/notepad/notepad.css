@@ -1,0 +1,114 @@
+/* ── Notepad app styles ───────────────────────────────────────────────────── */
+.notepad {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+  font-family: 'Lucida Console', 'Consolas', monospace;
+  font-size: 13px;
+  color: #000;
+}
+
+.notepad__menu {
+  display: flex;
+  gap: 14px;
+  padding: 2px 6px;
+  border-bottom: 1px solid #d4d0c8;
+  background: #ece9d8;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  user-select: none;
+}
+
+.notepad__menu span {
+  padding: 2px 6px;
+  cursor: default;
+}
+
+.notepad__menu span:hover {
+  background: #316ac5;
+  color: #fff;
+}
+
+.notepad__body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #111;
+}
+
+.notepad__body h1,
+.notepad__body h2,
+.notepad__body h3 {
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+}
+
+.notepad__body h1 { font-size: 1.6em; }
+.notepad__body h2 { font-size: 1.3em; }
+.notepad__body h3 { font-size: 1.1em; }
+
+.notepad__body p {
+  margin: 0.5em 0;
+}
+
+.notepad__body ul,
+.notepad__body ol {
+  margin: 0.5em 0;
+  padding-left: 1.6em;
+}
+
+.notepad__body li {
+  margin: 0.15em 0;
+}
+
+.notepad__body a {
+  color: #0033aa;
+  text-decoration: underline;
+}
+
+.notepad__body a:hover {
+  color: #d06000;
+}
+
+.notepad__body code {
+  background: #f4f4f4;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: 'Consolas', 'Lucida Console', monospace;
+  font-size: 0.92em;
+}
+
+.notepad__body pre {
+  background: #f4f4f4;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  overflow-x: auto;
+}
+
+.notepad__body pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.notepad__body blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 12px;
+  color: #555;
+  margin: 0.6em 0;
+}
+
+.notepad__body hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 1em 0;
+}
+
+.notepad__empty {
+  padding: 24px;
+  color: #666;
+  font-style: italic;
+}

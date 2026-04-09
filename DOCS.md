@@ -1,729 +1,973 @@
 # Windows XP Portfolio — Developer Documentation
 
-A Windows XP-themed portfolio built with Astro. The entire desktop is an interactive simulation — icons, windows, taskbar, and start menu — styled to match authentic Windows XP chrome.
+A Windows XP–themed portfolio built with Astro. The page loads a desktop shell;
+windows, apps, and file content are created dynamically on the client. Content
+lives in markdown files inside a virtual file system, and all interactions
+(opening a file, launching an app, navigating folders) flow through a single
+shell launcher.
 
 ---
 
-## Table of Contents
+## Table of contents
 
-1. [Architecture Overview](#architecture-overview)
-2. [Project Structure](#project-structure)
-3. [How It All Connects](#how-it-all-connects)
-4. [The Event Bus](#the-event-bus)
-5. [Window Manager Deep Dive](#window-manager-deep-dive)
-6. [Styling System](#styling-system)
-7. [Component Reference](#component-reference)
-8. [How to Add a New App](#how-to-add-a-new-app)
-9. [How to Extend Each Part](#how-to-extend-each-part)
-10. [Roadmap / Next Steps](#roadmap--next-steps)
-
----
-
-## Architecture Overview
-
-### Design Philosophy
-
-- **Astro-first**: Static HTML + minimal client-side JS. No React, no framework runtime.
-- **No UI libraries**: All XP styling is hand-crafted CSS. We removed `xp.css` because it forced workarounds.
-- **Vanilla DOM**: The window manager is a plain TS class that manipulates the DOM directly. No virtual DOM, no reconciliation.
-- **Custom events as message bus**: Components communicate via `document.dispatchEvent(new CustomEvent('xp:...'))`. This keeps components decoupled — the Start Menu doesn't need to know about the Window Manager, it just fires `xp:open`.
-- **CSS custom properties for theming**: All XP colors live in `variables.css`. Changing the palette is a one-file edit.
-
-### Runtime Flow
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  User clicks Desktop Icon (double-click)                │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-              document.dispatchEvent(
-                'xp:open', { id: 'about' }
-              )
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  index.astro <script> listener                          │
-│  → windowManager.open('about')                          │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  WindowManager:                                         │
-│   1. Update state.isOpen = true                         │
-│   2. applyState() — DOM: display, transform, z-index    │
-│   3. focus() — set classes, bump z-counter              │
-│   4. syncTaskbar() — dispatch xp:taskbar-update         │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│  Taskbar listens to xp:taskbar-update                   │
-│  → re-renders window buttons                            │
-└─────────────────────────────────────────────────────────┘
-```
+1. [Mental model](#mental-model)
+2. [Project structure](#project-structure)
+3. [Layered architecture](#layered-architecture)
+4. [The virtual file system (`src/fs/`)](#the-virtual-file-system-srcfs)
+5. [The shell (`src/shell/`)](#the-shell-srcshell)
+6. [The window manager (`src/lib/`)](#the-window-manager-srclib)
+7. [The app host and apps (`src/apps/`)](#the-app-host-and-apps-srcapps)
+8. [Components & layout (`src/components/`, `src/pages/`, `src/layouts/`)](#components--layout-srccomponents-srcpages-srclayouts)
+9. [Styling (`src/styles/`)](#styling-srcstyles)
+10. [The event bus](#the-event-bus)
+11. [Launch lifecycle walkthroughs](#launch-lifecycle-walkthroughs)
+12. [Recipes](#recipes)
+    - [Add a markdown file](#add-a-markdown-file)
+    - [Add a folder or desktop shortcut](#add-a-folder-or-desktop-shortcut)
+    - [Add a file type](#add-a-file-type)
+    - [Add a simple app (singleton)](#add-a-simple-app-singleton)
+    - [Add a document app](#add-a-document-app)
+    - [Add a multi-instance app](#add-a-multi-instance-app)
+    - [Add an interactive app or game](#add-an-interactive-app-or-game)
+13. [Architectural principles](#architectural-principles)
 
 ---
 
-## Project Structure
+## Mental model
+
+This codebase is organized like the real Windows XP shell:
+
+- A **virtual file system** (VFS) defines folders, files, and shortcuts in a
+  declarative tree.
+- A **file-type registry** maps extensions (`.md`, `.txt`, …) to a default app.
+- A **shell launcher** is the single entry point for "open something". You give
+  it a path, or an app ID, or both. It figures out what to do.
+- A **window manager** creates and destroys window DOM nodes at runtime, keyed
+  by **instance ID**. It knows about geometry, drag/resize, focus, z-index — it
+  does not know about apps or files.
+- An **app host** bridges the shell and the window manager. It loads app modules
+  lazily, keeps an instance map, and forwards lifecycle events.
+- **Apps** are small TypeScript modules that receive a mount context (a DOM
+  element, a file handle or args, a host API, an abort signal) and do whatever
+  they want inside that element. They can be static content (notepad), file
+  navigators (explorer), or fully interactive (a future game).
+
+This gives you three clean extension points:
+
+1. Add **content** → drop a markdown file under `src/content/` and reference it
+   in `src/fs/tree.ts`.
+2. Add a **file type** → add a row to `src/shell/fileTypes.ts` pointing at an
+   existing or new app.
+3. Add an **app** → create `src/apps/<id>/index.ts` exporting an `AppModule`
+   and register it in `src/apps/registry.ts`.
+
+Nothing else has to change.
+
+---
+
+## Project structure
 
 ```
 computer-portfolio/
 ├── public/
-│   ├── icons/              ← Authentic XP PNG icons (copied from winXP reference)
-│   │   ├── start.png       ← Start button sprite
-│   │   ├── user.png        ← User avatar (start menu header)
-│   │   ├── folder.png, folder-32.png
-│   │   ├── notepad.png, mail.png, my-computer.png
-│   │   ├── sound.png, usb.png, shield.png (system tray)
-│   │   ├── logoff.png, shutdown.png
-│   │   └── control-panel.png, search.png, help.png, connect.png
-│   └── favicon.svg
-│
+│   └── icons/               # PNG icons used everywhere (XP chrome, files, apps)
 ├── src/
-│   ├── components/
-│   │   ├── Desktop.astro       ← Desktop container, renders icons + windows
-│   │   ├── DesktopIcon.astro   ← Individual icon with click/double-click logic
-│   │   ├── Window.astro        ← Window frame + title bar + controls
-│   │   ├── Taskbar.astro       ← Bottom taskbar (start, window btns, clock)
-│   │   └── StartMenu.astro     ← Start menu popup
-│   │
-│   ├── config/
-│   │   └── apps.ts             ← Single source of truth for apps list
-│   │
-│   ├── lib/
-│   │   ├── types.ts            ← TypeScript interfaces
-│   │   └── windowManager.ts    ← Singleton that manages all window state
-│   │
+│   ├── apps/                # Apps + app runtime
+│   │   ├── explorer/        # File Explorer app
+│   │   ├── notepad/         # Markdown viewer
+│   │   ├── host.ts          # Instance map + lifecycle coordinator
+│   │   ├── registry.ts      # AppManifest[] — the list of known apps
+│   │   └── types.ts         # AppManifest, AppModule, AppMountContext, AppInstance
+│   ├── components/          # Astro components (server-rendered at build time)
+│   │   ├── Desktop.astro    # Renders desktop icons from the VFS /Desktop folder
+│   │   ├── DesktopIcon.astro
+│   │   ├── StartMenu.astro
+│   │   └── Taskbar.astro
+│   ├── content/             # Markdown files that form the portfolio content
+│   │   ├── about.md
+│   │   ├── contact.md
+│   │   ├── skills.md
+│   │   └── projects/
+│   │       └── portfolio.md
+│   ├── fs/                  # Virtual file system
+│   │   ├── api.ts           # resolve, listChildren, readFile, parentPath, …
+│   │   ├── tree.ts          # Declarative VFS root (folders/files/shortcuts)
+│   │   └── types.ts         # FsNode, FileNode, FolderNode, ShortcutNode, FileHandle
 │   ├── layouts/
-│   │   └── BaseLayout.astro    ← HTML shell, imports global.css, renders Taskbar + StartMenu
-│   │
+│   │   └── BaseLayout.astro
+│   ├── lib/                 # Window machinery (DOM, geometry, state)
+│   │   ├── types.ts         # CreateWindowOptions, WindowState, XpEventName
+│   │   ├── windowDom.ts     # Imperative window DOM builder
+│   │   └── windowManager.ts # Singleton that creates/destroys windows
 │   ├── pages/
-│   │   └── index.astro         ← Entry point, wires event bus to windowManager
-│   │
-│   └── styles/
-│       ├── global.css          ← @import hub
-│       ├── variables.css       ← XP color palette (CSS custom properties)
-│       ├── reset.css           ← Minimal reset + body defaults
-│       ├── desktop.css         ← Desktop, icons grid, icon styles
-│       ├── window.css          ← Window frame, title bar, header buttons
-│       ├── taskbar.css         ← Taskbar, window buttons, system tray
-│       └── start-menu.css      ← Start menu header, panes, footer
-│
-├── astro.config.mjs            ← Astro + Cloudflare adapter config
-├── package.json                ← Only deps: astro, @astrojs/cloudflare
-├── tsconfig.json               ← Strict TS config
-└── winXP/                      ← REFERENCE ONLY — cloned React WinXP clone, not built
+│   │   └── index.astro      # Entry point — wires up appHost, shell, event routing
+│   ├── shell/               # Shell layer
+│   │   ├── fileTypes.ts     # Extension → default app ID
+│   │   └── launcher.ts      # launch({ appId?, path?, args? }) — the one entry point
+│   └── styles/              # Plain CSS files (no framework)
+│       ├── desktop.css
+│       ├── global.css
+│       ├── reset.css
+│       ├── start-menu.css
+│       ├── taskbar.css
+│       ├── variables.css    # Colors, gradients, cursors — theme lives here
+│       └── window.css
+├── astro.config.mjs
+├── package.json
+├── tsconfig.json
+└── wrangler.jsonc           # Cloudflare Pages config
 ```
 
 ---
 
-## How It All Connects
+## Layered architecture
 
-### 1. Page boots (`index.astro`)
-
-```ts
-document.addEventListener('DOMContentLoaded', () => {
-  apps.forEach((app) => windowManager.register(app));  // Register every app
-
-  // Wire event bus → window manager
-  document.addEventListener('xp:open',     (e) => windowManager.open(e.detail.id));
-  document.addEventListener('xp:close',    (e) => windowManager.close(e.detail.id));
-  // ...etc
-});
+```
+  User interaction  (desktop icon, start menu, explorer double-click, taskbar)
+         │
+         │  dispatches `xp:launch` CustomEvent
+         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  src/shell/launcher.ts                                           │
+  │  launch({ appId?, path?, args? })                                │
+  │  - resolves path via VFS                                         │
+  │  - if file → FileHandle + file-type registry → default app       │
+  │  - if folder/unresolved path + explicit appId → forwards as args │
+  └──────────────────────────────────────────────────────────────────┘
+         │
+         │  { appId, file, args }
+         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  src/apps/host.ts                                                │
+  │  - computes instanceId (singleton | document | multi)            │
+  │  - dedupe: focus existing, else lazy-load module                 │
+  │  - asks windowManager.create() for a DOM body                    │
+  │  - builds AppMountContext and calls module.default.mount(ctx)    │
+  │  - stores instance, subscribes to lifecycle events               │
+  └──────────────────────────────────────────────────────────────────┘
+         │                                    │
+         │ mount(ctx)                         │ create/destroy/focus/…
+         ▼                                    ▼
+  ┌──────────────────────┐        ┌──────────────────────────────────┐
+  │  src/apps/<id>/      │        │  src/lib/windowManager.ts        │
+  │  index.ts            │        │  - Map<instanceId, WindowState>  │
+  │  Your app code here. │        │  - drag, resize, focus, z-index  │
+  │  Receives root,      │        │  - dispatches xp:taskbar-update  │
+  │  file, args, host,   │        │  ┌──── src/lib/windowDom.ts ───┐ │
+  │  signal.             │        │  │ createWindowElement(opts)   │ │
+  └──────────────────────┘        │  └─────────────────────────────┘ │
+                                  └──────────────────────────────────┘
 ```
 
-Every app from `apps.ts` is registered with the `WindowManager`. Registration:
-- Creates a `WindowState` object with default position (cascade offset)
-- Finds the corresponding `[data-window-id="..."]` DOM element (pre-rendered by `Desktop.astro`)
-- Applies initial state (hidden, correct size)
-- Sets up drag/resize interaction listeners
+Every layer has one job:
 
-### 2. Desktop renders all windows upfront (`Desktop.astro`)
-
-```astro
-{apps.map((app) => (
-  <Window id={app.id} title={app.title} icon={app.icon} ...>
-    <div class="placeholder-content">...</div>
-  </Window>
-))}
-```
-
-**Important**: All windows are rendered in the HTML from the start. They're just `display: none` until opened. This avoids the complexity of dynamic insertion and allows CSS transitions.
-
-### 3. User double-clicks an icon (`DesktopIcon.astro`)
-
-```ts
-icon.addEventListener('click', () => {
-  if (clickTimer) {
-    // Second click within 400ms = double-click
-    const id = icon.dataset.openWindow!;
-    document.dispatchEvent(new CustomEvent('xp:open', { detail: { id } }));
-  } else {
-    clickTimer = setTimeout(() => { clickTimer = null; }, 400);
-  }
-});
-```
-
-The icon fires `xp:open`. It doesn't know or care who's listening — the event bus decouples the sender from the receiver.
-
-### 4. Window Manager reacts
-
-`windowManager.open(id)` →  marks state as open → calls `applyState()` which sets `display: flex` and applies size/position → calls `focus()` which brings it to front → calls `syncTaskbar()` which fires `xp:taskbar-update`.
-
-### 5. Taskbar re-renders (`Taskbar.astro`)
-
-The taskbar listens for `xp:taskbar-update` and rebuilds its window button list from the event payload. One button per open window.
+| Layer           | Knows about                      | Doesn't know about            |
+| --------------- | -------------------------------- | ----------------------------- |
+| `fs/`           | Folders, files, content loading  | Apps, windows, events         |
+| `shell/`        | File types, app IDs, VFS         | Window chrome, DOM            |
+| `lib/`          | Window DOM, geometry, drag, z    | Apps, file types, shell       |
+| `apps/host.ts`  | Apps, lifecycle, instance map    | Geometry, markdown, explorer  |
+| `apps/<id>/`    | Its own content and UI           | Other apps, window chrome     |
+| `components/`   | Astro SSR of the page shell      | Runtime app state             |
 
 ---
 
-## The Event Bus
+## The virtual file system (`src/fs/`)
 
-All cross-component communication happens via custom events on `document`. This is the **single most important pattern** in the codebase.
-
-### Event Types (`types.ts`)
-
-| Event | Payload | Who fires it | Who handles it |
-|-------|---------|-------------|----------------|
-| `xp:open` | `{ id }` | DesktopIcon, StartMenu | `index.astro` → `windowManager.open()` |
-| `xp:close` | `{ id }` | Window close btn | `windowManager.close()` |
-| `xp:minimize` | `{ id }` | Window min btn, Taskbar btn | `windowManager.minimize()` |
-| `xp:maximize` | `{ id }` | Window max btn, dblclick title bar | `windowManager.maximize()` |
-| `xp:restore` | `{ id }` | Taskbar btn (on minimized) | `windowManager.restore()` |
-| `xp:focus` | `{ id }` | Taskbar btn click | `windowManager.focus()` |
-| `xp:taskbar-update` | `{ windows, focusedId }` | `windowManager.syncTaskbar()` | Taskbar re-renders |
-
-### Why Custom Events?
-
-- **Zero coupling**: DesktopIcon doesn't import windowManager. StartMenu doesn't import anything. They just dispatch events.
-- **Works across Astro script boundaries**: Each `<script>` block is isolated, but they all share the `document` object.
-- **Easy to debug**: Add a single `document.addEventListener('xp:*', console.log)` and see every event.
-- **Extensible**: New components can listen or fire events without touching existing code.
-
-### Firing an event
+### Types (`src/fs/types.ts`)
 
 ```ts
-document.dispatchEvent(new CustomEvent('xp:open', { detail: { id: 'about' } }));
+export type FsNode = FolderNode | FileNode | ShortcutNode;
+
+export interface FolderNode {
+  kind: 'folder';
+  name: string;
+  icon?: string;
+  children: FsNode[];
+}
+
+export interface FileNode {
+  kind: 'file';
+  name: string;
+  icon?: string;
+  ext: string;                              // ".md"
+  load: () => Promise<string>;              // lazy — one chunk per file
+}
+
+export interface ShortcutNode {
+  kind: 'shortcut';
+  name: string;
+  icon?: string;
+  target: { appId: string; path?: string };
+}
+
+export interface FileHandle {
+  path: string;                             // canonical VFS path
+  name: string;
+  ext: string;
+  icon: string;
+  read(): Promise<string>;                  // memoized per handle
+}
 ```
 
-### Listening for an event
+### Tree (`src/fs/tree.ts`)
+
+The VFS is a single declarative tree rooted at `/`. Each folder's `children`
+array is an explicit list of `FsNode`s — the order you write is the order
+Explorer and Desktop will render in.
+
+File nodes reference content through a lazy dynamic import:
 
 ```ts
-document.addEventListener('xp:open', (e) => {
-  const { id } = (e as CustomEvent).detail;
-  // handle
-});
+{
+  kind: 'file',
+  name: 'About Me.md',
+  ext: '.md',
+  load: () => import('../content/about.md?raw').then((m) => m.default),
+}
 ```
+
+`?raw` is a Vite query that imports the file contents as a string. Because each
+import is dynamic, Vite emits one JS chunk per markdown file — opening
+`About Me.md` only ships `about.md` over the wire; the other files stay on
+disk until requested.
+
+### API (`src/fs/api.ts`)
+
+Pure functions over the tree. No state, no caching beyond `FileHandle.read()`.
+
+| Function                                     | Returns                       | Used by              |
+| --------------------------------------------- | ----------------------------- | -------------------- |
+| `resolve(path)`                               | `FsNode \| null`              | shell, explorer      |
+| `listChildren(path)`                          | `FsNode[]`                    | explorer             |
+| `readFile(path)`                              | `Promise<FileHandle \| null>` | shell                |
+| `parentPath(path)`                            | `string`                      | explorer "Up" button |
+| `joinPath(parent, name)` / `pathOf(…)`        | `string`                      | explorer, desktop    |
+| `iconForNode(node)`                           | `string`                      | desktop, explorer    |
+| `desktopNodes()`                              | `FsNode[]`                    | Desktop.astro        |
+
+Paths are slash-delimited strings. No case normalization, no backslashes, no
+trailing-slash magic. `segments()` internally drops empty segments so `/` and
+`''` both resolve to root.
 
 ---
 
-## Window Manager Deep Dive
+## The shell (`src/shell/`)
 
-`src/lib/windowManager.ts` is the brain. It's a singleton class exported as `windowManager`.
+### File types (`src/shell/fileTypes.ts`)
 
-### State
-
-Each window has a `WindowState` object:
+A flat `Record<string, FileTypeDef>` keyed by lowercased extension:
 
 ```ts
-interface WindowState {
+const registry: Record<string, FileTypeDef> = {
+  '.md':  { ext: '.md', icon: '/icons/notepad.png', defaultAppId: 'notepad', displayName: 'Markdown Document' },
+  '.txt': { ext: '.txt', icon: '/icons/notepad.png', defaultAppId: 'notepad', displayName: 'Text Document' },
+};
+```
+
+`getFileType(ext)` returns the entry or a fallback pointing at notepad.
+
+Adding a new file type is a one-line change plus an icon:
+
+```ts
+'.png': { ext: '.png', icon: '/icons/image.png', defaultAppId: 'image-viewer', displayName: 'Image' },
+```
+
+### Launcher (`src/shell/launcher.ts`)
+
+The single entry point for "open something":
+
+```ts
+export interface LaunchRequest {
+  appId?: string;
+  path?: string;
+  args?: Record<string, unknown>;
+}
+
+export async function launch(req: LaunchRequest): Promise<void>;
+```
+
+Rules, in order:
+
+1. If `path` is given:
+   - If it resolves to a **file** → read it into a `FileHandle`.
+   - Else if `appId` is explicit → forward the path via `args.path` (so
+     folder-aware apps like Explorer can use it as a start directory).
+   - Else → warn and bail.
+2. If `appId` is not given, fall back to the file's default app from the
+   file-type registry.
+3. Call `appHost.launch({ appId, file, args })`.
+
+**Every UI surface** (desktop icons, start menu, taskbar, explorer
+double-click) goes through `launch()`. There is no other path to the app host.
+
+---
+
+## The window manager (`src/lib/`)
+
+### `types.ts`
+
+```ts
+export interface CreateWindowOptions {
+  instanceId: string;
+  title: string;
+  icon: string;
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
+}
+
+export interface WindowState {
+  id: string;                 // instance ID
+  title: string; icon: string;
+  isOpen: boolean; isMinimized: boolean; isMaximized: boolean;
+  zIndex: number;
+  x: number; y: number; width: number; height: number;
+  openedAt?: number;          // counter for taskbar ordering
+}
+```
+
+### `windowDom.ts`
+
+`createWindowElement(opts)` imperatively builds the DOM for one window:
+
+```
+.window[data-window-id="<instanceId>"]
+├── .header__bg
+├── .title-bar
+│   ├── img.title-bar-icon
+│   ├── .title-bar-text
+│   └── .title-bar-controls
+│       ├── button[data-action="minimize"]
+│       ├── button[data-action="maximize"]
+│       └── button[data-action="close"]
+└── .window-body              ← app mounts here
+```
+
+Returns `{ root, body }`. The markup matches what `window.css` expects, so all
+styling keeps working unchanged.
+
+### `windowManager.ts`
+
+Singleton class exported as `windowManager`. Public API:
+
+| Method                            | Effect                                               |
+| --------------------------------- | ---------------------------------------------------- |
+| `create(opts): HTMLElement`       | Builds a window, appends to `#desktop`, wires drag/resize, focuses it. Returns the `.window-body` the app should mount into. |
+| `destroy(id)`                     | Removes the DOM node and deletes state.              |
+| `has(id)`                         | Is this instance id tracked?                         |
+| `focus(id)`                       | Raises z-index, toggles `is-focused` / `is-unfocused` classes, dispatches taskbar update. |
+| `minimize(id)` / `restore(id)`    | Hides/shows and updates taskbar.                     |
+| `maximize(id)`                    | Toggles the `is-maximized` class (CSS handles sizing). |
+| `setTitle(id, title)`             | Updates title-bar text and taskbar.                  |
+| `getState(id)` / `getAllStates()` | State introspection.                                 |
+
+Internals:
+
+- `setupInteraction(el, id)` wires mouse-based drag (title bar) and resize
+  (edges) with a cursor cover div during drags. This is the only code that
+  directly mutates inline `transform` / `width` / `height` during interaction —
+  `applyState()` is the authoritative sync at rest.
+- `syncTaskbar()` emits `xp:taskbar-update` with `{ windows, focusedId }`. The
+  taskbar component listens and rebuilds its button list.
+- Cascading: new windows auto-cascade (`CASCADE_BASE_*` + `CASCADE_STEP`) unless
+  `x`/`y` are provided in `CreateWindowOptions`.
+
+The window manager does **not** know about apps. It is told to `create` and
+`destroy` by the app host.
+
+---
+
+## The app host and apps (`src/apps/`)
+
+### Types (`src/apps/types.ts`)
+
+```ts
+export type AppKind = 'singleton' | 'document' | 'multi';
+
+export interface AppManifest {
   id: string;
   title: string;
   icon: string;
-  isOpen: boolean;           // Exists in the DOM and can be focused
-  isMinimized: boolean;      // Hidden but still "open" (shows in taskbar)
-  isMaximized: boolean;      // Fullscreen
-  zIndex: number;
-  x: number; y: number;      // Position
-  width: number; height: number;
-  savedRect?: { x, y, width, height };  // Pre-maximize rect for restore
-  openedAt?: number;          // For taskbar button ordering
+  defaultWidth: number;
+  defaultHeight: number;
+  kind: AppKind;
+  acceptsFileTypes?: string[];
+  showInStartMenu?: boolean;
+  loader: () => Promise<{ default: AppModule }>;
+}
+
+export interface AppModule {
+  mount(ctx: AppMountContext): AppInstance | void | Promise<AppInstance | void>;
+}
+
+export interface AppMountContext {
+  root: HTMLElement;                        // .window-body
+  instanceId: string;
+  file: FileHandle | null;                  // null unless launched with a file
+  args: Record<string, unknown>;            // extra launch arguments
+  host: AppHostAPI;
+  signal: AbortSignal;                      // aborted on unmount
+}
+
+export interface AppInstance {
+  unmount?(): void;
+  onResize?(width: number, height: number): void;
+  onFocus?(): void;
+  onBlur?(): void;
+  onMinimize?(): void;
+  onRestore?(): void;
+  onLaunchArgs?(args: Record<string, unknown>): void;
+}
+
+export interface AppHostAPI {
+  setTitle(title: string): void;
+  close(): void;
 }
 ```
 
-All states live in `this.windows: Map<string, WindowState>`.
+### App kinds
 
-### Lifecycle Methods
+Instance IDs drive everything. The `host.computeInstanceId(manifest, file, args)`
+rule:
 
-| Method | What it does |
-|--------|--------------|
-| `register(config)` | Create initial state, find DOM el, apply state, set up interaction |
-| `open(id)` | `isOpen = true`, apply state, focus, sync taskbar |
-| `close(id)` | `isOpen = false`, clear classes, sync taskbar |
-| `minimize(id)` | `isMinimized = true`, hide, clear focus, sync |
-| `restore(id)` | `isMinimized = false`, show, focus, sync |
-| `maximize(id)` | Toggle maximized state. Save/restore `savedRect` |
-| `focus(id)` | Bump z-counter, set `.is-focused` on target, `.is-unfocused` on others |
+| Kind        | Instance ID                                      | Behavior on relaunch                  |
+| ----------- | ------------------------------------------------ | ------------------------------------- |
+| `singleton` | `<appId>` (e.g. `minesweeper`)                   | Focus existing, never a new window    |
+| `document`  | `<appId>:<file.path or args.path or "">`         | Focus existing if same key; else new  |
+| `multi`     | `<appId>#<++counter>` (always unique)            | Every launch spawns a new window      |
 
-### The `applyState` method
+`document` is the clever one: it's keyed on file path **or** `args.path`. That's
+why Notepad opens one window per markdown file *and* Explorer opens one window
+per starting folder — same code path.
 
-This is the sole DOM mutation point. It reads state and writes to the DOM:
+### Host (`src/apps/host.ts`)
 
-```ts
-private applyState(id: string): void {
-  const state = this.windows.get(id);
-  const el = this.getElement(id);
-  if (!state || !el) return;
+The host owns one `Map<instanceId, MountedEntry>`. On launch:
 
-  const visible = state.isOpen && !state.isMinimized;
+1. Look up the manifest by `appId`.
+2. Compute the `instanceId` by kind.
+3. If already mounted → restore/focus + forward `onLaunchArgs` if args given.
+4. If a loader is already in flight for that ID → ignore (debounce).
+5. `await manifest.loader()`.
+6. `windowManager.create({...})` — returns the `.window-body` to mount into.
+7. Build an `AbortController`, the host API (`setTitle`, `close`), and the
+   mount context; call `module.default.mount(ctx)`.
+8. Attach a `ResizeObserver` on the body so apps receive `onResize(w, h)` on
+   window drag-resize.
+9. Store the entry.
 
-  el.style.display = visible ? 'flex' : 'none';
-  el.style.width = `${state.width}px`;
-  el.style.height = `${state.height}px`;
-  el.style.transform = `translate(${state.x}px, ${state.y}px)`;
-  el.style.zIndex = String(state.zIndex);
+On `xp:close`:
 
-  el.classList.toggle('is-maximized', state.isMaximized);
-  el.setAttribute('aria-hidden', String(!visible));
-}
-```
+- Find the entry, call `unmount()`, abort the signal (so listeners attached
+  with `{ signal }` auto-remove), disconnect the observer, remove from map,
+  call `windowManager.destroy(id)`.
 
-**Why `transform: translate()` instead of `left`/`top`?** Performance. Transforms are GPU-accelerated and don't trigger layout.
+Lifecycle hooks are forwarded from events:
 
-### The Maximize Trick
+- `xp:minimize` → `instance.onMinimize()` + `setFocused(id, false)`
+- `xp:restore` → `instance.onRestore()`
+- `xp:taskbar-update` — the host diffs the new `focusedId` against each
+  entry's previous focused state and fires `onFocus` / `onBlur` only on
+  transitions.
 
-```ts
-maximize(id: string): void {
-  // ...
-  state.x = -3;
-  state.y = -3;
-  state.width = desktopWidth + 6;
-  state.height = desktopHeight + 6;
-  state.isMaximized = true;
-}
-```
+All host methods wrap app calls in try/catch so one buggy app can't break the
+host.
 
-The `-3` offset extends the window 3px beyond every edge. Combined with `.is-maximized { border-radius: 0 }`, this hides the rounded corners at the edges — matching authentic XP maximize behavior where maximized windows look "flat" against the screen edges.
+### Registry (`src/apps/registry.ts`)
 
-### Drag & Resize (`setupInteraction`)
+A plain array of `AppManifest` objects. Adding an app = adding one entry.
 
-This is the most complex part of the window manager. It replaces what used to be the `interact.js` library with ~150 lines of vanilla TS.
+### Notepad (`src/apps/notepad/`)
 
-**Key concepts:**
+- `index.ts` — reads `ctx.file`, calls `host.setTitle(...)`, renders menu +
+  body. For `.md`, `render.ts` lazy-imports `marked`; for `.txt`, escapes and
+  wraps in `<pre>`.
+- `notepad.css` — XP-ish formatted prose styles inside the window body.
+- `kind: 'document'` + `acceptsFileTypes: ['.md', '.txt']`. Each file gets its
+  own window; re-opening the same file focuses the existing one.
 
-1. **Cursor position detection**: On `mousemove`, calculate whether the cursor is within `RESIZE_THRESHOLD` (10px) of any edge or corner. Map to one of 8 positions: `top`, `topRight`, `right`, `bottomRight`, `bottom`, `bottomLeft`, `left`, `topLeft`.
+### Explorer (`src/apps/explorer/`)
 
-2. **Cursor style**: Set `el.style.cursor` to match (`n-resize`, `ne-resize`, etc.).
-
-3. **Mousedown routing**: On mousedown, if the target is the title bar → start drag. If the target is the window itself and a cursor position is set → start resize.
-
-4. **The "cover div" pattern**: During drag/resize, a fullscreen invisible `<div>` is appended to `<body>`. This captures mouse events even when the cursor leaves the window (e.g., moves faster than the window can follow). Without this, dragging breaks when the cursor overshoots.
-
-5. **State origin tracking**: `originMouseX/Y` and `startX/Y/W/H` are captured at mousedown. On mousemove, we compute the delta from the origin, not the previous frame — this avoids drift.
-
-6. **Resize math**: Each direction calculates new x/y/w/h:
-   - Right: `width = startW + dx`
-   - Left: `width = startW - dx`, `x = startX + (startW - width)` (right edge stays put)
-   - Bottom: `height = startH + dy`
-   - Top: similar to left but for y/height
-   - Corners combine two axes
-   - Min size enforced via `Math.max(MIN_WIDTH, ...)`
-
-### Taskbar Sync
-
-```ts
-private syncTaskbar(): void {
-  const openWindows = Array.from(this.windows.values())
-    .filter((s) => s.isOpen)
-    .sort((a, b) => (a.openedAt ?? 0) - (b.openedAt ?? 0));
-  document.dispatchEvent(
-    new CustomEvent('xp:taskbar-update', {
-      detail: { windows: openWindows, focusedId: this.focusedId },
-    }),
-  );
-}
-```
-
-Called after every state change that affects the taskbar (open, close, minimize, focus). Windows are sorted by `openedAt` so button order is stable (new windows append to the right).
+- `index.ts` — toolbar (Back/Up), address bar, icon grid, click + double-click.
+  Folders navigate in-place; files call `launch({ path })`; shortcuts call
+  `launch({ appId, path })`. Shortcut items get an `is-shortcut` class so
+  they render with the shortcut-arrow overlay.
+- `explorer.css` — listing styles.
+- `kind: 'document'` (folder-path-keyed) + `showInStartMenu: true`. Opening
+  `/Desktop` twice focuses the existing window; opening `/` and `/My Documents`
+  gives you two Explorer windows.
 
 ---
 
-## Styling System
+## Components & layout (`src/components/`, `src/pages/`, `src/layouts/`)
 
-All styles live in `src/styles/`. `global.css` is an `@import` hub — Astro bundles them all into one stylesheet.
+Astro runs at build time. Everything in `.astro` files is rendered to HTML
+statically; the `<script>` blocks are the only client-side code shipped by
+Astro itself.
 
-### Files
+### `src/pages/index.astro`
 
-| File | Purpose |
-|------|---------|
-| `variables.css` | CSS custom properties for colors & gradients |
-| `reset.css` | Box-sizing, body defaults, `user-select: none` |
-| `desktop.css` | Desktop container, icons grid, icon styles |
-| `window.css` | Window frame, title bar, header buttons |
-| `taskbar.css` | Taskbar shell, window buttons, system tray |
-| `start-menu.css` | Start menu header, panes, footer |
+The top-level entry. It:
 
-### The Color Variables (`variables.css`)
+1. Renders `<BaseLayout><Desktop /></BaseLayout>` (the desktop background and
+   icons).
+2. On `DOMContentLoaded`:
+   - `appHost.init(apps)` — registers manifests and subscribes to lifecycle
+     events.
+   - Listens for `xp:launch` → calls `shell.launch(detail)`.
+   - Forwards `xp:minimize`, `xp:maximize`, `xp:restore`, `xp:focus` to
+     `windowManager`. (`xp:close` is handled by the host, which also destroys
+     the window.)
+   - Delegates title-bar button clicks (`[data-action][data-window-target]`)
+     → dispatches the matching `xp:<action>` event.
+   - Delegates double-clicks on `.title-bar` → dispatches `xp:maximize`.
 
-```css
-:root {
-  --xp-frame-focused: #0831d9;
-  --xp-frame-unfocused: #6582f5;
-  --xp-title-focused: linear-gradient(to bottom, #0058ee 0%, ...);
-  --xp-title-unfocused: linear-gradient(to bottom, #7697e7 0%, ...);
-  --xp-btn-blue: radial-gradient(...);
-  --xp-btn-close: radial-gradient(...);
-  --xp-taskbar: linear-gradient(...);
-  --xp-tray: linear-gradient(...);
-  --xp-font: Tahoma, 'Noto Sans', sans-serif;
-}
-```
+### `src/components/Desktop.astro`
 
-**Critical detail**: The title bar gradients are 13-15 color stops. This isn't arbitrary — it's what gives the title bar its authentic XP "glossy" look. A 2-stop gradient looks cheap; 15 stops reproduce the exact curvature of the original.
+Iterates `desktopNodes()` (children of the `/Desktop` VFS folder) and renders a
+`<DesktopIcon>` for each. Shortcuts get `isShortcut`, files get their own
+path, folders get an explorer launch.
 
-### The `header__bg` Pattern (`window.css`)
+### `src/components/DesktopIcon.astro`
 
-XP title bars have a subtle left and right edge shine. We reproduce it with a dedicated `<div class="header__bg">` that sits absolutely positioned behind the title bar content:
+Renders one icon. On double-click, dispatches `xp:launch` with
+`{ appId, path }` from `data-` attributes. Single-click toggles `is-selected`.
+Shortcut icons render with a badge via the
+`.desktop-icon.is-shortcut .desktop-icon__img-wrap::after` CSS rule.
 
-```css
-.header__bg {
-  background: var(--xp-title-focused);
-  position: absolute;
-  left: 0; top: 0; right: 0;
-  height: 28px;
-  pointer-events: none;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  overflow: hidden;
-}
+### `src/components/StartMenu.astro`
 
-.header__bg::before {
-  /* Left edge shine */
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 15px;
-  background: linear-gradient(to right, #1638e6 0%, transparent 100%);
-}
+- **Left pane**: iterates `apps.filter(a => a.showInStartMenu)` — driven by the
+  registry.
+- **Right pane**: a curated list of shortcuts (My Documents, My Computer, etc.)
+  dispatching `xp:launch` with the target path/app.
+- Toggles on start-button click, closes on outside click.
 
-.header__bg::after {
-  /* Right edge shine */
-  width: 15px;
-  background: linear-gradient(to left, #1638e6 0%, transparent 100%);
-}
-```
+### `src/components/Taskbar.astro`
 
-The actual title bar content (`.title-bar`) sits *on top* with `position: relative; z-index: 1`.
-
-**Why this pattern?** Because `::before`/`::after` on the title bar itself would conflict with the title bar's own layout. Separating the background into its own element lets us use pseudo-elements freely for the shine effect.
-
-### Focused vs Unfocused
-
-Switching is done by toggling `.is-focused` / `.is-unfocused` on the `.window` element:
-
-```css
-.window { background-color: var(--xp-frame-focused); }
-.window.is-unfocused { background-color: var(--xp-frame-unfocused); }
-
-.header__bg { background: var(--xp-title-focused); }
-.window.is-unfocused .header__bg { background: var(--xp-title-unfocused); }
-
-.window.is-unfocused .title-bar-controls { opacity: 0.6; }
-```
-
-All state changes cascade from a single class toggle — no JS style manipulation needed.
-
-### Header Buttons (min/max/close)
-
-The buttons are drawn entirely with CSS — no images. Each uses a radial gradient background plus pseudo-elements for the icon:
-
-```css
-/* Minimize: underscore at bottom */
-.title-bar-controls button[aria-label="Minimize"] {
-  background-image: var(--xp-btn-blue);  /* radial gradient */
-  box-shadow: inset 0 -1px 2px 1px #4646ff;
-}
-.title-bar-controls button[aria-label="Minimize"]::before {
-  content: '';
-  position: absolute;
-  left: 4px; top: 13px;
-  width: 8px; height: 3px;
-  background: white;
-}
-
-/* Close: orange gradient + rotated X */
-.title-bar-controls button[aria-label="Close"] {
-  background-image: var(--xp-btn-close);  /* orange radial */
-}
-.title-bar-controls button[aria-label="Close"]::before,
-.title-bar-controls button[aria-label="Close"]::after {
-  content: '';
-  position: absolute;
-  width: 2px; height: 16px;
-  background: white;
-  left: 9px; top: 2px;
-}
-.title-bar-controls button[aria-label="Close"]::before { transform: rotate(45deg); }
-.title-bar-controls button[aria-label="Close"]::after  { transform: rotate(-45deg); }
-```
-
-The "maximized" state swaps maximize for a "restore" icon (two overlapping squares) by re-styling `::before` and adding `::after`.
-
-### Taskbar Button Shine (`taskbar.css`)
-
-The white corner shine on inactive taskbar buttons:
-
-```css
-.taskbar-win-btn::before {
-  position: absolute;
-  left: -2px; top: -2px;
-  width: 10px; height: 1px;
-  border-bottom-right-radius: 50%;
-  box-shadow: 2px 2px 3px rgba(255, 255, 255, 0.5);
-}
-```
-
-A 10x1 pixel element with a bottom-right border radius creates a rounded corner, and the box-shadow projects the shine. Removed for `.is-active` (focused) buttons.
+- Clock updates every second but only writes `textContent` when the value
+  actually changes (avoids dev-mode DOM audit churn).
+- Listens for `xp:taskbar-update` and rebuilds its window button list. Each
+  button uses the `WindowState.id` (= instance ID) to dispatch `xp:restore`,
+  `xp:minimize`, or `xp:focus`.
 
 ---
 
-## Component Reference
+## Styling (`src/styles/`)
 
-### `Desktop.astro`
-**Purpose**: Container for the desktop area. Renders the icon grid and pre-renders all window shells.
+- `reset.css`, `global.css`, `variables.css` — base styles and theme. All XP
+  colors, gradients, and custom cursors live in `variables.css` as CSS custom
+  properties.
+- `window.css` — the window chrome (title bar, frame, `is-focused`,
+  `is-maximized`, resize cursors).
+- `desktop.css`, `taskbar.css`, `start-menu.css` — shell styles.
+- Apps own their body styles via per-app CSS files (`notepad.css`,
+  `explorer.css`) imported from `index.ts`. Vite bundles these into the app's
+  lazy chunk so the initial page doesn't pay for them.
 
-**Key pattern**: Maps over `apps` twice — once for icons, once for windows. Windows are hidden until opened.
-
-### `DesktopIcon.astro`
-**Purpose**: Individual clickable icon.
-
-**State**: Uses inline script for single-click (select) vs double-click (open) detection via a 400ms timer.
-
-**Events fired**: `xp:open`
-
-**Classes**:
-- `.desktop-icon` — base
-- `.is-selected` — blue label highlight, icon tinted
-
-### `Window.astro`
-**Purpose**: Window shell with title bar, controls, and body slot.
-
-**Structure**:
-```astro
-<div class="window" data-window-id={id}>
-  <div class="header__bg"></div>           <!-- Gradient layer -->
-  <div class="title-bar">                  <!-- Content layer -->
-    <img class="title-bar-icon" />
-    <div class="title-bar-text" />
-    <div class="title-bar-controls">
-      <button aria-label="Minimize" />
-      <button aria-label="Maximize" />
-      <button aria-label="Close" />
-    </div>
-  </div>
-  <div class="window-body"><slot /></div>
-</div>
-```
-
-**Events fired**: `xp:minimize`, `xp:maximize`, `xp:close` (via buttons), `xp:maximize` (via dblclick title bar)
-
-**Classes**: `.is-focused`, `.is-unfocused`, `.is-maximized`
-
-### `Taskbar.astro`
-**Purpose**: Bottom bar with start button, window buttons, system tray, clock.
-
-**Structure**:
-```astro
-<div id="taskbar">
-  <div class="taskbar__left">
-    <div id="taskbar-start"><img src="/icons/start.png" /></div>
-    <div id="taskbar-windows"></div>  <!-- Populated by JS -->
-  </div>
-  <div class="taskbar__right">
-    <img src="sound.png" />
-    <img src="usb.png" />
-    <img src="shield.png" />
-    <span id="taskbar-clock"></span>
-  </div>
-</div>
-```
-
-**Events listened**: `xp:taskbar-update` (to rebuild window buttons)
-
-**Events fired**: `xp:minimize`, `xp:restore`, `xp:focus` (depending on button state)
-
-### `StartMenu.astro`
-**Purpose**: Start menu popup.
-
-**Structure**: header (avatar + username) + body (left pane with apps, right pane with XP items) + footer (log off / turn off).
-
-**Events fired**: `xp:open` (when clicking an app in the left pane)
-
-**Classes**:
-- `.start-menu` — base (hidden)
-- `.is-open` — visible
-
-**Open/close logic**: Inline script toggles `.is-open` on start button mousedown, and closes on any outside click.
+No CSS framework, no CSS-in-JS, no CSS modules. Just plain CSS with variables.
 
 ---
 
-## How to Add a New App
+## The event bus
 
-1. **Add an entry in `src/config/apps.ts`**:
+Communication between components is `document.dispatchEvent(new CustomEvent(...))`.
+Every listener lives on `document`, so there's nothing to wire and nothing to
+tear down as windows come and go.
+
+| Event               | Dispatched by                                  | Listener(s)              | Detail                                 |
+| ------------------- | ---------------------------------------------- | ------------------------ | -------------------------------------- |
+| `xp:launch`         | DesktopIcon, StartMenu, Explorer (via shell API) | `index.astro` → shell   | `{ appId?, path?, args? }`             |
+| `xp:close`          | Title-bar close button, `AppHostAPI.close()`   | `appHost.handleClose`    | `{ id }` (instance ID)                 |
+| `xp:minimize`       | Title-bar minimize, Taskbar button             | `windowManager`, `appHost` | `{ id }`                             |
+| `xp:maximize`       | Title-bar maximize, dblclick on title bar      | `windowManager`          | `{ id }`                               |
+| `xp:restore`        | Taskbar button                                 | `windowManager`, `appHost` | `{ id }`                             |
+| `xp:focus`          | Taskbar button                                 | `windowManager`, `appHost` | `{ id }`                             |
+| `xp:taskbar-update` | `windowManager.syncTaskbar()`                  | `Taskbar.astro`, `appHost` | `{ windows: WindowState[], focusedId }` |
+
+Important: `xp:launch` carries **app/file identifiers**. All other `xp:*`
+events carry **instance IDs** (whatever `windowManager.create()` was given).
+
+---
+
+## Launch lifecycle walkthroughs
+
+### Double-click `About Me.md` on the desktop
+
+1. `DesktopIcon.astro` delegates the double-click and dispatches
+   `xp:launch` with `{ path: '/Desktop/About Me.md' }`.
+2. `index.astro` routes it to `shell.launch({ path: '/Desktop/About Me.md' })`.
+3. Launcher calls `resolve('/Desktop/About Me.md')` → `FileNode`, then
+   `readFile(...)` → `FileHandle`.
+4. File ext `.md` → file type registry → default app `notepad`.
+5. Launcher calls `appHost.launch({ appId: 'notepad', file, args: undefined })`.
+6. Host computes `instanceId = 'notepad:/Desktop/About Me.md'`. Not mounted.
+7. `await manifest.loader()` — lazy-imports `src/apps/notepad/index.ts` and
+   its CSS. `marked` is not yet loaded.
+8. `windowManager.create({...})` builds the window DOM, wires drag/resize,
+   appends it to `#desktop`, focuses it, dispatches `xp:taskbar-update`.
+9. Host calls `notepad.mount(ctx)`. Notepad calls `ctx.file.read()` (lazy
+   dynamic import of `about.md?raw`), calls `renderMarkdown()` (lazy import
+   of `marked`), sets `innerHTML`, calls `host.setTitle('About Me.md — Notepad')`.
+10. `ResizeObserver` starts observing the body. The host stores the entry.
+
+### Double-click the same file again
+
+1. Steps 1–5 repeat.
+2. Host finds `'notepad:/Desktop/About Me.md'` already mounted.
+3. If minimized → `windowManager.restore(id)`, else `windowManager.focus(id)`.
+4. No remount, no new window.
+
+### Double-click `My Computer` shortcut
+
+1. DesktopIcon dispatches `xp:launch` with `{ appId: 'explorer', path: '/' }`.
+2. Launcher sees `appId` explicit, resolves `/` → `FolderNode`, so it forwards
+   the path as `args.path`: `appHost.launch({ appId: 'explorer', file: null,
+   args: { path: '/' } })`.
+3. Host computes `instanceId = 'explorer:/'` (document kind falls back to
+   `args.path`).
+4. Not mounted → lazy-load, create window, mount. Explorer reads `args.path`
+   and renders listing for `/`.
+
+### Close the window
+
+1. User clicks the X. Title bar button delegation in `index.astro` fires
+   `xp:close` with `{ id: 'explorer:/' }`.
+2. `appHost.handleClose('explorer:/')` runs: finds the entry, calls
+   `unmount()`, aborts the signal (any listeners attached with `{ signal }`
+   auto-detach), disconnects the `ResizeObserver`, removes from map, calls
+   `windowManager.destroy('explorer:/')` which removes the DOM node and emits
+   `xp:taskbar-update`.
+
+---
+
+## Recipes
+
+### Add a markdown file
+
+Three steps:
+
+1. **Write the content**:
+   ```
+   src/content/hobbies.md
+   ```
+   ```markdown
+   # Hobbies
+
+   - Woodworking
+   - Retro computing
+   ```
+
+2. **Reference it in `src/fs/tree.ts`** — drop a `FileNode` wherever you want
+   it to appear. Inside `My Documents`, for example:
+   ```ts
+   {
+     kind: 'file',
+     name: 'Hobbies.md',
+     ext: '.md',
+     load: () => import('../content/hobbies.md?raw').then((m) => m.default),
+   },
+   ```
+   The `name` is what Explorer and the desktop show. The `load` path is the
+   source file; it ships as its own lazy chunk.
+
+3. **That's it.** Because `.md` already maps to `notepad` in the file-type
+   registry, double-click → Notepad opens it. No changes to apps, registry,
+   or components.
+
+Optional: give the file a custom `icon: '/icons/xxx.png'` on the node, or
+place it under `/Desktop` instead of `/My Documents` to make it a desktop icon.
+
+### Add a folder or desktop shortcut
+
+**Folder** — add a `FolderNode` to any `children` array:
 
 ```ts
-export const apps: AppConfig[] = [
-  // ...existing apps
-  {
-    id: 'resume',               // Unique ID — becomes data-window-id
-    title: 'Resume',
-    icon: '/icons/notepad.png', // Path to icon in /public/
-    defaultWidth: 500,
-    defaultHeight: 400,
-    defaultX: 100,              // Optional — omit for auto-cascade
-    defaultY: 100,
+{
+  kind: 'folder',
+  name: 'Blog',
+  icon: '/icons/folder-32.png',
+  children: [
+    // ...FileNodes
+  ],
+}
+```
+
+**Desktop shortcut** — add a `ShortcutNode` under `/Desktop`:
+
+```ts
+{
+  kind: 'shortcut',
+  name: 'My Blog',
+  icon: '/icons/folder-32.png',
+  target: { appId: 'explorer', path: '/My Documents/Blog' },
+}
+```
+
+Shortcut icons automatically render with the shortcut-arrow overlay on both
+the desktop and inside Explorer.
+
+### Add a file type
+
+For example, add support for plain JSON files shown in Notepad:
+
+```ts
+// src/shell/fileTypes.ts
+'.json': {
+  ext: '.json',
+  icon: '/icons/notepad.png',
+  defaultAppId: 'notepad',
+  displayName: 'JSON File',
+},
+```
+
+Then add an `acceptsFileTypes: ['.md', '.txt', '.json']` entry to the Notepad
+manifest if you want it to advertise the type, and an `ext: '.json'` FileNode
+in the VFS tree pointing at whatever content you want to load.
+
+For a **new default app** (e.g. `.png` → new image viewer), create the app
+first (next recipe) and then set `defaultAppId: 'image-viewer'`.
+
+### Add a simple app (singleton)
+
+A singleton app has one instance and runs on launch with no file. Example:
+a clock.
+
+1. **Create the app module**:
+   ```
+   src/apps/clock/index.ts
+   src/apps/clock/clock.css
+   ```
+
+   ```ts
+   // src/apps/clock/index.ts
+   import type { AppModule } from '../types';
+   import './clock.css';
+
+   const mod: AppModule = {
+     mount({ root, signal }) {
+       root.classList.add('clock');
+       const face = document.createElement('div');
+       face.className = 'clock__face';
+       root.appendChild(face);
+
+       const tick = () => {
+         face.textContent = new Date().toLocaleTimeString();
+       };
+       tick();
+       const id = setInterval(tick, 1000);
+       signal.addEventListener('abort', () => clearInterval(id));
+
+       return {
+         unmount() {
+           root.classList.remove('clock');
+           root.innerHTML = '';
+         },
+       };
+     },
+   };
+
+   export default mod;
+   ```
+
+2. **Register it** in `src/apps/registry.ts`:
+   ```ts
+   {
+     id: 'clock',
+     title: 'Clock',
+     icon: '/icons/clock.png',
+     defaultWidth: 240,
+     defaultHeight: 160,
+     kind: 'singleton',
+     showInStartMenu: true,
+     loader: () => import('./clock'),
+   },
+   ```
+
+3. **Optional: add a desktop shortcut**:
+   ```ts
+   // in src/fs/tree.ts, inside /Desktop children
+   {
+     kind: 'shortcut',
+     name: 'Clock',
+     icon: '/icons/clock.png',
+     target: { appId: 'clock' },
+   },
+   ```
+
+That's the full surface. Launching from the start menu or the shortcut will
+focus the existing clock window if it's already open, thanks to `kind:
+'singleton'`.
+
+### Add a document app
+
+Document apps get a new window per opened file/path. Notepad is the reference
+implementation. The only differences from a singleton:
+
+- `kind: 'document'`
+- `acceptsFileTypes: ['.ext1', '.ext2']`
+- Inside `mount`, use `ctx.file` (for files) or `ctx.args.path` (for folder-
+  aware apps) as the thing the window is "about". Call
+  `host.setTitle(\`${file.name} — MyApp\`)`.
+- Register the extension in `src/shell/fileTypes.ts` with
+  `defaultAppId: 'myapp'`.
+
+Every different file becomes its own window; opening the same file twice
+focuses the existing one.
+
+### Add a multi-instance app
+
+Use `kind: 'multi'` when you genuinely want a new window on every launch and
+no deduplication. Each instance gets a unique `#<counter>` suffix.
+
+```ts
+{
+  id: 'browser',
+  title: 'Web Browser',
+  icon: '/icons/ie.png',
+  defaultWidth: 800,
+  defaultHeight: 600,
+  kind: 'multi',
+  loader: () => import('./browser'),
+},
+```
+
+Good fits: browsers, editors that should always open a blank window, games
+where the user wants multiple simultaneous boards.
+
+### Add an interactive app or game
+
+The mount context gives you everything you need:
+
+```ts
+import type { AppModule } from '../types';
+import './minesweeper.css';
+
+const mod: AppModule = {
+  async mount({ root, signal }) {
+    root.classList.add('minesweeper');
+
+    const canvas = document.createElement('canvas');
+    root.appendChild(canvas);
+    const ctx = canvas.getContext('2d')!;
+
+    let paused = false;
+    let raf = 0;
+
+    const loop = () => {
+      if (paused) return;
+      // draw frame
+      raf = requestAnimationFrame(loop);
+    };
+
+    // Inputs — signal auto-removes on unmount
+    canvas.addEventListener('click', onClick, { signal });
+    canvas.addEventListener('keydown', onKey, { signal });
+
+    raf = requestAnimationFrame(loop);
+
+    return {
+      onResize(w, h) {
+        canvas.width = w;
+        canvas.height = h;
+      },
+      onMinimize() {
+        paused = true;
+        cancelAnimationFrame(raf);
+      },
+      onBlur() {
+        paused = true;
+        cancelAnimationFrame(raf);
+      },
+      onRestore() {
+        paused = false;
+        raf = requestAnimationFrame(loop);
+      },
+      onFocus() {
+        if (paused) {
+          paused = false;
+          raf = requestAnimationFrame(loop);
+        }
+      },
+      unmount() {
+        cancelAnimationFrame(raf);
+        root.classList.remove('minesweeper');
+        root.innerHTML = '';
+      },
+    };
+
+    function onClick(_e: MouseEvent) { /* ... */ }
+    function onKey(_e: KeyboardEvent) { /* ... */ }
   },
-];
-```
-
-2. **Done.** The new app will automatically:
-   - Appear as a desktop icon (via `Desktop.astro` mapping)
-   - Appear in the Start Menu left pane (via `StartMenu.astro` mapping)
-   - Get registered with `WindowManager` on page load
-   - Be draggable, resizable, minimizable, maximizable
-
-### Custom Content Per App
-
-Currently `Desktop.astro` renders a generic `placeholder-content` div in every window. To have real content per app, refactor like this:
-
-```astro
----
-import AboutApp from './apps/AboutApp.astro';
-import ProjectsApp from './apps/ProjectsApp.astro';
-// ...
-
-const appComponents = {
-  about: AboutApp,
-  projects: ProjectsApp,
-  // ...
 };
----
 
-{apps.map((app) => {
-  const Component = appComponents[app.id];
-  return (
-    <Window id={app.id} ...>
-      {Component ? <Component /> : <div>Default content</div>}
-    </Window>
-  );
-})}
+export default mod;
 ```
 
-Then create `src/components/apps/AboutApp.astro` etc. Each is a self-contained Astro component that renders inside the window-body slot.
+Important patterns:
 
-### Custom Icon
+- **Attach listeners with `{ signal }`** — they auto-remove on close.
+- **Pause RAF loops on `onMinimize` and `onBlur`** — the window is invisible
+  or backgrounded; don't burn CPU.
+- **Size the canvas in `onResize`** — the host runs a `ResizeObserver` on the
+  window body and forwards changes.
+- **Clear the DOM in `unmount`** — the window element itself is destroyed by
+  the window manager, but it's polite to drop references for GC.
 
-Place a PNG in `public/icons/` and reference it in `apps.ts`. Authentic XP icons are available in `winXP/src/assets/windowsIcons/` — copy the ones you need.
+Register with `kind: 'singleton'` (one game at a time) or `'multi'` (several
+concurrent games). Add a desktop shortcut via `ShortcutNode`.
 
----
+If the game needs assets, use dynamic imports so they only load on first
+launch:
 
-## How to Extend Each Part
-
-### Add a new event type
-
-1. Add it to the `XpEventName` union in `types.ts`.
-2. Dispatch it from wherever: `document.dispatchEvent(new CustomEvent('xp:myevent', { detail: { ... } }))`
-3. Listen for it in `index.astro` and route it: `document.addEventListener('xp:myevent', (e) => windowManager.myMethod(e.detail));`
-4. If the handler lives in `windowManager`, add the method there.
-
-### Add a new window control (e.g., pin/unpin)
-
-1. Add the button to `Window.astro`:
-```astro
-<button aria-label="Pin" data-action="pin" data-window-target={id}></button>
-```
-2. The existing click delegator in `Window.astro`'s script block will automatically fire `xp:pin`.
-3. Add a listener in `index.astro` and a `pin()` method on `windowManager`.
-4. Style it in `window.css` using the `[aria-label="Pin"]` selector, following the minimize/close pattern (radial gradient + pseudo-element icon).
-
-### Add a boot screen
-
-1. Create `src/components/BootScreen.astro` with a fullscreen overlay styled like the XP boot animation.
-2. Render it in `BaseLayout.astro` above the `#desktop-shell`.
-3. Add a script that removes it after a delay or on click.
-
-### Add right-click context menu
-
-1. Create `src/components/ContextMenu.astro` — a hidden `<ul>` with menu items.
-2. Add a listener on `#desktop` for `contextmenu` events: `e.preventDefault()`, position the menu at `e.clientX/Y`, show it.
-3. Close on any other click.
-
-### Add a wallpaper
-
-Drop an image at `public/wallpaper.jpg`. It's already referenced in `desktop.css` — will appear automatically.
-
-### Full start menu (dual-pane, All Programs, etc.)
-
-The existing `StartMenu.astro` is already structured with `.start-menu__left` and `.start-menu__right` panes. To expand:
-
-1. Add more items to the left pane (pinned programs, recent programs, "All Programs" entry).
-2. Right pane already has decorative items — make them functional by dispatching events.
-3. For "All Programs" submenu, add a nested `<div>` that appears on hover, styled similarly.
-4. Reference: `winXP/src/WinXP/Footer/FooterMenu.js` has the complete layout.
-
-### Desktop icon selection marquee (DashedBox)
-
-1. On `mousedown` on `#desktop` background (not on an icon), record the start position.
-2. On `mousemove`, render a `1px dotted gray` bordered div between start and current position.
-3. On `mouseup`, check which icons' bounding rects intersect the box, mark them selected.
-4. Remove the box on `mouseup`.
-5. Reference: `winXP/src/components/DashedBox/index.js` (only ~29 lines).
-
-### Power-off animation
-
-1. Add a `powerOff()` method to `windowManager` or a new `systemManager`.
-2. Apply `filter: brightness(0.6) grayscale(1)` to `#desktop-shell` via keyframes over 5s.
-3. Show a modal dialog for confirmation before triggering.
-
----
-
-## Roadmap / Next Steps
-
-**Core features not yet implemented:**
-- Real content for each app (About, Projects, Skills, Contact) — currently placeholder divs
-- Right-click context menu on desktop (New, Refresh, Properties...)
-- Desktop icon multi-select with dashed marquee
-- Boot screen / loading animation
-- XP Bliss wallpaper
-
-**Nice-to-haves:**
-- Recycle Bin easter egg
-- Balloon tooltip in system tray ("Your computer might be at risk")
-- Power-off modal with grayscale animation
-- Sound effects (error.wav, etc.)
-- Terminal app with easter eggs
-- Minesweeper (can port from `winXP/src/WinXP/apps/Minesweeper/`)
-- Mobile fallback (currently desktop-only)
-
-**Architectural improvements:**
-- Per-app content components (instead of generic placeholder)
-- Window transitions (fade-in/out, minimize animation)
-- Keyboard shortcuts (Alt+F4 to close, Alt+Tab to cycle, etc.)
-- Persist window positions to localStorage
-- Dynamic app loading (not all pre-rendered)
-
----
-
-## Reference: The `winXP/` Directory
-
-The `winXP/` folder is a cloned React-based Windows XP replica. **It is not built or deployed** — it exists purely as a visual and code reference.
-
-Useful things to grep:
-- **Exact gradient values**: `winXP/src/WinXP/Windows/index.js`, `winXP/src/WinXP/Footer/index.js`, `winXP/src/WinXP/Footer/FooterMenu.js`
-- **Button pseudo-element tricks**: `winXP/src/WinXP/Windows/HeaderButtons.js`
-- **8-directional resize logic**: `winXP/src/hooks/useElementResize.js` (ported to `src/lib/windowManager.ts`)
-- **Authentic XP icons**: `winXP/src/assets/windowsIcons/` (~100 PNGs)
-- **Start menu layout**: `winXP/src/WinXP/Footer/FooterMenu.js`
-- **Minesweeper implementation**: `winXP/src/WinXP/apps/Minesweeper/`
-- **App window patterns**: `winXP/src/WinXP/apps/` (Notepad, IE, MyComputer, Paint)
-
----
-
-## Quick Commands
-
-```bash
-npm run dev       # Start dev server at localhost:4321
-npm run build     # Build for production (Cloudflare Pages)
-npm run preview   # Preview production build
+```ts
+const { loadLevel } = await import('./levels');
 ```
 
-No linter or test suite configured yet.
+---
+
+## Architectural principles
+
+These are the rules the codebase is meant to keep as it grows:
+
+1. **One entry point for opening things.** Every "open X" action flows
+   through `shell.launch()`. Never call `appHost.launch()` directly from a UI
+   surface; let the shell resolve paths and defaults.
+
+2. **Instance IDs are opaque strings.** Everything downstream of the app host
+   (window manager, taskbar, event bus) treats them as keys. Never parse them.
+
+3. **Apps are sandboxes.** An app's only contact surface is `AppMountContext`
+   + `AppInstance`. An app should not import the window manager, not know
+   about other apps, not reach into the DOM outside its `root`.
+
+4. **The window manager doesn't know about content.** It creates and destroys
+   DOM nodes, tracks geometry, and delegates everything else. If you find
+   yourself needing to teach it about apps or files, extend the app host
+   instead.
+
+5. **Code-split by default.** Apps (`loader: () => import(...)`) and content
+   files (`load: () => import('...?raw')`) use dynamic imports so they land
+   in separate chunks. Heavy things (a game, a markdown parser) should never
+   be in the initial bundle.
+
+6. **Prefer declarative over imperative.** The VFS tree, the app registry,
+   and the file-type registry are all plain data. Adding a file or an app is
+   usually one entry, not a new code path.
+
+7. **No framework runtime.** Astro renders the static shell; the rest is
+   vanilla TypeScript. No React, no signals, no store. Custom events on
+   `document` are the only message bus.
+
+8. **Mutate DOM sparingly and intentionally.** Every avoidable mutation
+   retriggers Astro's dev-mode DOM audit. When writing to text content,
+   check for equality first (see the clock).
+
+9. **Style stays in plain CSS.** Theme tokens live in `variables.css`; per-app
+   body styles live alongside the app. No Tailwind, no CSS-in-JS.
+
+10. **Fail loudly in dev, gracefully in production.** The host wraps every
+    app callback in try/catch and logs with a `[appHost]` prefix. The shell
+    warns on unresolved paths but doesn't throw.

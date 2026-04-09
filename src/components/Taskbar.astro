@@ -38,7 +38,10 @@
   }
 
   function updateClock() {
-    clockEl.textContent = getTime();
+    const t = getTime();
+    // Only touch the DOM when the value actually changes — avoids needlessly
+    // re-running Astro's dev-mode DOM audit every second.
+    if (clockEl.textContent !== t) clockEl.textContent = t;
   }
   updateClock();
   setInterval(updateClock, 1000);

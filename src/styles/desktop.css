@@ -92,6 +92,20 @@
   transition: background 0.05s;
 }
 
+/* Shortcut badge — overlaid on the bottom-left of the icon */
+.desktop-icon.is-shortcut .desktop-icon__img-wrap::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  bottom: -2px;
+  width: 16px;
+  height: 16px;
+  background-image: url('/icons/shortcut-16.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
 /* Selected: tint the icon */
 .desktop-icon.is-selected .desktop-icon__img {
   opacity: 0.5;
