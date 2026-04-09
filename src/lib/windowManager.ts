@@ -206,24 +206,29 @@ class WindowManager {
 
     const getCursorStyle = (pos: string): string => {
       const map: Record<string, string> = {
-        top: 'n-resize', topRight: 'ne-resize', right: 'e-resize',
-        bottomRight: 'se-resize', bottom: 's-resize', bottomLeft: 'sw-resize',
-        left: 'w-resize', topLeft: 'nw-resize',
+        top: 'var(--xp-cursor-resize-ns)',
+        bottom: 'var(--xp-cursor-resize-ns)',
+        left: 'var(--xp-cursor-resize-ew)',
+        right: 'var(--xp-cursor-resize-ew)',
+        topLeft: 'var(--xp-cursor-resize-nesw)',
+        bottomRight: 'var(--xp-cursor-resize-nesw)',
+        topRight: 'var(--xp-cursor-resize-nwse)',
+        bottomLeft: 'var(--xp-cursor-resize-nwse)',
       };
-      return map[pos] || 'auto';
+      return map[pos] || '';
     };
 
     // Hover cursor
     el.addEventListener('mousemove', (e) => {
       if (isDragging || isResizing) return;
       const state = this.windows.get(id);
-      if (state?.isMaximized) { el.style.cursor = 'auto'; return; }
+      if (state?.isMaximized) { el.style.cursor = ''; return; }
       cursorPos = getCursorPosition(e);
       el.style.cursor = getCursorStyle(cursorPos);
     });
 
     el.addEventListener('mouseleave', () => {
-      if (!isDragging && !isResizing) el.style.cursor = 'auto';
+      if (!isDragging && !isResizing) el.style.cursor = '';
     });
 
     const onMouseMove = (e: MouseEvent) => {
@@ -300,7 +305,7 @@ class WindowManager {
       if (titleBar && !isButton && !state.isMaximized) {
         isDragging = true;
         document.body.appendChild(cover);
-        cover.style.cursor = 'default';
+        cover.style.cursor = 'var(--xp-cursor-default)';
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
         return;

@@ -124,7 +124,7 @@
   align-items: center;
   padding: 1px;
   margin-bottom: 4px;
-  cursor: default;
+  cursor: var(--xp-cursor-default);
 }
 
 .start-menu__left .start-menu__item {
@@ -206,7 +206,7 @@
   margin-right: 10px;
   align-items: center;
   color: #fff;
-  cursor: default;
+  cursor: var(--xp-cursor-default);
 }
 
 .start-menu__footer-btn:hover {

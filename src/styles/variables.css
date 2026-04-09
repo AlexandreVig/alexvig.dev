@@ -57,4 +57,23 @@
 
   /* Font */
   --xp-font: Tahoma, 'Noto Sans', sans-serif;
+
+  /* Cursors (served from /public/cursors) */
+  --xp-cursor-default: url('/cursors/default_arrow.cur'), default;
+  --xp-cursor-text: url('/cursors/default_beam.cur'), text;
+  --xp-cursor-pointer: url('/cursors/default_link.cur'), pointer;
+  --xp-cursor-help: url('/cursors/default_helpsel.cur'), help;
+  --xp-cursor-wait: url('/cursors/default_wait.cur'), wait;
+  --xp-cursor-progress: url('/cursors/default_busy.cur'), progress;
+  --xp-cursor-crosshair: url('/cursors/default_cross.cur'), crosshair;
+  --xp-cursor-move: url('/cursors/default_move.cur'), move;
+  --xp-cursor-not-allowed: url('/cursors/default_no.cur'), not-allowed;
+
+  /* Resize cursors
+     Note: the size1–size4 files are mapped here so you can swap them in one place
+     if the diagonals/axes don’t match your expectations in your browser. */
+  --xp-cursor-resize-nwse: url('/cursors/default_size1.cur'), nwse-resize;
+  --xp-cursor-resize-nesw: url('/cursors/default_size2.cur'), nesw-resize;
+  --xp-cursor-resize-ew: url('/cursors/default_size3.cur'), ew-resize;
+  --xp-cursor-resize-ns: url('/cursors/default_size4.cur'), ns-resize;
 }

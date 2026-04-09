@@ -80,7 +80,7 @@
   position: relative;
   align-items: center;
   z-index: 1;
-  cursor: default;
+  cursor: var(--xp-cursor-default);
 }
 
 .title-bar-icon {
@@ -123,7 +123,7 @@
   border: 1px solid #fff;
   border-radius: 3px;
   margin-right: 1px;
-  cursor: default;
+  cursor: var(--xp-cursor-default);
 }
 
 .title-bar-controls button:hover {

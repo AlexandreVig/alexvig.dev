@@ -37,7 +37,7 @@
 #taskbar-start {
   height: 100%;
   margin-right: 10px;
-  cursor: default;
+  cursor: var(--xp-cursor-default);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -84,7 +84,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  cursor: default;
+  cursor: var(--xp-cursor-default);
   user-select: none;
 }
 
