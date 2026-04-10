@@ -22,7 +22,7 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const ip =
     request.headers.get('cf-connecting-ip') ??
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
@@ -73,7 +73,8 @@ export const POST: APIRoute = async ({ request }) => {
   if (message.length > 4000) return jsonError('Message is too long.', 400);
 
   // Send via Resend
-  const apiKey = import.meta.env.RESEND_API_KEY;
+  const runtime = (locals as Record<string, any>).runtime;
+  const apiKey = runtime?.env?.RESEND_API_KEY ?? import.meta.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error('[contact] RESEND_API_KEY is not configured');
     return jsonError('Email service is not configured.', 500);
