@@ -80,7 +80,7 @@ export const POST: APIRoute = async ({ request }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Portfolio Contact <noreply@avigneau.dev>',
+        from: 'Portfolio Contact <no-reply@avigneau.dev>',
         to: ['alexandre.vigneau.974@gmail.com'],
         reply_to: email.trim(),
         subject: `[Portfolio] ${subject.trim()}`,
