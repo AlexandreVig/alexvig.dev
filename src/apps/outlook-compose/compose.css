@@ -1,0 +1,155 @@
+/* ── Compose window styles ────────────────────────────────────────────────── */
+.compose {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(to right, #edede5 0%, #ede8cd 100%);
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.compose__toolbar {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 1px 3px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.compose__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-family: Tahoma, sans-serif;
+  font-size: 10px;
+  color: #000;
+  cursor: default;
+  user-select: none;
+  gap: 1px;
+}
+
+.compose__btn img {
+  width: 24px;
+  height: 24px;
+  image-rendering: auto;
+}
+
+.compose__btn:not([disabled]):hover {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.compose__btn:not([disabled]):active {
+  border: 1px solid rgb(185, 185, 185);
+  background-color: #dedede;
+  box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.7);
+}
+
+.compose__btn[disabled] {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.compose__tsep {
+  width: 1px;
+  height: 80%;
+  background: rgba(0, 0, 0, 0.2);
+  margin: 0 2px;
+}
+
+/* ── Field rows ──────────────────────────────────────────────────────────── */
+.compose__fields {
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.compose__field-row {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  border-bottom: 1px solid #e0e0d8;
+}
+
+.compose__field-label {
+  width: 60px;
+  padding: 0 8px;
+  font-weight: bold;
+  text-align: right;
+  flex-shrink: 0;
+  cursor: default;
+}
+
+.compose__field-input {
+  flex: 1;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: #fff;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+  padding: 0 4px;
+}
+
+.compose__field-input[readonly] {
+  background: #f0f0ea;
+  color: #555;
+}
+
+.compose__field-input:focus {
+  background: #fff;
+}
+
+/* Honeypot — invisible to users */
+.compose__honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+/* ── Message body ────────────────────────────────────────────────────────── */
+.compose__body {
+  flex: 1;
+  border: 0;
+  border-top: 1px solid #aca899;
+  outline: none;
+  resize: none;
+  font-family: Tahoma, sans-serif;
+  font-size: 11px;
+  color: #000;
+  padding: 8px;
+  line-height: 1.5;
+}
+
+.compose__body:focus {
+  background: #fff;
+}
+
+/* ── Status bar ──────────────────────────────────────────────────────────── */
+.compose__status {
+  display: flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-top: 1px solid #ffffff;
+  box-shadow: inset 0 1px 0 #aca899;
+  background: #ece9d8;
+  flex-shrink: 0;
+  min-height: 20px;
+}
+
+.compose__status-text {
+  font-size: 11px;
+  color: #333;
+}

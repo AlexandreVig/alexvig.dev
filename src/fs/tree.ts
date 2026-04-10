@@ -35,6 +35,12 @@ export const root: FolderNode = {
           ext: '.md',
           load: () => import('../content/contact.md?raw').then((m) => m.default),
         },
+        {
+          kind: 'shortcut',
+          name: 'Outlook Express',
+          icon: '/icons/outlook.png',
+          target: { appId: 'outlook-express' },
+        },
       ],
     },
     {

@@ -5,6 +5,9 @@ compatibility_flags = ["nodejs_compat_v2"]
 # Note: This project uses `@astrojs/cloudflare` (Workers runtime). Keeping this as a Workers project
 # avoids Cloudflare Pages' reserved `ASSETS` binding name, which otherwise causes `astro build` to fail.
 
+# Secrets (set via `wrangler secret put RESEND_API_KEY`):
+# - RESEND_API_KEY: API key for Resend email service (used by /api/contact)
+
 # Future bindings (KV, D1, etc.) go here
 # [[kv_namespaces]]
 # binding = "MY_KV"
