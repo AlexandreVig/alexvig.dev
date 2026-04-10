@@ -70,4 +70,15 @@ export const apps: AppManifest[] = [
     showInStartMenu: false,
     loader: () => import('./outlook-compose'),
   },
+  {
+    id: 'adobe-reader',
+    title: 'Adobe Reader',
+    icon: '/icons/adobe-reader.png',
+    defaultWidth: 760,
+    defaultHeight: 580,
+    kind: 'document',
+    acceptsFileTypes: ['.pdf'],
+    showInStartMenu: false,
+    loader: () => import('./adobe-reader'),
+  },
 ];

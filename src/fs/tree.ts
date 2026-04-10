@@ -71,6 +71,13 @@ export const root: FolderNode = {
           target: { appId: 'outlook-express' },
           desktopPosition: { row: 4, col: 1 },
         },
+        {
+          kind: 'file',
+          name: 'Resume.pdf',
+          ext: '.pdf',
+          desktopPosition: { row: 4, col: 2 },
+          load: () => Promise.resolve("/pdf/test.pdf"),
+        },
       ],
     },
     {
@@ -123,6 +130,12 @@ export const root: FolderNode = {
             getLocale() === 'fr'
               ? import('../content/fr/about.md?raw').then((m) => m.default)
               : import('../content/about.md?raw').then((m) => m.default),
+        },
+        {
+          kind: 'file',
+          name: 'Resume.pdf',
+          ext: '.pdf',
+          load: () => Promise.resolve("/pdf/test.pdf"),
         },
       ],
     },

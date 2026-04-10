@@ -18,6 +18,12 @@ const registry: Record<string, FileTypeDef> = {
     defaultAppId: 'notepad',
     displayName: 'Text Document',
   },
+  '.pdf': {
+    ext: '.pdf',
+    icon: '/icons/pdf-file.png',
+    defaultAppId: 'adobe-reader',
+    displayName: 'PDF Document',
+  },
 };
 
 const FALLBACK: FileTypeDef = {

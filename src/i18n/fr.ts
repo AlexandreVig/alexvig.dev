@@ -19,7 +19,7 @@ const fr: Record<string, string> = {
   'notepad.about.description':
     'Un petit lecteur Markdown fa\u00e7on Windows XP, int\u00e9gr\u00e9 \u00e0 ce portfolio. ' +
     'Source sur [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
-  'notepad.about.footer': 'Con\u00e7u avec Astro et TypeScript.',
+  'notepad.about.footer': 'Con\u00e7u avec Astro, TypeScript et Marked.',
 
   // ── Outlook ─────────────────────────────────────────────────────────────────
   'outlook.createMail': 'Nouveau',
@@ -177,6 +177,21 @@ const fr: Record<string, string> = {
   'compose.status.sending': 'Envoi du message...',
   'compose.status.error': '\u00c9chec de l\u2019envoi. Veuillez r\u00e9essayer.',
   'compose.status.networkError': 'Erreur r\u00e9seau. Veuillez r\u00e9essayer.',
+
+  // -- Adobe Reader --
+  'reader.download': 'Enregistrer une copie',
+  'reader.print': 'Imprimer',
+  'reader.fitPage': 'Ajuster à la page',
+  'reader.fitWidth': 'Ajuster à la largeur',
+  'reader.zoomIn': 'Zoom avant',
+  'reader.zoomOut': 'Zoom arrière',
+  'reader.previousPage': 'Page précédente',
+  'reader.nextPage': 'Page suivante',
+  'reader.pageLabelLimit': 'de {0}',
+  'reader.about.description':
+    'Un lecteur PDF fa\u00e7on Adobe Reader, int\u00e9gr\u00e9 \u00e0 ce portfolio. ' +
+    'Source sur [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
+  'reader.about.footer': 'Con\u00e7u avec Astro, TypeScript et PDF.js.',
 };
 
 export default fr;

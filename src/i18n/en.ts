@@ -19,7 +19,7 @@ const en: Record<string, string> = {
   'notepad.about.description':
     'A tiny Windows XP\u2013style markdown viewer, built as part of this portfolio. ' +
     'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
-  'notepad.about.footer': 'Built with Astro and TypeScript.',
+  'notepad.about.footer': 'Built with Astro, TypeScript and Marked.',
 
   // ── Outlook ─────────────────────────────────────────────────────────────────
   'outlook.createMail': 'Create Mail',
@@ -176,6 +176,21 @@ const en: Record<string, string> = {
   'compose.status.sending': 'Sending message...',
   'compose.status.error': 'Failed to send message. Please try again.',
   'compose.status.networkError': 'Network error. Please try again.',
+
+  // -- Adobe Reader --
+  'reader.download': 'Save a Copy',
+  'reader.print': 'Print',
+  'reader.fitPage': 'Fit Page',
+  'reader.fitWidth': 'Fit Width',
+  'reader.zoomIn': 'Zoom In',
+  'reader.zoomOut': 'Zoom Out',
+  'reader.previousPage': 'Previous Page',
+  'reader.nextPage': 'Next Page',
+  'reader.pageLabelLimit': 'of {0}',
+  'reader.about.description':
+    'A Windows XP\u2013style PDF reader, built as part of this portfolio. ' +
+    'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
+  'reader.about.footer': 'Built with Astro, TypeScript and PDF.js.',
 };
 
 export default en;
