@@ -1,6 +1,8 @@
 # Contact
 
-The best ways to reach me:
+Want to get in touch? Open **Outlook** on the desktop to send me a message directly!
+
+You can also find me here:
 
 - **Email**: alexandre.vigneau@gmail.com
 - **GitHub**: [github.com/AlexandreVig](https://github.com/AlexandreVig)
