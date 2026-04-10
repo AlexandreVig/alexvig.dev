@@ -74,7 +74,16 @@ import Desktop from "../components/Desktop.astro";
       );
     });
 
-    // Open About Me on startup.
-    void launch({ path: "/My Documents/About Me.md" });
+    // Open About Me on startup, centered on screen.
+    const desktop = document.getElementById("desktop-area");
+    const dw = desktop?.clientWidth ?? window.innerWidth;
+    const dh = desktop?.clientHeight ?? window.innerHeight;
+    void launch({
+      path: "/My Documents/About Me.md",
+      args: {
+        x: Math.round((dw - 560) / 2),
+        y: Math.round((dh - 440) / 2),
+      },
+    });
   });
 </script>

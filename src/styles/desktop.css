@@ -26,13 +26,13 @@
 
 /* ── Desktop icons grid ────────────────────────────────────────────────────── */
 #desktop-icons {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 8px;
+  display: grid;
+  grid-auto-rows: 76px;
+  grid-auto-columns: 76px;
+  grid-auto-flow: column;
+  gap: 4px;
   padding: 12px;
-  max-height: 100%;
+  align-content: start;
 }
 
 /* ── Desktop icon ──────────────────────────────────────────────────────────── */

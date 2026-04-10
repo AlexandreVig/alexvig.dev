@@ -1,4 +1,5 @@
 import { launch } from '../../shell/launcher';
+import { t } from '../../i18n';
 import type { AppModule } from '../types';
 import { createMenu } from './menu';
 import { escapeHtml, renderMarkdown } from './render';
@@ -53,10 +54,8 @@ const mod: AppModule = {
                   appTitle: 'Notepad',
                   version: 'Version 1.0',
                   copyright: '© 2026 Alexandre Vigneau',
-                  description:
-                    'A tiny Windows XP–style markdown viewer, built as part of this portfolio. ' +
-                    'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
-                  footer: 'Built with Astro and TypeScript.',
+                  description: t('notepad.about.description'),
+                  footer: t('notepad.about.footer'),
                 },
               });
               break;
@@ -71,8 +70,8 @@ const mod: AppModule = {
     root.appendChild(statusBar);
 
     if (!file) {
-      body.innerHTML = '<div class="notepad__empty">Untitled</div>';
-      statusBar.textContent = 'Untitled';
+      body.innerHTML = `<div class="notepad__empty">${t('notepad.untitled')}</div>`;
+      statusBar.textContent = t('notepad.untitled');
       return {
         unmount() {
           root.classList.remove('notepad');

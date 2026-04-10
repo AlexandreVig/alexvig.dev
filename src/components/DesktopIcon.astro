@@ -8,9 +8,13 @@ interface Props {
   appId?: string | null;
   /** When true, overlay the shortcut badge on the icon. */
   isShortcut?: boolean;
+  /** Grid row (1-based). */
+  row?: number;
+  /** Grid column (1-based). */
+  col?: number;
 }
 
-const { label, icon, path = null, appId = null, isShortcut = false } = Astro.props;
+const { label, icon, path = null, appId = null, isShortcut = false, row, col } = Astro.props;
 ---
 
 <button
@@ -18,6 +22,7 @@ const { label, icon, path = null, appId = null, isShortcut = false } = Astro.pro
   data-launch-app={appId ?? ''}
   data-launch-path={path ?? ''}
   aria-label={`Open ${label}`}
+  style={row || col ? `grid-row: ${row ?? 'auto'}; grid-column: ${col ?? 'auto'};` : undefined}
 >
   <span class="desktop-icon__img-wrap">
     <img src={icon} alt="" class="desktop-icon__img" aria-hidden="true" />

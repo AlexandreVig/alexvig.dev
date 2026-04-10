@@ -13,6 +13,12 @@ const { title = "Alexandre's Computer" } = Astro.props;
 <!doctype html>
 <html lang="en">
   <head>
+    <script is:inline>
+      (function() {
+        var l = localStorage.getItem('xp-locale');
+        if (l === 'fr') document.documentElement.lang = 'fr';
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta

@@ -1,4 +1,5 @@
 import type { AppModule } from '../types';
+import { t } from '../../i18n';
 import './compose.css';
 
 const mod: AppModule = {
@@ -11,40 +12,40 @@ const mod: AppModule = {
       <div class="compose__toolbar">
         <button class="compose__btn compose__btn--send" data-action="send">
           <img src="/icons/outlook/send-recv.png" alt="" />
-          <span>Send</span>
+          <span>${t('compose.send')}</span>
         </button>
         <div class="compose__tsep"></div>
         <button class="compose__btn" disabled>
           <img src="/icons/outlook/delete.png" alt="" />
-          <span>Cut</span>
+          <span>${t('compose.cut')}</span>
         </button>
         <button class="compose__btn" disabled>
           <img src="/icons/outlook/find.png" alt="" />
-          <span>Paste</span>
+          <span>${t('compose.paste')}</span>
         </button>
         <div class="compose__tsep"></div>
         <button class="compose__btn" disabled>
           <img src="/icons/outlook/print.png" alt="" />
-          <span>Check</span>
+          <span>${t('compose.check')}</span>
         </button>
       </div>
 
       <div class="compose__fields">
         <div class="compose__field-row">
-          <label class="compose__field-label">To:</label>
+          <label class="compose__field-label">${t('compose.to')}</label>
           <input class="compose__field-input" name="to" type="text" value="alexandre.vigneau@epitech.eu" readonly tabindex="-1" />
         </div>
         <div class="compose__field-row">
-          <label class="compose__field-label">From:</label>
-          <input class="compose__field-input" name="from" type="text" placeholder="Your Name" value="${escapeAttr(prefillTo)}" />
+          <label class="compose__field-label">${t('compose.from')}</label>
+          <input class="compose__field-input" name="from" type="text" placeholder="${t('compose.placeholder.name')}" value="${escapeAttr(prefillTo)}" />
         </div>
         <div class="compose__field-row">
-          <label class="compose__field-label">Email:</label>
-          <input class="compose__field-input" name="email" type="email" placeholder="your@email.com" value="${escapeAttr(prefillEmail)}" />
+          <label class="compose__field-label">${t('compose.email')}</label>
+          <input class="compose__field-input" name="email" type="email" placeholder="${t('compose.placeholder.email')}" value="${escapeAttr(prefillEmail)}" />
         </div>
         <div class="compose__field-row">
-          <label class="compose__field-label">Subject:</label>
-          <input class="compose__field-input" name="subject" type="text" placeholder="Subject" />
+          <label class="compose__field-label">${t('compose.subject')}</label>
+          <input class="compose__field-input" name="subject" type="text" placeholder="${t('compose.placeholder.subject')}" />
         </div>
       </div>
 
@@ -52,14 +53,13 @@ const mod: AppModule = {
         <input name="website" type="text" tabindex="-1" autocomplete="off" />
       </div>
 
-      <textarea class="compose__body" name="message" placeholder="Type your message here..."></textarea>
+      <textarea class="compose__body" name="message" placeholder="${t('compose.placeholder.message')}"></textarea>
 
       <div class="compose__status">
         <span class="compose__status-text"></span>
       </div>
     `;
 
-    const toInput = root.querySelector<HTMLInputElement>('input[name="to"]')!;
     const fromInput = root.querySelector<HTMLInputElement>('input[name="from"]')!;
     const emailInput = root.querySelector<HTMLInputElement>('input[name="email"]')!;
     const subjectInput = root.querySelector<HTMLInputElement>('input[name="subject"]')!;
@@ -75,15 +75,15 @@ const mod: AppModule = {
     }
 
     function validate(): string | null {
-      if (!fromInput.value.trim()) return 'Please enter your name.';
-      if (!emailInput.value.trim()) return 'Please enter your email address.';
+      if (!fromInput.value.trim()) return t('compose.validation.name');
+      if (!emailInput.value.trim()) return t('compose.validation.email');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim()))
-        return 'Please enter a valid email address.';
-      if (!subjectInput.value.trim()) return 'Please enter a subject.';
-      if (!messageArea.value.trim()) return 'Please enter a message.';
-      if (fromInput.value.length > 80) return 'Name is too long (max 80 characters).';
-      if (subjectInput.value.length > 120) return 'Subject is too long (max 120 characters).';
-      if (messageArea.value.length > 4000) return 'Message is too long (max 4000 characters).';
+        return t('compose.validation.emailInvalid');
+      if (!subjectInput.value.trim()) return t('compose.validation.subject');
+      if (!messageArea.value.trim()) return t('compose.validation.message');
+      if (fromInput.value.length > 80) return t('compose.validation.nameTooLong');
+      if (subjectInput.value.length > 120) return t('compose.validation.subjectTooLong');
+      if (messageArea.value.length > 4000) return t('compose.validation.messageTooLong');
       return null;
     }
 
@@ -98,12 +98,12 @@ const mod: AppModule = {
 
       // Honeypot check (client-side — server also validates)
       if (honeypot.value) {
-        setStatus('Your message has been sent!');
+        setStatus(t('compose.status.sent'));
         return;
       }
 
       sending = true;
-      setStatus('Sending message...');
+      setStatus(t('compose.status.sending'));
       setFieldsDisabled(true);
 
       try {
@@ -122,15 +122,15 @@ const mod: AppModule = {
         const data = await res.json();
 
         if (res.ok && data.ok) {
-          setStatus('Your message has been sent!');
+          setStatus(t('compose.status.sent'));
           setTimeout(() => host.close(), 1200);
         } else {
-          setStatus(data.error ?? 'Failed to send message. Please try again.', true);
+          setStatus(data.error ?? t('compose.status.error'), true);
           setFieldsDisabled(false);
           sending = false;
         }
       } catch {
-        setStatus('Network error. Please try again.', true);
+        setStatus(t('compose.status.networkError'), true);
         setFieldsDisabled(false);
         sending = false;
       }

@@ -109,6 +109,8 @@ class AppHost {
         icon,
         width: manifest.defaultWidth,
         height: manifest.defaultHeight,
+        x: typeof req.args?.x === 'number' ? (req.args.x as number) : undefined,
+        y: typeof req.args?.y === 'number' ? (req.args.y as number) : undefined,
         controls: manifest.controls,
         showIcon: manifest.showWindowIcon,
         resizable: manifest.resizable,

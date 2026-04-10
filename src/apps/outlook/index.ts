@@ -1,8 +1,9 @@
 import type { AppModule } from '../types';
 import type { FolderId } from './types';
-import { folders, emails, contacts } from './data';
+import { getFolders, getEmails, contacts } from './data';
 import { createMenu } from './menu';
 import { launch } from '../../shell/launcher';
+import { t, getLocale } from '../../i18n';
 import './outlook.css';
 
 const mod: AppModule = {
@@ -19,53 +20,53 @@ const mod: AppModule = {
       <div class="outlook__toolbar">
         <button class="outlook__tbtn" data-action="create-mail">
           <img src="/icons/outlook/create-mail.png" alt="" />
-          <span>Create Mail</span>
+          <span>${t('outlook.createMail')}</span>
         </button>
         <div class="outlook__tsep"></div>
         <button class="outlook__tbtn" data-action="reply" disabled>
           <img src="/icons/outlook/reply.png" alt="" />
-          <span>Reply</span>
+          <span>${t('outlook.reply')}</span>
         </button>
         <button class="outlook__tbtn" data-action="reply-all" disabled>
           <img src="/icons/outlook/reply-all.png" alt="" />
-          <span>Reply All</span>
+          <span>${t('outlook.replyAll')}</span>
         </button>
         <button class="outlook__tbtn" data-action="forward" disabled>
           <img src="/icons/outlook/forward.png" alt="" />
-          <span>Forward</span>
+          <span>${t('outlook.forward')}</span>
         </button>
         <div class="outlook__tsep"></div>
         <button class="outlook__tbtn" data-action="print" disabled>
           <img src="/icons/outlook/print.png" alt="" />
-          <span>Print</span>
+          <span>${t('outlook.print')}</span>
         </button>
         <button class="outlook__tbtn" data-action="delete" disabled>
           <img src="/icons/outlook/delete.png" alt="" />
-          <span>Delete</span>
+          <span>${t('outlook.delete')}</span>
         </button>
         <div class="outlook__tsep"></div>
         <button class="outlook__tbtn" data-action="send-recv" disabled>
           <img src="/icons/outlook/send-recv.png" alt="" />
-          <span>Send/Recv</span>
+          <span>${t('outlook.sendRecv')}</span>
         </button>
         <button class="outlook__tbtn" data-action="addresses" disabled>
           <img src="/icons/outlook/addresses.png" alt="" />
-          <span>Addresses</span>
+          <span>${t('outlook.addresses')}</span>
         </button>
         <button class="outlook__tbtn" data-action="find" disabled>
           <img src="/icons/outlook/find.png" alt="" />
-          <span>Find</span>
+          <span>${t('outlook.find')}</span>
         </button>
       </div>
 
       <div class="outlook__main">
         <div class="outlook__sidebar">
           <div class="outlook__folders">
-            <div class="outlook__folders-header">Folders</div>
+            <div class="outlook__folders-header">${t('outlook.foldersHeader')}</div>
             <div class="outlook__folders-tree"></div>
           </div>
           <div class="outlook__contacts">
-            <div class="outlook__contacts-header">Contacts</div>
+            <div class="outlook__contacts-header">${t('outlook.contactsHeader')}</div>
             <div class="outlook__contacts-list"></div>
           </div>
         </div>
@@ -74,9 +75,9 @@ const mod: AppModule = {
             <div class="outlook__list-header">
               <div class="outlook__list-col outlook__list-col--prio"></div>
               <div class="outlook__list-col outlook__list-col--attach"></div>
-              <div class="outlook__list-col outlook__list-col--from">From</div>
-              <div class="outlook__list-col outlook__list-col--subject">Subject</div>
-              <div class="outlook__list-col outlook__list-col--date">Received</div>
+              <div class="outlook__list-col outlook__list-col--from">${t('outlook.listFrom')}</div>
+              <div class="outlook__list-col outlook__list-col--subject">${t('outlook.listSubject')}</div>
+              <div class="outlook__list-col outlook__list-col--date">${t('outlook.listReceived')}</div>
             </div>
             <div class="outlook__list-body"></div>
           </div>
@@ -86,7 +87,7 @@ const mod: AppModule = {
 
       <div class="outlook__status">
         <span class="outlook__status-count"></span>
-        <span class="outlook__status-online">Working Online</span>
+        <span class="outlook__status-online">${t('outlook.workingOnline')}</span>
       </div>
     `;
 
@@ -109,9 +110,7 @@ const mod: AppModule = {
                   appTitle: 'Outlook Express',
                   version: 'Version 6.0',
                   copyright: '\u00a9 2026 Alexandre Vigneau',
-                  description:
-                    'A Windows XP\u2013style email client, doubling as a contact form. ' +
-                    'Part of this portfolio.',
+                  description: t('outlook.about.description'),
                 },
               });
             }
@@ -153,7 +152,7 @@ const mod: AppModule = {
       `;
       foldersTree.appendChild(rootNode);
 
-      for (const folder of folders) {
+      for (const folder of getFolders()) {
         const node = document.createElement('div');
         node.className = 'outlook__tree-node outlook__tree-node--child';
         if (folder.id === currentFolder) node.classList.add('outlook__tree-node--active');
@@ -182,8 +181,7 @@ const mod: AppModule = {
       contactsList.innerHTML = '';
       const note = document.createElement('div');
       note.className = 'outlook__contacts-note';
-      note.textContent =
-        'There are no contacts to display. Click on Contacts to create a new contact.';
+      note.textContent = t('outlook.noContacts');
       // Only show note if no contacts
       if (contacts.length === 0) {
         contactsList.appendChild(note);
@@ -203,14 +201,14 @@ const mod: AppModule = {
     // ── Render email list ─────────────────────────────────────────────────
     function renderList(): void {
       listBody.innerHTML = '';
-      const folderEmails = emails.filter((e) => e.folder === currentFolder);
+      const folderEmails = getEmails().filter((e) => e.folder === currentFolder);
 
       if (folderEmails.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'outlook__list-empty';
-        empty.textContent = 'There are no items to show in this view.';
+        empty.textContent = t('outlook.noItems');
         listBody.appendChild(empty);
-        statusCount.textContent = '0 message(s)';
+        statusCount.textContent = t('outlook.messageCountZero');
         return;
       }
 
@@ -265,30 +263,31 @@ const mod: AppModule = {
       }
 
       const unreadCount = folderEmails.filter((e) => e.unread).length;
-      statusCount.textContent = `${folderEmails.length} message(s), ${unreadCount} unread`;
+      statusCount.textContent = t('outlook.messageCount', folderEmails.length, unreadCount);
     }
 
     // ── Render reading pane ───────────────────────────────────────────────
     function renderReader(): void {
-      const email = selectedEmailId ? emails.find((e) => e.id === selectedEmailId) : null;
+      const email = selectedEmailId ? getEmails().find((e) => e.id === selectedEmailId) : null;
       if (!email) {
         reader.innerHTML = '';
         return;
       }
 
+      const loc = getLocale();
       reader.innerHTML = `
         <div class="outlook__reader-header">
           <div class="outlook__reader-field">
-            <b>From:</b>&nbsp; ${escapeHtml(email.from.name)} &lt;${escapeHtml(email.from.email)}&gt;
+            <b>${t('outlook.readerFrom')}</b>&nbsp; ${escapeHtml(email.from.name)} &lt;${escapeHtml(email.from.email)}&gt;
           </div>
           <div class="outlook__reader-field">
-            <b>Date:</b>&nbsp; ${new Date(email.date).toLocaleString()}
+            <b>${t('outlook.readerDate')}</b>&nbsp; ${new Date(email.date).toLocaleString(loc)}
           </div>
           <div class="outlook__reader-field">
-            <b>To:</b>&nbsp; ${escapeHtml(email.to)}
+            <b>${t('outlook.readerTo')}</b>&nbsp; ${escapeHtml(email.to)}
           </div>
           <div class="outlook__reader-field">
-            <b>Subject:</b>&nbsp; ${escapeHtml(email.subject)}
+            <b>${t('outlook.readerSubject')}</b>&nbsp; ${escapeHtml(email.subject)}
           </div>
         </div>
         <div class="outlook__reader-body">${email.bodyHtml}</div>
@@ -338,6 +337,7 @@ function escapeHtml(str: string): string {
 }
 
 function formatDate(iso: string): string {
+  const loc = getLocale();
   const d = new Date(iso);
   const now = new Date();
   const isToday =
@@ -345,9 +345,9 @@ function formatDate(iso: string): string {
     d.getMonth() === now.getMonth() &&
     d.getDate() === now.getDate();
   if (isToday) {
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
   }
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString(loc, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export default mod;

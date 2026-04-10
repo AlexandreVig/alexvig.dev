@@ -1,10 +1,17 @@
 export type FsNode = FolderNode | FileNode | ShortcutNode;
 
+/** Grid position for desktop icons (1-based row/col). */
+export interface DesktopPosition {
+  row: number;
+  col: number;
+}
+
 export interface FolderNode {
   kind: 'folder';
   name: string;
   icon?: string;
   children: FsNode[];
+  desktopPosition?: DesktopPosition;
 }
 
 export interface FileNode {
@@ -15,6 +22,7 @@ export interface FileNode {
   ext: string;
   /** Lazy content loader — enables Vite code-splitting per file. */
   load: () => Promise<string>;
+  desktopPosition?: DesktopPosition;
 }
 
 /**
@@ -26,6 +34,7 @@ export interface ShortcutNode {
   name: string;
   icon?: string;
   target: { appId: string; path?: string };
+  desktopPosition?: DesktopPosition;
 }
 
 /** Resolved runtime handle passed to apps. */

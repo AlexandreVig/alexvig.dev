@@ -7,6 +7,7 @@ import {
   parseAddress,
 } from './address';
 import { launch } from '../../shell/launcher';
+import { t } from '../../i18n';
 import type { AppModule } from '../types';
 import { explorerInstances } from './instances';
 import { createMenu } from './menu';
@@ -35,24 +36,24 @@ const mod: AppModule = {
       <div class="explorer__toolbar">
         <button class="explorer__tbtn" data-action="back" disabled>
           <img src="/icons/explorer/back.png" alt="" />
-          <span>Back</span>
+          <span>${t('explorer.back')}</span>
           <span class="explorer__tbtn-caret"></span>
         </button>
         <button class="explorer__tbtn explorer__tbtn--icon" data-action="forward" disabled>
           <img src="/icons/explorer/forward.png" alt="" />
           <span class="explorer__tbtn-caret"></span>
         </button>
-        <button class="explorer__tbtn explorer__tbtn--icon" data-action="up" disabled title="Up">
+        <button class="explorer__tbtn explorer__tbtn--icon" data-action="up" disabled title="${t('explorer.up')}">
           <img src="/icons/explorer/up.png" alt="" />
         </button>
         <div class="explorer__tsep"></div>
         <button class="explorer__tbtn" data-action="search">
           <img src="/icons/explorer/search.png" alt="" />
-          <span>Search</span>
+          <span>${t('explorer.search')}</span>
         </button>
         <button class="explorer__tbtn" data-action="folders">
           <img src="/icons/explorer/folder.png" alt="" />
-          <span>Folders</span>
+          <span>${t('explorer.folders')}</span>
         </button>
         <div class="explorer__tsep"></div>
         <button class="explorer__tbtn explorer__tbtn--icon" data-action="views" title="Views">
@@ -62,7 +63,7 @@ const mod: AppModule = {
       </div>
 
       <div class="explorer__address">
-        <span class="explorer__address-label">Address</span>
+        <span class="explorer__address-label">${t('explorer.address')}</span>
         <div class="explorer__address-combo">
           <img class="explorer__address-icon" alt="" />
           <input class="explorer__address-input" type="text" spellcheck="false" />
@@ -70,7 +71,7 @@ const mod: AppModule = {
         </div>
         <button class="explorer__address-go" data-action="go">
           <img src="/icons/explorer/forward.png" alt="" />
-          <span>Go</span>
+          <span>${t('explorer.go')}</span>
         </button>
       </div>
 
@@ -95,10 +96,8 @@ const mod: AppModule = {
                   appTitle: 'Windows Explorer',
                   version: 'Version 1.0',
                   copyright: '\u00a9 2026 Alexandre Vigneau',
-                  description:
-                    'A Windows XP\u2013style file explorer, part of this portfolio. ' +
-                    'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
-                  footer: 'Built with Astro and TypeScript.',
+                  description: t('explorer.about.description'),
+                  footer: t('explorer.about.footer'),
                 },
               });
             }
@@ -149,7 +148,7 @@ const mod: AppModule = {
       if (children.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'explorer__empty';
-        empty.textContent = 'This folder is empty.';
+        empty.textContent = t('explorer.empty');
         body.appendChild(empty);
       } else {
         for (const child of children) {
@@ -157,7 +156,7 @@ const mod: AppModule = {
         }
       }
 
-      status.textContent = `${children.length} item${children.length === 1 ? '' : 's'}`;
+      status.textContent = t(children.length === 1 ? 'explorer.items.one' : 'explorer.items.other', children.length);
       host.setTitle(title);
     }
 
