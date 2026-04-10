@@ -3,20 +3,10 @@ import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
-const RATE_LIMIT_MAX = 5;
-const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour
-
-const rateMap = new Map<string, { count: number; resetAt: number }>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return false;
-  }
-  entry.count++;
-  return entry.count > RATE_LIMIT_MAX;
+interface Env {
+  CONTACT_RATE_LIMITER: {
+    limit(opts: { key: string }): Promise<{ success: boolean }>;
+  };
 }
 
 function isValidEmail(email: string): boolean {
@@ -29,7 +19,9 @@ export const POST: APIRoute = async ({ request }) => {
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     'unknown';
 
-  if (isRateLimited(ip)) {
+  const { CONTACT_RATE_LIMITER } = env as unknown as Env;
+  const { success } = await CONTACT_RATE_LIMITER.limit({ key: ip });
+  if (!success) {
     return new Response(
       JSON.stringify({ ok: false, error: 'Too many requests. Please try again later.' }),
       { status: 429, headers: { 'Content-Type': 'application/json' } },
@@ -74,8 +66,8 @@ export const POST: APIRoute = async ({ request }) => {
   if (message.length > 4000) return jsonError('Message is too long.', 400);
 
   // Send via Resend
-  const apiKey = (env as Record<string, any>).RESEND_API_KEY;
-  if (!apiKey) {
+  const apiKey = (env as Record<string, unknown>).RESEND_API_KEY;
+  if (typeof apiKey !== 'string' || !apiKey) {
     console.error('[contact] RESEND_API_KEY is not configured');
     return jsonError('Email service is not configured.', 500);
   }

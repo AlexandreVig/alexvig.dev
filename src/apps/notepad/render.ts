@@ -32,7 +32,9 @@ async function getParser(): Promise<MarkedParseFn> {
   marked.use({
     renderer: {
       link({ href, title, text }) {
-        return `<a href="${href}" target="_blank" rel="noreferrer">${title ? ` title="${title}>"` : ''}${text}</a>`;
+        const safeHref = href ? href.replace(/"/g, '&quot;') : '';
+        const titleAttr = title ? ` title="${title.replace(/"/g, '&quot;')}"` : '';
+        return `<a href="${safeHref}"${titleAttr} target="_blank" rel="noreferrer">${text}</a>`;
       },
     },
   });

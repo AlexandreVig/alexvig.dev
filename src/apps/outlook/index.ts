@@ -160,8 +160,8 @@ const mod: AppModule = {
         const unreadBadge = folder.unread ? ` (${folder.unread})` : '';
         const bold = folder.unread ? ' outlook__tree-label--bold' : '';
         node.innerHTML = `
-          <img src="${folder.icon}" class="outlook__tree-icon" alt="" />
-          <span class="outlook__tree-label${bold}">${folder.name}${unreadBadge}</span>
+          <img src="${escapeHtml(folder.icon)}" class="outlook__tree-icon" alt="" />
+          <span class="outlook__tree-label${bold}">${escapeHtml(folder.name)}${unreadBadge}</span>
         `;
         node.addEventListener(
           'click',
@@ -191,8 +191,8 @@ const mod: AppModule = {
         const item = document.createElement('div');
         item.className = 'outlook__contact-item';
         item.innerHTML = `
-          <img src="${contact.icon}" class="outlook__contact-icon" alt="" />
-          <span>${contact.name}</span>
+          <img src="${escapeHtml(contact.icon)}" class="outlook__contact-icon" alt="" />
+          <span>${escapeHtml(contact.name)}</span>
         `;
         contactsList.appendChild(item);
       }
@@ -290,8 +290,16 @@ const mod: AppModule = {
             <b>${t('outlook.readerSubject')}</b>&nbsp; ${escapeHtml(email.subject)}
           </div>
         </div>
-        <div class="outlook__reader-body">${email.bodyHtml}</div>
+        <div class="outlook__reader-body"></div>
       `;
+
+      // Render email body in a sandboxed iframe to prevent XSS
+      const readerBody = root.querySelector<HTMLElement>('.outlook__reader-body')!;
+      const iframe = document.createElement('iframe');
+      iframe.sandbox.add('allow-same-origin');
+      iframe.className = 'outlook__reader-iframe';
+      iframe.srcdoc = email.bodyHtml;
+      readerBody.appendChild(iframe);
     }
 
     // ── Master render ─────────────────────────────────────────────────────

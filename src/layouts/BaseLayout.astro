@@ -11,12 +11,19 @@ const { title = "Alexandre's Computer" } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-default-lang>
   <head>
     <script is:inline>
       (function() {
         var l = localStorage.getItem('xp-locale');
-        if (l === 'fr') document.documentElement.lang = 'fr';
+        if (l === 'fr') {
+          document.documentElement.lang = 'fr';
+        } else if (l === 'en') {
+          document.documentElement.lang = 'en';
+        } else if (navigator.language && navigator.language.slice(0, 2).toLowerCase() === 'fr') {
+          document.documentElement.lang = 'fr';
+        }
+        document.documentElement.removeAttribute('data-default-lang');
       })();
     </script>
     <meta charset="UTF-8" />

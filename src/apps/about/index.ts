@@ -6,6 +6,11 @@ const mod: AppModule = {
   mount({ root, args, host }) {
     const a = args as unknown as AboutArgs;
 
+    if (typeof a.appTitle !== 'string' || typeof a.appIcon !== 'string') {
+      root.textContent = 'Invalid About dialog arguments.';
+      return;
+    }
+
     host.setTitle(`About ${a.appTitle}`);
     root.classList.add('about');
 

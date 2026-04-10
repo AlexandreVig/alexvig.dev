@@ -458,9 +458,14 @@
 }
 
 .outlook__reader-body {
-  padding: 8px;
-  font-size: 11px;
-  line-height: 1.5;
+  padding: 0;
+  flex: 1;
+}
+
+.outlook__reader-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
 }
 
 /* ── Status bar ──────────────────────────────────────────────────────────── */

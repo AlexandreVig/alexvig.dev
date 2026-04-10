@@ -8,10 +8,13 @@ compatibility_flags = ["nodejs_compat_v2"]
 # Secrets (set via `wrangler secret put RESEND_API_KEY`):
 # - RESEND_API_KEY: API key for Resend email service (used by /api/contact)
 
-# Future bindings (KV, D1, etc.) go here
-# [[kv_namespaces]]
-# binding = "MY_KV"
-# id = "xxx"
+[[ratelimits]]
+name = "CONTACT_RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
 
 [observability]
-enabled = false
+enabled = true

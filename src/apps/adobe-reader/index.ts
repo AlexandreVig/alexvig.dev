@@ -33,6 +33,7 @@ const mod: AppModule = {
     const canvases: HTMLCanvasElement[] = [];
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     let observer: IntersectionObserver | null = null;
+    let zoomGeneration = 0;
 
     // Viewport
     const viewport = document.createElement('div');
@@ -159,7 +160,9 @@ const mod: AppModule = {
 
     // Load PDF
     const loadingTask = pdfjsLib.getDocument(pdfUrl);
+    signal.addEventListener('abort', () => loadingTask.destroy(), { once: true });
     pdfDoc = await loadingTask.promise;
+    if (signal.aborted) return;
     totalPages = pdfDoc.numPages;
 
     pageContainer.innerHTML = '';
@@ -226,6 +229,7 @@ const mod: AppModule = {
     }
 
     async function applyZoom() {
+      const gen = ++zoomGeneration;
       currentZoom = computeScale();
       toolbar.setZoom(currentZoom);
       rendered.clear();
@@ -234,6 +238,7 @@ const mod: AppModule = {
 
       // Re-render all visible pages
       for (const canvas of canvases) {
+        if (gen !== zoomGeneration || signal.aborted) return;
         if (isVisible(canvas)) {
           const pageNum = parseInt(canvas.dataset.page!, 10);
           await renderPage(pageNum);
