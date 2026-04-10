@@ -24,7 +24,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'About Me.md',
-          icon: '/icons/user.png',
+          icon: '/icons/user-2.png',
           ext: '.md',
           load: () => import('../content/about.md?raw').then((m) => m.default),
         },
@@ -73,7 +73,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'About Me.md',
-          icon: '/icons/user.png',
+          icon: '/icons/user-2.png',
           ext: '.md',
           load: () => import('../content/about.md?raw').then((m) => m.default),
         },

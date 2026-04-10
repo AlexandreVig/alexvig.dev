@@ -2,26 +2,48 @@
 
 ## Languages
 
-- TypeScript / JavaScript
-- Go
-- Python
-- Rust
+- **TypeScript** — my daily driver (and yes, way better than plain JS)
+- **Python**
+- **C** / **C++**
+- **Bash**
 
 ## Frontend
 
-- React, Astro, Svelte
-- CSS (plain, modules, Tailwind)
-- Vite, Webpack
+- **Vue** / **Nuxt**
+- **Astro**
+- HTML & CSS (plain, Tailwind, and a bit of SCSS)
+- Testing: **Vitest**, **Jest**, **Playwright**
 
-## Backend & infra
+## Backend & data
 
-- Node.js, Bun, Deno
-- PostgreSQL, Redis
-- Docker, Kubernetes
-- Cloudflare Workers
+- **Node.js**, **Bun**
+- **PostgreSQL**, **MongoDB**, **Redis**, **SQLite**
+- Low-code stack: **WeWeb** + **Xano** — shipped to production at Finmoove
 
-## Tooling
+## Infra, cloud & devops
 
-- Git, GitHub Actions
-- Linux / shell
-- Testing: Vitest, Playwright
+- **Docker**, **Kubernetes**
+- **Terraform**, **Ansible**
+- **GitHub Actions**
+- **GCP**, **Cloudflare** (Workers, Pages)
+- **Linux**, **Git**
+
+## Networking
+
+- Deep dive on the **OSI stack** — every layer, in earnest
+- **TCP** / **UDP** (with a soft spot for **QUIC** — UDP should win)
+- **VPN protocols** — reimplemented **WireGuard** from the spec in Python
+- **Wireshark**, for when packets misbehave
+
+## Security
+
+- Crypto basics: hashing, symmetric & asymmetric encryption
+- Network architecture: bastions, segmentation
+- **SSH hardening**
+- Certificates and Certificate Authorities
+
+## AI / ML
+
+- **scikit-learn** for classical ML
+- **Ollama** for local models
+- **OpenAI** and **OpenRouter** SDKs for hosted inference
