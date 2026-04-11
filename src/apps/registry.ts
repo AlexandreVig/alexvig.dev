@@ -81,4 +81,16 @@ export const apps: AppManifest[] = [
     showInStartMenu: false,
     loader: () => import('./adobe-reader'),
   },
+  {
+    id: 'bsod',
+    title: 'BSOD',
+    icon: '/icons/notepad.png',
+    defaultWidth: 0,
+    defaultHeight: 0,
+    kind: 'multi',
+    acceptsFileTypes: ['.exe'],
+    showInStartMenu: false,
+    showInTaskbar: false,
+    loader: () => import('./bsod'),
+  },
 ];

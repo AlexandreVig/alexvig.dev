@@ -17,7 +17,7 @@ const items = desktopNodes();
               icon={node.icon ?? iconForNode(node)}
               appId={node.target.appId}
               path={node.target.path}
-              isShortcut
+              isShortcut={node.displayShortcutArrow !== false}
               row={pos?.row}
               col={pos?.col}
             />

@@ -24,6 +24,12 @@ const registry: Record<string, FileTypeDef> = {
     defaultAppId: 'adobe-reader',
     displayName: 'PDF Document',
   },
+  '.exe': {
+    ext: '.exe',
+    icon: '/icons/notepad.png',
+    defaultAppId: 'bsod',
+    displayName: 'Application',
+  },
 };
 
 const FALLBACK: FileTypeDef = {

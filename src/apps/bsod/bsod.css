@@ -1,0 +1,50 @@
+.bsod {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #0000aa;
+  color: #fff;
+  font-family: 'Lucida Console', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  user-select: none;
+  padding: 40px;
+}
+
+.bsod-header {
+  background: #aaa;
+  color: #0000aa;
+  padding: 2px 12px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  letter-spacing: 1px;
+}
+
+.bsod-body {
+  max-width: 640px;
+  width: 100%;
+  font-weight: bold;
+}
+
+.bsod-body p {
+  margin: 0 0 20px;
+}
+
+.bsod-continue {
+  text-align: center;
+  margin-top: 32px;
+}
+
+.bsod-cursor {
+  animation: bsod-blink 1s step-end infinite;
+}
+
+@keyframes bsod-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}

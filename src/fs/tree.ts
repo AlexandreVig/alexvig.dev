@@ -7,29 +7,50 @@ export const root: FolderNode = {
   children: [
     {
       kind: 'folder',
+      name: 'Recycle Bin',
+      icon: '/icons/recycle-bin-32.png',
+      children: [
+        {
+          kind: 'file',
+          name: 'totally-not-a-virus.exe',
+          ext: '.exe',
+          load: () => Promise.resolve(''),
+        }
+      ],
+    },
+    {
+      kind: 'folder',
       name: 'Desktop',
       icon: '/icons/folder-32.png',
       children: [
         {
           kind: 'shortcut',
+          name: 'Recycle Bin',
+          icon: '/icons/recycle-bin-32.png',
+          target: { appId: 'explorer', path: '/Recycle Bin' },
+          desktopPosition: { row: 1, col: 1 },
+          displayShortcutArrow: false,
+        },
+        {
+          kind: 'shortcut',
           name: 'My Computer',
           icon: '/icons/my-computer.png',
           target: { appId: 'explorer', path: '/' },
-          desktopPosition: { row: 1, col: 1 },
+          desktopPosition: { row: 2, col: 1 },
         },
         {
           kind: 'shortcut',
           name: 'My Documents',
           icon: '/icons/folder-32.png',
           target: { appId: 'explorer', path: '/My Documents' },
-          desktopPosition: { row: 2, col: 1 },
+          desktopPosition: { row: 3, col: 1 },
         },
         {
           kind: 'shortcut',
           name: 'Projects',
           icon: '/icons/folder-32.png',
           target: { appId: 'explorer', path: '/My Documents/Projects' },
-          desktopPosition: { row: 3, col: 1 },
+          desktopPosition: { row: 4, col: 1 },
         },
         {
           kind: 'file',
@@ -69,7 +90,7 @@ export const root: FolderNode = {
           name: 'Outlook Express',
           icon: '/icons/outlook.png',
           target: { appId: 'outlook-express' },
-          desktopPosition: { row: 4, col: 1 },
+          desktopPosition: { row: 5, col: 1 },
         },
         {
           kind: 'file',

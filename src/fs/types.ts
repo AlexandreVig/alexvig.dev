@@ -35,6 +35,7 @@ export interface ShortcutNode {
   icon?: string;
   target: { appId: string; path?: string };
   desktopPosition?: DesktopPosition;
+  displayShortcutArrow?: boolean; // Defaults to true
 }
 
 /** Resolved runtime handle passed to apps. */
