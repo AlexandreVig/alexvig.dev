@@ -2,7 +2,8 @@ import { launch } from '../../lib/launcher';
 import { t } from '../../../../i18n';
 import type { AppModule } from '../types';
 import { createMenu } from './menu';
-import { escapeHtml, renderMarkdown } from './render';
+import { escapeHtml } from '../../../../core/html';
+import { renderMarkdown } from './render';
 import './notepad.css';
 
 const mod: AppModule = {

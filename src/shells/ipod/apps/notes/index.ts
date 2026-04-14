@@ -8,6 +8,7 @@
  * content edit, not a UI edit — this module only renders what it finds.
  */
 
+import { escapeHtml } from '../../../../core/html';
 import type { IpodAppModule } from '../types';
 import { renderMarkdown } from '../../lib/markdown';
 import { NOTES, type Note } from './notes-list';
@@ -22,12 +23,6 @@ const mod: IpodAppModule = {
     root.innerHTML = `<div class="ipod-notes__screen" id="ipod-notes-screen"></div>`;
     const screen = root.querySelector<HTMLElement>('#ipod-notes-screen')!;
 
-    const escape = (s: string) =>
-      s
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
     const renderList = () => {
       host.setTitle(t('ipod.app.notes'));
       screen.scrollTop = 0;
@@ -35,10 +30,10 @@ const mod: IpodAppModule = {
         <ul class="ipod-notes__list">
           ${NOTES.map(
             (n) => `
-              <li class="ipod-notes__list-row" data-note-id="${escape(n.id)}">
+              <li class="ipod-notes__list-row" data-note-id="${escapeHtml(n.id)}">
                 <div class="ipod-notes__list-meta">
-                  <div class="ipod-notes__list-title">${escape(n.title)}</div>
-                  <div class="ipod-notes__list-snippet">${escape(n.snippet)}</div>
+                  <div class="ipod-notes__list-title">${escapeHtml(n.title)}</div>
+                  <div class="ipod-notes__list-snippet">${escapeHtml(n.snippet)}</div>
                 </div>
                 <div class="ipod-notes__list-chev" aria-hidden="true">›</div>
               </li>
@@ -67,9 +62,9 @@ const mod: IpodAppModule = {
       screen.scrollTop = 0;
       screen.innerHTML = `
         <div class="ipod-notes__page">
-          <button type="button" class="ipod-notes__back">${escape(t('ipod.notes.back'))}</button>
-          <div class="ipod-notes__header">${escape(note.title)}</div>
-          <div class="ipod-notes__body" aria-live="polite">${escape(t('ipod.common.loading'))}</div>
+          <button type="button" class="ipod-notes__back">${escapeHtml(t('ipod.notes.back'))}</button>
+          <div class="ipod-notes__header">${escapeHtml(note.title)}</div>
+          <div class="ipod-notes__body" aria-live="polite">${escapeHtml(t('ipod.common.loading'))}</div>
         </div>
       `;
 

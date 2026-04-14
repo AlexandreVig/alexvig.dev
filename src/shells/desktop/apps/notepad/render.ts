@@ -48,11 +48,3 @@ export async function renderMarkdown(source: string): Promise<string> {
   return parser(source, { async: false });
 }
 
-export function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}

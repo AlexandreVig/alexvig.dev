@@ -1,3 +1,4 @@
+import { escapeAttr, escapeHtml } from '../../../../core/html';
 import type { AppModule } from '../types';
 import type { AboutArgs } from './types';
 import './about.css';
@@ -72,19 +73,6 @@ function renderInline(source: string): string {
     (_m, text: string, href: string) =>
       `<a href="${escapeAttr(href)}" target="_blank" rel="noreferrer noopener">${text}</a>`,
   );
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function escapeAttr(s: string): string {
-  return escapeHtml(s);
 }
 
 export default mod;

@@ -9,15 +9,10 @@
  * they tapped — exactly like a first-gen iPod Touch with Wi-Fi off.
  */
 
+import { escapeHtml } from '../../../../core/html';
 import type { IpodAppModule } from '../types';
 import { t } from '../../../../i18n';
 import './decorative.css';
-
-const escape = (s: string) =>
-  s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 
 const mod: IpodAppModule = {
   mount({ root, host }) {
@@ -25,11 +20,11 @@ const mod: IpodAppModule = {
     root.innerHTML = `
       <div class="ipod-decorative__scrim">
         <div class="ipod-decorative__alert" role="alertdialog" aria-modal="true">
-          <div class="ipod-decorative__alert-title">${escape(t('ipod.decorative.alertTitle'))}</div>
+          <div class="ipod-decorative__alert-title">${escapeHtml(t('ipod.decorative.alertTitle'))}</div>
           <div class="ipod-decorative__alert-body">
-            ${escape(t('ipod.decorative.alertBody'))}
+            ${escapeHtml(t('ipod.decorative.alertBody'))}
           </div>
-          <button type="button" class="ipod-decorative__alert-ok">${escape(t('ipod.decorative.ok'))}</button>
+          <button type="button" class="ipod-decorative__alert-ok">${escapeHtml(t('ipod.decorative.ok'))}</button>
         </div>
       </div>
     `;

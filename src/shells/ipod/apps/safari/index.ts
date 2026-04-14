@@ -7,6 +7,7 @@
  * content edit, not a UI edit — this module only renders what it finds.
  */
 
+import { escapeHtml } from '../../../../core/html';
 import type { IpodAppModule } from '../types';
 import { renderMarkdown } from '../../lib/markdown';
 import { PROJECTS, type Project } from './projects';
@@ -41,12 +42,6 @@ const mod: IpodAppModule = {
 
     navBack.addEventListener('click', () => renderList(), { signal });
 
-    const escape = (s: string) =>
-      s
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
     const renderList = () => {
       host.setTitle(t('ipod.app.safari'));
       urlEl.textContent = t('ipod.safari.bookmarks');
@@ -56,11 +51,11 @@ const mod: IpodAppModule = {
         <ul class="ipod-safari__bookmarks">
           ${PROJECTS.map(
             (p) => `
-              <li class="ipod-safari__bookmark" data-project-id="${escape(p.id)}">
+              <li class="ipod-safari__bookmark" data-project-id="${escapeHtml(p.id)}">
                 <div class="ipod-safari__bookmark-icon" aria-hidden="true">🔖</div>
                 <div class="ipod-safari__bookmark-meta">
-                  <div class="ipod-safari__bookmark-title">${escape(p.title)}</div>
-                  <div class="ipod-safari__bookmark-desc">${escape(p.description)}</div>
+                  <div class="ipod-safari__bookmark-title">${escapeHtml(p.title)}</div>
+                  <div class="ipod-safari__bookmark-desc">${escapeHtml(p.description)}</div>
                 </div>
                 <div class="ipod-safari__bookmark-chev" aria-hidden="true">›</div>
               </li>
@@ -91,7 +86,7 @@ const mod: IpodAppModule = {
       urlEl.textContent = project.url;
       navBack.hidden = false;
       viewport.scrollTop = 0;
-      viewport.innerHTML = `<div class="ipod-safari__loading">${escape(t('ipod.common.loading'))}</div>`;
+      viewport.innerHTML = `<div class="ipod-safari__loading">${escapeHtml(t('ipod.common.loading'))}</div>`;
 
       try {
         const source = await project.load();
@@ -105,8 +100,8 @@ const mod: IpodAppModule = {
         console.error('[ipod/safari] failed to load project', err);
         viewport.innerHTML = `
           <div class="ipod-safari__error">
-            <strong>${escape(t('ipod.safari.errorTitle'))}</strong>
-            <p>${escape(t('ipod.safari.errorBody'))}</p>
+            <strong>${escapeHtml(t('ipod.safari.errorTitle'))}</strong>
+            <p>${escapeHtml(t('ipod.safari.errorBody'))}</p>
           </div>
         `;
       }

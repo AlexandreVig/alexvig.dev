@@ -1,3 +1,4 @@
+import { escapeHtml } from '../../../../core/html';
 import type { AppModule } from '../types';
 import type { FolderId } from './types';
 import { getFolders, getEmails, contacts } from './data';
@@ -336,14 +337,6 @@ const mod: AppModule = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 function formatDate(iso: string): string {
   const loc = getLocale();
   const d = new Date(iso);
