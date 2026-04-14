@@ -1,10 +1,19 @@
-# Windows XP Portfolio — Developer Documentation
+# Computer Portfolio — Developer Documentation
 
-A Windows XP–themed portfolio built with Astro. The page loads a desktop shell;
-windows, apps, and file content are created dynamically on the client. Content
-lives in markdown files inside a virtual file system, and all interactions
-(opening a file, launching an app, navigating folders) flow through a single
-shell launcher.
+A dual-shell portfolio built with Astro. The page ships two independent UIs
+that share the same Markdown content:
+
+- **Desktop shell** — a Windows XP–themed environment with a window manager,
+  taskbar, start menu, and a small set of apps (Notepad, Explorer, Adobe
+  Reader, Outlook Express, Minesweeper, …).
+- **iPod shell** — an iPod Touch 1G / iOS 1 mobile environment with a status
+  bar, home-screen icon grid, dock, and slide-up app frames.
+
+A synchronous script in `<head>` picks one shell based on the viewport and
+pointer type, a CSS rule hides the loser instantly (no FOUC), and a module
+script then deletes the loser's DOM and dynamic-imports only the winning
+shell's bootstrap. Each shell is a full Vite chunk tree of its own — mobile
+visitors never download the desktop code, and vice-versa.
 
 ---
 
@@ -12,56 +21,63 @@ shell launcher.
 
 1. [Mental model](#mental-model)
 2. [Project structure](#project-structure)
-3. [Layered architecture](#layered-architecture)
-4. [The virtual file system (`src/fs/`)](#the-virtual-file-system-srcfs)
-5. [The shell (`src/shell/`)](#the-shell-srcshell)
-6. [The window manager (`src/lib/`)](#the-window-manager-srclib)
-7. [The app host and apps (`src/apps/`)](#the-app-host-and-apps-srcapps)
-8. [Components & layout (`src/components/`, `src/pages/`, `src/layouts/`)](#components--layout-srccomponents-srcpages-srclayouts)
-9. [Styling (`src/styles/`)](#styling-srcstyles)
-10. [The event bus](#the-event-bus)
-11. [Launch lifecycle walkthroughs](#launch-lifecycle-walkthroughs)
-12. [Recipes](#recipes)
+3. [Shell selection](#shell-selection)
+4. [`src/core/` — shell-agnostic contracts](#srccore--shell-agnostic-contracts)
+5. [`src/i18n/` — typed translations](#srci18n--typed-translations)
+6. [Desktop shell](#desktop-shell)
+   - [Virtual file system](#virtual-file-system)
+   - [Shell launcher & file types](#shell-launcher--file-types)
+   - [Window manager](#window-manager)
+   - [App host and app types](#app-host-and-app-types)
+   - [Shared menu bar](#shared-menu-bar)
+   - [Apps](#desktop-apps)
+   - [Clippy](#clippy)
+7. [iPod shell](#ipod-shell)
+8. [Astro layer and event bus](#astro-layer-and-event-bus)
+9. [Styling](#styling)
+10. [Tooling & tests](#tooling--tests)
+11. [Recipes](#recipes)
     - [Add a markdown file](#add-a-markdown-file)
     - [Add a folder or desktop shortcut](#add-a-folder-or-desktop-shortcut)
     - [Add a file type](#add-a-file-type)
-    - [Add a simple app (singleton)](#add-a-simple-app-singleton)
-    - [Add a document app](#add-a-document-app)
-    - [Add a multi-instance app](#add-a-multi-instance-app)
-    - [Add an interactive app or game](#add-an-interactive-app-or-game)
-13. [Architectural principles](#architectural-principles)
+    - [Add a desktop app](#add-a-desktop-app)
+    - [Add an iPod app](#add-an-ipod-app)
+    - [Add a translation key](#add-a-translation-key)
+12. [Architectural principles](#architectural-principles)
 
 ---
 
 ## Mental model
 
-This codebase is organized like the real Windows XP shell:
+Each shell is organized like the real OS it imitates:
 
-- A **virtual file system** (VFS) defines folders, files, and shortcuts in a
-  declarative tree.
-- A **file-type registry** maps extensions (`.md`, `.txt`, …) to a default app.
-- A **shell launcher** is the single entry point for "open something". You give
-  it a path, or an app ID, or both. It figures out what to do.
-- A **window manager** creates and destroys window DOM nodes at runtime, keyed
-  by **instance ID**. It knows about geometry, drag/resize, focus, z-index — it
-  does not know about apps or files.
-- An **app host** bridges the shell and the window manager. It loads app modules
-  lazily, keeps an instance map, and forwards lifecycle events.
-- **Apps** are small TypeScript modules that receive a mount context (a DOM
-  element, a file handle or args, a host API, an abort signal) and do whatever
-  they want inside that element. They can be static content (notepad), file
-  navigators (explorer), or fully interactive (a future game).
+- **Content** is markdown in `src/content/` (and `src/content/fr/` for the
+  French locale). Content does not belong to either shell.
+- **`src/core/`** defines the minimum, shell-agnostic contracts: `BaseAppModule`,
+  `BaseAppMountContext`, `BaseAppInstance`, `BaseAppManifest`, `BaseAppHostAPI`,
+  plus tiny utilities (`html.ts`). Nothing in `core/` imports from a shell.
+- **Each shell in `src/shells/<shell>/`** extends those base types and owns its
+  own runtime: app host (or navigator), registry, window/frame chrome,
+  components, and CSS.
+- **Apps** are small TypeScript modules receiving a mount context (a DOM
+  element, a host API, an abort signal, sometimes a `FileHandle`). They never
+  reach outside their `root`.
 
-This gives you three clean extension points:
+The desktop shell adds a **virtual file system (VFS)**, a **shell launcher**
+that resolves paths + file types, and a **window manager** that owns geometry
+and focus. The iPod shell skips all of that: there's no filesystem, a single
+linear navigator stack replaces the window manager, and every app is
+fullscreen.
 
-1. Add **content** → drop a markdown file under `src/content/` and reference it
-   in `src/fs/tree.ts`.
-2. Add a **file type** → add a row to `src/shell/fileTypes.ts` pointing at an
-   existing or new app.
-3. Add an **app** → create `src/apps/<id>/index.ts` exporting an `AppModule`
-   and register it in `src/apps/registry.ts`.
+Extension points:
 
-Nothing else has to change.
+1. **Add content** → drop a markdown file in `src/content/` and reference it
+   from `src/shells/desktop/fs/tree.ts`.
+2. **Add a file type** → one line in `src/shells/desktop/lib/fileTypes.ts`.
+3. **Add a desktop app** → create `src/shells/desktop/apps/<id>/index.ts`
+   exporting an `AppModule` and register it in `apps/registry.ts`.
+4. **Add an iPod app** → create `src/shells/ipod/apps/<id>/index.ts` and
+   register it in `ipod/apps/registry.ts` with a `location` (`home` or `dock`).
 
 ---
 
@@ -70,120 +86,272 @@ Nothing else has to change.
 ```
 computer-portfolio/
 ├── public/
-│   └── icons/               # PNG icons used everywhere (XP chrome, files, apps)
+│   ├── icons/             # XP icons (apps, files, chrome)
+│   ├── ipod/              # iOS 1 app icons + assets
+│   ├── cursors/           # Custom XP cursors
+│   └── pdf/               # PDF assets for Adobe Reader
 ├── src/
-│   ├── apps/                # Apps + app runtime
-│   │   ├── explorer/        # File Explorer app
-│   │   ├── notepad/         # Markdown viewer
-│   │   ├── host.ts          # Instance map + lifecycle coordinator
-│   │   ├── registry.ts      # AppManifest[] — the list of known apps
-│   │   └── types.ts         # AppManifest, AppModule, AppMountContext, AppInstance
-│   ├── components/          # Astro components (server-rendered at build time)
-│   │   ├── Desktop.astro    # Renders desktop icons from the VFS /Desktop folder
-│   │   ├── DesktopIcon.astro
-│   │   ├── StartMenu.astro
-│   │   └── Taskbar.astro
-│   ├── content/             # Markdown files that form the portfolio content
+│   ├── content/           # Markdown content (shared by both shells)
 │   │   ├── about.md
 │   │   ├── contact.md
 │   │   ├── skills.md
-│   │   └── projects/
-│   │       └── portfolio.md
-│   ├── fs/                  # Virtual file system
-│   │   ├── api.ts           # resolve, listChildren, readFile, parentPath, …
-│   │   ├── tree.ts          # Declarative VFS root (folders/files/shortcuts)
-│   │   └── types.ts         # FsNode, FileNode, FolderNode, ShortcutNode, FileHandle
+│   │   ├── projects/
+│   │   └── fr/            # French translations of the same files
+│   ├── core/              # Shell-agnostic base types and utilities
+│   │   ├── types.ts       # BaseAppModule / BaseAppMountContext / ...
+│   │   └── html.ts        # escapeHtml / escapeAttr
+│   ├── i18n/              # Typed translations
+│   │   ├── en.ts          # Source of truth — `I18nKey = keyof typeof en`
+│   │   ├── fr.ts
+│   │   ├── index.ts       # getLocale / setLocale / t
+│   │   └── index.test.ts  # Parity + interpolation tests
 │   ├── layouts/
-│   │   └── BaseLayout.astro
-│   ├── lib/                 # Window machinery (DOM, geometry, state)
-│   │   ├── types.ts         # CreateWindowOptions, WindowState, XpEventName
-│   │   ├── windowDom.ts     # Imperative window DOM builder
-│   │   └── windowManager.ts # Singleton that creates/destroys windows
+│   │   └── BaseLayout.astro  # <html>, locale + shell detection
 │   ├── pages/
-│   │   └── index.astro      # Entry point — wires up appHost, shell, event routing
-│   ├── shell/               # Shell layer
-│   │   ├── fileTypes.ts     # Extension → default app ID
-│   │   └── launcher.ts      # launch({ appId?, path?, args? }) — the one entry point
-│   └── styles/              # Plain CSS files (no framework)
-│       ├── desktop.css
-│       ├── global.css
-│       ├── reset.css
-│       ├── start-menu.css
-│       ├── taskbar.css
-│       ├── variables.css    # Colors, gradients, cursors — theme lives here
-│       └── window.css
+│   │   ├── index.astro    # Mounts both shells, chooser picks one
+│   │   └── api/
+│   │       └── contact.ts # Cloudflare Worker endpoint for Outlook compose
+│   └── shells/
+│       ├── desktop/       # Windows XP shell
+│       │   ├── DesktopShell.astro
+│       │   ├── bootstrap.ts       # mount() entry — called by index.astro
+│       │   ├── apps/
+│       │   │   ├── host.ts        # Instance map, lifecycle, mount context
+│       │   │   ├── registry.ts    # AppManifest[]
+│       │   │   ├── types.ts       # Desktop AppModule / AppMountContext / ...
+│       │   │   ├── about/         # Reusable "About <app>" dialog
+│       │   │   ├── adobe-reader/  # PDF viewer (pdfjs-dist)
+│       │   │   ├── bsod/          # Fake BSOD for .exe files
+│       │   │   ├── explorer/      # File navigator (history, addressBar, …)
+│       │   │   ├── minesweeper/   # Game (game.ts pure logic + game.test.ts)
+│       │   │   ├── notepad/       # Markdown viewer (lazy-imports marked)
+│       │   │   ├── outlook/       # Outlook Express inbox/reader
+│       │   │   └── outlook-compose/ # New-mail composer (multi-instance)
+│       │   ├── components/        # Astro: Desktop, DesktopIcon, Taskbar, StartMenu
+│       │   ├── fs/                # VFS (moved out of shared top level)
+│       │   │   ├── api.ts         # resolve / listChildren / readFile / …
+│       │   │   ├── api.test.ts
+│       │   │   ├── tree.ts        # Declarative VFS root
+│       │   │   └── types.ts       # FsNode / FileHandle / DesktopPosition
+│       │   ├── lib/
+│       │   │   ├── windowManager.ts  # Singleton: create/destroy/focus/…
+│       │   │   ├── windowDom.ts      # Imperative window DOM builder
+│       │   │   ├── types.ts          # CreateWindowOptions / WindowState
+│       │   │   ├── launcher.ts       # shell.launch({ appId?, path?, args? })
+│       │   │   ├── fileTypes.ts      # Extension → default app ID
+│       │   │   ├── menubar.ts        # Shared XP menu-bar component
+│       │   │   └── clippy/           # Clippy assistant (engine, animations, movement)
+│       │   └── styles/               # XP theme CSS (variables, window, taskbar, …)
+│       │       ├── variables.css
+│       │       ├── window.css
+│       │       ├── menubar.css       # Shared .xp-menubar dropdown styles
+│       │       └── …
+│       └── ipod/          # iPod Touch 1G / iOS 1 shell
+│           ├── IpodShell.astro
+│           ├── bootstrap.ts          # mount() entry
+│           ├── apps/
+│           │   ├── registry.ts       # IpodAppManifest[]
+│           │   ├── types.ts          # IpodAppModule / IpodAppMountContext
+│           │   ├── safari/ mail/ notes/ music/ calculator/ decorative/
+│           ├── components/           # StatusBar, HomeScreen, IconGrid, Dock, AppIcon
+│           ├── lib/
+│           │   ├── navigator.ts      # Singleton nav stack (home ↔ app)
+│           │   ├── appFrame.ts       # Fullscreen <section> with slide in/out
+│           │   ├── ipod-host.ts      # IpodAppHostAPI factory
+│           │   └── markdown.ts       # Shared markdown renderer for Notes/Mail
+│           └── styles/global.css
 ├── astro.config.mjs
-├── package.json
-├── tsconfig.json
-└── wrangler.jsonc           # Cloudflare Pages config
+├── tsconfig.json           # extends strict + noUncheckedIndexedAccess
+├── eslint.config.js        # flat config (@typescript-eslint)
+├── .prettierrc.json
+├── package.json            # scripts: dev/build/test/format/lint
+└── wrangler.jsonc          # Cloudflare Pages config
 ```
 
 ---
 
-## Layered architecture
+## Shell selection
 
-```
-  User interaction  (desktop icon, start menu, explorer double-click, taskbar)
-         │
-         │  dispatches `xp:launch` CustomEvent
-         ▼
-  ┌──────────────────────────────────────────────────────────────────┐
-  │  src/shell/launcher.ts                                           │
-  │  launch({ appId?, path?, args? })                                │
-  │  - resolves path via VFS                                         │
-  │  - if file → FileHandle + file-type registry → default app       │
-  │  - if folder/unresolved path + explicit appId → forwards as args │
-  └──────────────────────────────────────────────────────────────────┘
-         │
-         │  { appId, file, args }
-         ▼
-  ┌──────────────────────────────────────────────────────────────────┐
-  │  src/apps/host.ts                                                │
-  │  - computes instanceId (singleton | document | multi)            │
-  │  - dedupe: focus existing, else lazy-load module                 │
-  │  - asks windowManager.create() for a DOM body                    │
-  │  - builds AppMountContext and calls module.default.mount(ctx)    │
-  │  - stores instance, subscribes to lifecycle events               │
-  └──────────────────────────────────────────────────────────────────┘
-         │                                    │
-         │ mount(ctx)                         │ create/destroy/focus/…
-         ▼                                    ▼
-  ┌──────────────────────┐        ┌──────────────────────────────────┐
-  │  src/apps/<id>/      │        │  src/lib/windowManager.ts        │
-  │  index.ts            │        │  - Map<instanceId, WindowState>  │
-  │  Your app code here. │        │  - drag, resize, focus, z-index  │
-  │  Receives root,      │        │  - dispatches xp:taskbar-update  │
-  │  file, args, host,   │        │  ┌──── src/lib/windowDom.ts ───┐ │
-  │  signal.             │        │  │ createWindowElement(opts)   │ │
-  └──────────────────────┘        │  └─────────────────────────────┘ │
-                                  └──────────────────────────────────┘
-```
+Shell selection is a three-stage handshake, all driven from `BaseLayout.astro`
+and `src/pages/index.astro`:
 
-Every layer has one job:
+1. **Inline synchronous script in `<head>`** (`BaseLayout.astro`): matches
+   `(max-width: 768px)` or `(pointer: coarse) + innerWidth < 1024` and sets
+   `html[data-shell="desktop"|"ipod"]` before the body paints.
+2. **Inline `<style is:global>`** (`BaseLayout.astro`):
+   `html[data-shell='desktop'] #ipod-shell { display: none !important; }` and
+   the symmetric rule — hides the losing shell on the very first frame, so
+   there is no FOUC regardless of which shell wins.
+3. **Module script in `index.astro`**: reads the same dataset attribute,
+   removes the losing shell's DOM node entirely, then does
+   `await import('../shells/<winner>/bootstrap')` and calls `mount()`. The
+   losing shell's JS is never fetched.
 
-| Layer          | Knows about                     | Doesn't know about           |
-| -------------- | ------------------------------- | ---------------------------- |
-| `fs/`          | Folders, files, content loading | Apps, windows, events        |
-| `shell/`       | File types, app IDs, VFS        | Window chrome, DOM           |
-| `lib/`         | Window DOM, geometry, drag, z   | Apps, file types, shell      |
-| `apps/host.ts` | Apps, lifecycle, instance map   | Geometry, markdown, explorer |
-| `apps/<id>/`   | Its own content and UI          | Other apps, window chrome    |
-| `components/`  | Astro SSR of the page shell     | Runtime app state            |
+Both shells are SSR'd by Astro at build time — the desktop-shell Astro
+components and the iPod-shell Astro components are rendered into the same
+HTML document. Only one ends up running code.
+
+Changing the breakpoint: edit both the synchronous script in `BaseLayout.astro`
+_and_ the matching comment in `index.astro` (keep them in sync).
 
 ---
 
-## The virtual file system (`src/fs/`)
+## `src/core/` — shell-agnostic contracts
 
-### Types (`src/fs/types.ts`)
+`src/core/types.ts` defines the base contracts every shell implements:
+
+```ts
+export interface BaseAppHostAPI {
+  setTitle(title: string): void;
+  setIcon(icon: string): void;
+  close(): void;
+}
+
+export interface BaseAppMountContext<Host extends BaseAppHostAPI = BaseAppHostAPI> {
+  root: HTMLElement;
+  instanceId: string;
+  args: Record<string, unknown>;
+  signal: AbortSignal;
+  host: Host;
+}
+
+export interface BaseAppInstance {
+  unmount?(): void;
+}
+
+export interface BaseAppModule<
+  Ctx extends BaseAppMountContext = BaseAppMountContext,
+  Inst extends BaseAppInstance = BaseAppInstance,
+> {
+  mount(ctx: Ctx): Inst | void | Promise<Inst | void>;
+}
+
+export interface BaseAppManifest<Mod extends BaseAppModule = BaseAppModule> {
+  id: string;
+  title: string;
+  loader: () => Promise<{ default: Mod }>;
+}
+```
+
+Each shell extends these. The desktop shell adds `file: FileHandle | null` to
+the mount context, `setSize(w, h)` to the host API, resize/focus/minimize
+lifecycle hooks on the instance, and window chrome fields on the manifest.
+The iPod shell currently uses the base types verbatim, but re-exports them as
+`IpodAppHostAPI`, `IpodAppMountContext`, etc. so apps have one stable import
+site.
+
+`src/core/html.ts` exports `escapeHtml` / `escapeAttr` — the one tiny utility
+that both shells _and_ the Cloudflare contact API all need. Kept in `core/`
+because it has zero dependencies on anything else.
+
+**Rule**: nothing inside `core/` may import from a shell. Shells import from
+`core/`, not the other way around.
+
+---
+
+## `src/i18n/` — typed translations
+
+English is the source of truth. The key type is derived from the `en` object:
+
+```ts
+// src/i18n/en.ts
+const en = {
+  'explorer.empty': 'This folder is empty.',
+  'explorer.items.one': '{0} item',
+  'explorer.items.other': '{0} items',
+  // …
+} as const;
+
+export type I18nKey = keyof typeof en;
+```
+
+`src/i18n/index.ts` exports:
+
+- `getLocale(): 'en' | 'fr'` — reads `localStorage['xp-locale']`, else the
+  browser language, else `'en'`. Memoized.
+- `setLocale(locale)` — writes the key and reloads.
+- `t(key: I18nKey, ...args): string` — looks up the current locale's string,
+  falls back to English, falls back to the key itself. Supports `{0}`, `{1}`
+  interpolation.
+
+`index.test.ts` covers interpolation, key fallback, and (critically) **en/fr
+key parity** — the test fails if either file drifts away from the other.
+
+Both shells use `t()` at runtime. The iPod shell also uses a `data-i18n`
+attribute on SSR'd home-screen labels that `bootstrap.ts` patches on mount
+(so the Astro-rendered English fallbacks get replaced with the live locale
+before the user sees them).
+
+---
+
+## Desktop shell
+
+Layered architecture:
+
+```
+  User action (icon double-click, start menu, explorer nav, taskbar)
+         │ xp:launch CustomEvent
+         ▼
+  ┌────────────────────────────────────────────────────────────┐
+  │  shells/desktop/lib/launcher.ts                            │
+  │  launch({ appId?, path?, args? })                          │
+  │  - if path → VFS resolve                                   │
+  │  - file → FileHandle + file-type registry → default app    │
+  │  - folder/unresolved + appId → forward path via args       │
+  └────────────────────────────────────────────────────────────┘
+         │ { appId, file, args }
+         ▼
+  ┌────────────────────────────────────────────────────────────┐
+  │  shells/desktop/apps/host.ts                               │
+  │  - manifest.findExistingInstance?(args) → focus + bail     │
+  │  - computeInstanceId by kind (singleton/document/multi)    │
+  │  - dedupe or lazy-load module                              │
+  │  - windowManager.create() → .window-body                   │
+  │  - build AppHostAPI + AbortController + AppMountContext    │
+  │  - await module.default.mount(ctx)                         │
+  │  - ResizeObserver forwards to instance.onResize            │
+  └────────────────────────────────────────────────────────────┘
+         │ mount(ctx)              │ create/destroy/focus/…
+         ▼                         ▼
+  ┌──────────────────────┐  ┌────────────────────────────────┐
+  │  apps/<id>/index.ts  │  │  lib/windowManager.ts          │
+  │  Your app code.      │  │  - Map<id, WindowState>        │
+  │  root / file / args  │  │  - drag, resize, focus, z      │
+  │  / host / signal.    │  │  - xp:taskbar-update events    │
+  └──────────────────────┘  │   ┌ lib/windowDom.ts ┐         │
+                            │   │ createWindow…    │         │
+                            │   └──────────────────┘         │
+                            └────────────────────────────────┘
+```
+
+| Layer                  | Knows about                     | Doesn't know about             |
+| ---------------------- | ------------------------------- | ------------------------------ |
+| `fs/`                  | Folders, files, content loading | Apps, windows, events          |
+| `lib/launcher.ts`      | File types, app IDs, VFS        | Window chrome, DOM             |
+| `lib/fileTypes.ts`     | Extension → default `appId`     | VFS paths, apps                |
+| `lib/windowManager.ts` | Window DOM, geometry, drag, z   | Apps, file types, shell events |
+| `apps/host.ts`         | Apps, lifecycle, instance map   | Geometry, markdown, explorer   |
+| `apps/<id>/`           | Its own content and UI          | Other apps, window chrome      |
+| `components/*.astro`   | SSR of the static shell surface | Runtime app state              |
+
+### Virtual file system
+
+**`shells/desktop/fs/types.ts`**:
 
 ```ts
 export type FsNode = FolderNode | FileNode | ShortcutNode;
+
+export interface DesktopPosition {
+  row: number;
+  col: number;
+} // 1-based
 
 export interface FolderNode {
   kind: 'folder';
   name: string;
   icon?: string;
   children: FsNode[];
+  desktopPosition?: DesktopPosition;
 }
 
 export interface FileNode {
@@ -191,7 +359,8 @@ export interface FileNode {
   name: string;
   icon?: string;
   ext: string; // ".md"
-  load: () => Promise<string>; // lazy — one chunk per file
+  load: () => Promise<string>; // lazy — one Vite chunk per file
+  desktopPosition?: DesktopPosition;
 }
 
 export interface ShortcutNode {
@@ -199,10 +368,12 @@ export interface ShortcutNode {
   name: string;
   icon?: string;
   target: { appId: string; path?: string };
+  desktopPosition?: DesktopPosition;
+  displayShortcutArrow?: boolean;
 }
 
 export interface FileHandle {
-  path: string; // canonical VFS path
+  path: string;
   name: string;
   ext: string;
   icon: string;
@@ -210,114 +381,76 @@ export interface FileHandle {
 }
 ```
 
-### Tree (`src/fs/tree.ts`)
-
-The VFS is a single declarative tree rooted at `/`. Each folder's `children`
-array is an explicit list of `FsNode`s — the order you write is the order
-Explorer and Desktop will render in.
-
-File nodes reference content through a lazy dynamic import:
+**`fs/tree.ts`** is the declarative VFS root. File `load` functions use Vite's
+`?raw` dynamic imports so each markdown file ships as its own chunk, and the
+French translations are picked at read time via `getLocale()`:
 
 ```ts
-{
-  kind: 'file',
-  name: 'About Me.md',
-  ext: '.md',
-  load: () => import('../content/about.md?raw').then((m) => m.default),
-}
+load: () =>
+  getLocale() === 'fr'
+    ? import('../../../content/fr/about.md?raw').then((m) => m.default)
+    : import('../../../content/about.md?raw').then((m) => m.default),
 ```
 
-`?raw` is a Vite query that imports the file contents as a string. Because each
-import is dynamic, Vite emits one JS chunk per markdown file — opening
-`About Me.md` only ships `about.md` over the wire; the other files stay on
-disk until requested.
+**`fs/api.ts`** exposes pure functions over the tree:
 
-### API (`src/fs/api.ts`)
+| Function              | Returns                       | Used by              |
+| --------------------- | ----------------------------- | -------------------- |
+| `resolve(path)`       | `FsNode \| null`              | launcher, explorer   |
+| `listChildren(path)`  | `FsNode[]`                    | explorer             |
+| `readFile(path)`      | `Promise<FileHandle \| null>` | launcher             |
+| `parentPath(path)`    | `string`                      | explorer "Up" button |
+| `joinPath(parent, n)` | `string`                      | explorer, desktop    |
+| `iconForNode(node)`   | `string`                      | desktop, explorer    |
+| `desktopNodes()`      | `FsNode[]`                    | `Desktop.astro`      |
 
-Pure functions over the tree. No state, no caching beyond `FileHandle.read()`.
+`api.test.ts` covers `resolve`, `parentPath`, `joinPath`, and `listChildren`.
 
-| Function                               | Returns                       | Used by              |
-| -------------------------------------- | ----------------------------- | -------------------- |
-| `resolve(path)`                        | `FsNode \| null`              | shell, explorer      |
-| `listChildren(path)`                   | `FsNode[]`                    | explorer             |
-| `readFile(path)`                       | `Promise<FileHandle \| null>` | shell                |
-| `parentPath(path)`                     | `string`                      | explorer "Up" button |
-| `joinPath(parent, name)` / `pathOf(…)` | `string`                      | explorer, desktop    |
-| `iconForNode(node)`                    | `string`                      | desktop, explorer    |
-| `desktopNodes()`                       | `FsNode[]`                    | Desktop.astro        |
+### Shell launcher & file types
 
-Paths are slash-delimited strings. No case normalization, no backslashes, no
-trailing-slash magic. `segments()` internally drops empty segments so `/` and
-`''` both resolve to root.
-
----
-
-## The shell (`src/shell/`)
-
-### File types (`src/shell/fileTypes.ts`)
-
-A flat `Record<string, FileTypeDef>` keyed by lowercased extension:
+**`lib/launcher.ts`** is the single entry point for "open something":
 
 ```ts
-const registry: Record<string, FileTypeDef> = {
-  '.md': {
-    ext: '.md',
-    icon: '/icons/notepad.png',
-    defaultAppId: 'notepad',
-    displayName: 'Markdown Document',
-  },
-  '.txt': {
-    ext: '.txt',
-    icon: '/icons/notepad.png',
-    defaultAppId: 'notepad',
-    displayName: 'Text Document',
-  },
-};
-```
-
-`getFileType(ext)` returns the entry or a fallback pointing at notepad.
-
-Adding a new file type is a one-line change plus an icon:
-
-```ts
-'.png': { ext: '.png', icon: '/icons/image.png', defaultAppId: 'image-viewer', displayName: 'Image' },
-```
-
-### Launcher (`src/shell/launcher.ts`)
-
-The single entry point for "open something":
-
-```ts
-export interface LaunchRequest {
+export async function launch(req: {
   appId?: string;
   path?: string;
   args?: Record<string, unknown>;
-}
-
-export async function launch(req: LaunchRequest): Promise<void>;
+}): Promise<void>;
 ```
 
-Rules, in order:
+Resolution rules:
 
 1. If `path` is given:
-   - If it resolves to a **file** → read it into a `FileHandle`.
-   - Else if `appId` is explicit → forward the path via `args.path` (so
-     folder-aware apps like Explorer can use it as a start directory).
-   - Else → warn and bail.
-2. If `appId` is not given, fall back to the file's default app from the
+   - Resolves to a **file** → load into a `FileHandle`.
+   - Resolves to a **folder** (or anything else) with an explicit `appId` →
+     forward the path via `args.path` (so Explorer can use it as a start
+     directory).
+   - Otherwise → `console.warn` and bail.
+2. If `appId` is not explicit, fall back to the file's default from the
    file-type registry.
 3. Call `appHost.launch({ appId, file, args })`.
 
-**Every UI surface** (desktop icons, start menu, taskbar, explorer
-double-click) goes through `launch()`. There is no other path to the app host.
+All UI surfaces route through here via `xp:launch` CustomEvents — never call
+`appHost.launch` directly from UI code.
 
----
-
-## The window manager (`src/lib/`)
-
-### `types.ts`
+**`lib/fileTypes.ts`** is a flat `Record<string, FileTypeDef>`:
 
 ```ts
+'.md':  { ext: '.md',  icon: '/icons/notepad.png',    defaultAppId: 'notepad',      displayName: 'Markdown Document' },
+'.txt': { ext: '.txt', icon: '/icons/notepad.png',    defaultAppId: 'notepad',      displayName: 'Text Document' },
+'.pdf': { ext: '.pdf', icon: '/icons/pdf-file.png',   defaultAppId: 'adobe-reader', displayName: 'PDF Document' },
+'.exe': { ext: '.exe', icon: '/icons/notepad.png',    defaultAppId: 'bsod',         displayName: 'Application' },
+```
+
+`getFileType(ext)` returns the entry or a Notepad fallback.
+
+### Window manager
+
+**`lib/types.ts`**:
+
+```ts
+export type WindowControl = 'minimize' | 'maximize' | 'close';
+
 export interface CreateWindowOptions {
   instanceId: string;
   title: string;
@@ -326,10 +459,14 @@ export interface CreateWindowOptions {
   height: number;
   x?: number;
   y?: number;
+  controls?: WindowControl[]; // default: ['minimize','maximize','close']
+  showIcon?: boolean; // default: true — title-bar icon
+  resizable?: boolean; // default: true — edge resize + maximize
+  showInTaskbar?: boolean; // default: true
 }
 
 export interface WindowState {
-  id: string; // instance ID
+  id: string;
   title: string;
   icon: string;
   isOpen: boolean;
@@ -340,95 +477,69 @@ export interface WindowState {
   y: number;
   width: number;
   height: number;
-  openedAt?: number; // counter for taskbar ordering
+  openedAt?: number;
+  resizable: boolean;
+  showInTaskbar: boolean;
 }
 ```
 
-### `windowDom.ts`
-
-`createWindowElement(opts)` imperatively builds the DOM for one window:
+**`lib/windowDom.ts::createWindowElement(opts)`** imperatively builds the DOM
+for one window:
 
 ```
-.window[data-window-id="<instanceId>"]
+.window[data-window-id][data-resizable]
 ├── .header__bg
 ├── .title-bar
-│   ├── img.title-bar-icon
+│   ├── img.title-bar-icon                (omitted if !showIcon)
 │   ├── .title-bar-text
 │   └── .title-bar-controls
 │       ├── button[data-action="minimize"]
 │       ├── button[data-action="maximize"]
-│       └── button[data-action="close"]
-└── .window-body              ← app mounts here
+│       └── button[data-action="close"]   (subset per opts.controls)
+└── .window-body                           ← app mounts here
 ```
 
-Returns `{ root, body }`. The markup matches what `window.css` expects, so all
-styling keeps working unchanged.
+**`lib/windowManager.ts`** is the singleton `WindowManager` class. Public API:
 
-### `windowManager.ts`
+| Method                               | Effect                                                                |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| `create(opts): HTMLElement`          | Builds + appends the window, wires drag/resize, focuses, returns body |
+| `destroy(id)`                        | Removes the DOM node and deletes state                                |
+| `has(id)`                            | Is this instance id tracked?                                          |
+| `focus(id)`                          | Raises z-index, toggles focus classes, emits `xp:taskbar-update`      |
+| `minimize(id)` / `restore(id)`       | Hides/shows and updates taskbar                                       |
+| `maximize(id)`                       | Toggles `.is-maximized` (guarded by `resizable`)                      |
+| `setTitle(id, t)` / `setIcon(id, i)` | Mutate chrome                                                         |
+| `setSize(id, w, h)`                  | Programmatic resize (e.g. Minesweeper fit-to-content)                 |
+| `getState(id)` / `getAllStates()`    | State introspection                                                   |
 
-Singleton class exported as `windowManager`. Public API:
-
-| Method                            | Effect                                                                                                                       |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `create(opts): HTMLElement`       | Builds a window, appends to `#desktop`, wires drag/resize, focuses it. Returns the `.window-body` the app should mount into. |
-| `destroy(id)`                     | Removes the DOM node and deletes state.                                                                                      |
-| `has(id)`                         | Is this instance id tracked?                                                                                                 |
-| `focus(id)`                       | Raises z-index, toggles `is-focused` / `is-unfocused` classes, dispatches taskbar update.                                    |
-| `minimize(id)` / `restore(id)`    | Hides/shows and updates taskbar.                                                                                             |
-| `maximize(id)`                    | Toggles the `is-maximized` class (CSS handles sizing).                                                                       |
-| `setTitle(id, title)`             | Updates title-bar text and taskbar.                                                                                          |
-| `getState(id)` / `getAllStates()` | State introspection.                                                                                                         |
-
-Internals:
-
-- `setupInteraction(el, id)` wires mouse-based drag (title bar) and resize
-  (edges) with a cursor cover div during drags. This is the only code that
-  directly mutates inline `transform` / `width` / `height` during interaction —
-  `applyState()` is the authoritative sync at rest.
-- `syncTaskbar()` emits `xp:taskbar-update` with `{ windows, focusedId }`. The
-  taskbar component listens and rebuilds its button list.
-- Cascading: new windows auto-cascade (`CASCADE_BASE_*` + `CASCADE_STEP`) unless
-  `x`/`y` are provided in `CreateWindowOptions`.
+Internals: `setupInteraction` wires mouse drag (title bar) and edge resize
+with a cursor cover div during interactions — the only code that mutates
+inline `transform`/`width`/`height` during drag. `applyState()` is the
+authoritative sync at rest. Cascading: windows auto-cascade
+(`CASCADE_BASE_X`/`Y` + `CASCADE_STEP`) unless `x`/`y` are explicit.
+`syncTaskbar()` dispatches `xp:taskbar-update` with `{ windows, focusedId }`;
+the taskbar component listens and rebuilds its buttons.
 
 The window manager does **not** know about apps. It is told to `create` and
 `destroy` by the app host.
 
----
+### App host and app types
 
-## The app host and apps (`src/apps/`)
-
-### Types (`src/apps/types.ts`)
+**`apps/types.ts`** extends the base contracts:
 
 ```ts
 export type AppKind = 'singleton' | 'document' | 'multi';
 
-export interface AppManifest {
-  id: string;
-  title: string;
-  icon: string;
-  defaultWidth: number;
-  defaultHeight: number;
-  kind: AppKind;
-  acceptsFileTypes?: string[];
-  showInStartMenu?: boolean;
-  loader: () => Promise<{ default: AppModule }>;
+export interface AppHostAPI extends BaseAppHostAPI {
+  setSize(width: number, height: number): void;
 }
 
-export interface AppModule {
-  mount(ctx: AppMountContext): AppInstance | void | Promise<AppInstance | void>;
+export interface AppMountContext extends BaseAppMountContext<AppHostAPI> {
+  file: FileHandle | null; // present for document apps
 }
 
-export interface AppMountContext {
-  root: HTMLElement; // .window-body
-  instanceId: string;
-  file: FileHandle | null; // null unless launched with a file
-  args: Record<string, unknown>; // extra launch arguments
-  host: AppHostAPI;
-  signal: AbortSignal; // aborted on unmount
-}
-
-export interface AppInstance {
-  unmount?(): void;
+export interface AppInstance extends BaseAppInstance {
   onResize?(width: number, height: number): void;
   onFocus?(): void;
   onBlur?(): void;
@@ -437,225 +548,373 @@ export interface AppInstance {
   onLaunchArgs?(args: Record<string, unknown>): void;
 }
 
-export interface AppHostAPI {
-  setTitle(title: string): void;
-  close(): void;
+export interface AppModule extends BaseAppModule<AppMountContext, AppInstance> {}
+
+export interface AppManifest extends BaseAppManifest<AppModule> {
+  icon: string;
+  defaultWidth: number;
+  defaultHeight: number;
+  kind: AppKind;
+  acceptsFileTypes?: string[];
+  showInStartMenu?: boolean;
+  controls?: WindowControl[];
+  showWindowIcon?: boolean;
+  resizable?: boolean;
+  showInTaskbar?: boolean;
+  /**
+   * Optional manifest-level dedup hook. Given the launch args, return the
+   * instance ID of an already-open window to focus, or null to fall through
+   * to the normal kind-based keying. Used by `multi` apps that need to
+   * dedupe on live runtime state — Explorer matches by *current* folder.
+   */
+  findExistingInstance?(args: Record<string, unknown>): string | null;
 }
 ```
 
-### App kinds
+**App kinds** drive instance IDs:
 
-Instance IDs drive everything. The `host.computeInstanceId(manifest, file, args)`
-rule:
-
-| Kind        | Instance ID                              | Behavior on relaunch                 |
+| Kind        | Instance ID                              | On relaunch                          |
 | ----------- | ---------------------------------------- | ------------------------------------ |
-| `singleton` | `<appId>` (e.g. `minesweeper`)           | Focus existing, never a new window   |
+| `singleton` | `<appId>`                                | Focus existing, never a new window   |
 | `document`  | `<appId>:<file.path or args.path or "">` | Focus existing if same key; else new |
 | `multi`     | `<appId>#<++counter>` (always unique)    | Every launch spawns a new window     |
 
-`document` is the clever one: it's keyed on file path **or** `args.path`. That's
-why Notepad opens one window per markdown file _and_ Explorer opens one window
-per starting folder — same code path.
+`multi + findExistingInstance` is how Explorer works: every launch _would_ be
+a new window, except the manifest's `findExplorerInstanceAt(path)` hook
+checks every live Explorer for its current folder and returns the matching
+instance ID. The host focuses that one instead. Users can still open two
+Explorers on two different folders; opening the same folder twice focuses
+the first.
 
-### Host (`src/apps/host.ts`)
-
-The host owns one `Map<instanceId, MountedEntry>`. On launch:
+**`apps/host.ts`** owns `Map<instanceId, MountedEntry>`. On launch:
 
 1. Look up the manifest by `appId`.
-2. Compute the `instanceId` by kind.
-3. If already mounted → restore/focus + forward `onLaunchArgs` if args given.
-4. If a loader is already in flight for that ID → ignore (debounce).
-5. `await manifest.loader()`.
-6. `windowManager.create({...})` — returns the `.window-body` to mount into.
-7. Build an `AbortController`, the host API (`setTitle`, `close`), and the
-   mount context; call `module.default.mount(ctx)`.
-8. Attach a `ResizeObserver` on the body so apps receive `onResize(w, h)` on
-   window drag-resize.
-9. Store the entry.
+2. Try `manifest.findExistingInstance?(args)` — if it returns an ID the host
+   is already tracking, focus and bail.
+3. Compute `instanceId` by kind.
+4. If that instance is already mounted → `focusExisting()` restores + forwards
+   `onLaunchArgs`; bail.
+5. If a loader is in flight for that ID → debounce and ignore.
+6. Dispatch `xp:app-launch` (so Clippy can react).
+7. `await manifest.loader()`.
+8. `windowManager.create({...})` with all the chrome flags forwarded.
+9. Build `AbortController`, `AppHostAPI` (`setTitle`/`setIcon`/`setSize`/`close`),
+   and `AppMountContext`, call `module.default.mount(ctx)`.
+10. Attach a `ResizeObserver` on the body — forwards width/height to
+    `instance.onResize`.
+11. Store the entry.
 
-On `xp:close`:
+**Chrome icon precedence** during mount: `args.icon > file.icon > manifest.icon`.
+This is why the About dialog (templated, one module) can adopt its parent
+app's icon via `args`.
 
-- Find the entry, call `unmount()`, abort the signal (so listeners attached
-  with `{ signal }` auto-remove), disconnect the observer, remove from map,
-  call `windowManager.destroy(id)`.
+Lifecycle events: `xp:close` → `unmount()`, abort the signal (so every listener
+attached with `{ signal }` auto-detaches), disconnect the ResizeObserver,
+`windowManager.destroy(id)`. `xp:minimize` / `xp:restore` forward to the
+instance hooks. `xp:taskbar-update` is diffed against each entry's previous
+focus state so `onFocus`/`onBlur` fire only on transitions.
 
-Lifecycle hooks are forwarded from events:
+Every host call into an app is wrapped in `try/catch` so one buggy app can't
+break the host.
 
-- `xp:minimize` → `instance.onMinimize()` + `setFocused(id, false)`
-- `xp:restore` → `instance.onRestore()`
-- `xp:taskbar-update` — the host diffs the new `focusedId` against each
-  entry's previous focused state and fires `onFocus` / `onBlur` only on
-  transitions.
+### Shared menu bar
 
-All host methods wrap app calls in try/catch so one buggy app can't break the
-host.
+`lib/menubar.ts` + `styles/menubar.css` expose one reusable XP-style dropdown
+menu bar used by every desktop app that has a menu:
 
-### Registry (`src/apps/registry.ts`)
+```ts
+export interface MenuBarOptions {
+  schema: MenuSchema; // Record<label, MenuItem[]>
+  onAction: (action: string) => void;
+  isChecked?: (action: string) => boolean; // checkmark rows (Minesweeper diff)
+  logo?: { src: string; alt?: string }; // optional right-aligned logo (Explorer)
+}
 
-A plain array of `AppManifest` objects. Adding an app = adding one entry.
+export function createMenuBar(opts: MenuBarOptions, signal: AbortSignal): HTMLElement;
+```
 
-### Notepad (`src/apps/notepad/`)
+Each app's `menu.ts` defines a typed `MenuSchema`, builds the bar, and wires
+its `onAction` to local handlers. Hover-to-switch, outside-click and Escape
+dismissal, and all listener teardown are handled by `createMenuBar` via the
+passed `AbortSignal`. CSS lives in `styles/menubar.css` as the `.xp-menubar`
+/ `.xp-menubar-dropdown-*` classes — no per-app menu CSS left.
 
-- `index.ts` — reads `ctx.file`, calls `host.setTitle(...)`, renders menu +
-  body. For `.md`, `render.ts` lazy-imports `marked`; for `.txt`, escapes and
-  wraps in `<pre>`.
-- `notepad.css` — XP-ish formatted prose styles inside the window body.
-- `kind: 'document'` + `acceptsFileTypes: ['.md', '.txt']`. Each file gets its
-  own window; re-opening the same file focuses the existing one.
+### Desktop apps
 
-### Explorer (`src/apps/explorer/`)
+Registered in `apps/registry.ts`:
 
-- `index.ts` — toolbar (Back/Up), address bar, icon grid, click + double-click.
-  Folders navigate in-place; files call `launch({ path })`; shortcuts call
-  `launch({ appId, path })`. Shortcut items get an `is-shortcut` class so
-  they render with the shortcut-arrow overlay.
-- `explorer.css` — listing styles.
-- `kind: 'document'` (folder-path-keyed) + `showInStartMenu: true`. Opening
-  `/Desktop` twice focuses the existing window; opening `/` and `/My Documents`
-  gives you two Explorer windows.
+| ID                | Kind      | File types    | Notes                                                                               |
+| ----------------- | --------- | ------------- | ----------------------------------------------------------------------------------- |
+| `explorer`        | multi     | —             | `findExistingInstance` dedupes by live folder; shows Windows logo in menu           |
+| `notepad`         | document  | `.md`, `.txt` | Lazy-imports `marked`; renders to `.window-body`                                    |
+| `about`           | document  | —             | Reusable About-<app> dialog; `controls: ['close']`, not resizable, not in taskbar   |
+| `outlook-express` | singleton | —             | Fake inbox + reading pane                                                           |
+| `outlook-compose` | multi     | —             | New-mail composer; posts to `/api/contact` Cloudflare Worker                        |
+| `adobe-reader`    | document  | `.pdf`        | Uses `pdfjs-dist`; `IntersectionObserver` for lazy page render                      |
+| `bsod`            | multi     | `.exe`        | No title bar, not in taskbar — pretends the system crashed                          |
+| `minesweeper`     | singleton | —             | `game.ts` pure logic (unit-tested), `digits.ts` seven-seg rendering, `index.ts` DOM |
+
+Each app lives in its own folder: `index.ts` (entry), `menu.ts` (menu schema
+for the shared menubar), a per-app `.css`, plus helpers (`render.ts`,
+`highlight.ts`, `history.ts`, `addressBar.ts`, `instances.ts`, …) as needed.
+
+**`apps/about/launch.ts`** exports `openAbout(parentAppId, fields)` — every
+app calls this to open its "About" dialog so there's one call site instead
+of a repeated `launch({ appId: 'about', ... })` block per app.
+
+### Clippy
+
+`lib/clippy/` is a small animated assistant overlay:
+
+- `animations.ts` — sprite-sheet animation table with preloaded frames.
+- `engine.ts` — plays and sequences animations, locks during scripted sequences.
+- `movement.ts` — idle drift + gravitate-towards-focused-window behaviour.
+- `clippy.ts` — `initClippy()` wires the runtime: subscribes to `xp:app-launch`,
+  `xp:close`, `xp:focus`, `xp:maximize`, `xp:game-win`, `xp:game-lose`, and
+  plays matching animations. Idempotent — safe under HMR.
+
+Clippy is mounted once from `bootstrap.ts` and listens to the event bus only;
+it never reaches into app DOM.
 
 ---
 
-## Components & layout (`src/components/`, `src/pages/`, `src/layouts/`)
+## iPod shell
+
+The iPod shell is a radically simpler environment:
+
+- **One visible screen at a time.** No windows, no z-index, no cascade.
+- **A linear navigation stack** (`home ↔ app`) instead of a window manager.
+- **No filesystem.** Apps get raw launch args only.
+- **Fullscreen apps** with a nav-bar back button.
+
+### Components
+
+Astro components under `shells/ipod/components/`:
+
+- `StatusBar.astro` — top bar with clock (wired by `bootstrap.ts::startClock`),
+  carrier, battery. Clock aligns to wall-clock minute and auto-localizes (12h
+  in English, 24h in French).
+- `HomeScreen.astro` — the icon grid + dock container.
+- `IconGrid.astro` — renders `ipodApps.filter(a => a.location === 'home')`
+  sorted by `order`. Every icon has `data-app-id` and `data-i18n`; the
+  bootstrap's `patchI18n` walks these after mount.
+- `Dock.astro` — same thing for `location === 'dock'`.
+- `AppIcon.astro` — one icon tile.
+
+### Apps
+
+`shells/ipod/apps/types.ts`:
+
+```ts
+export type IpodAppHostAPI = BaseAppHostAPI;
+export type IpodAppMountContext = BaseAppMountContext<IpodAppHostAPI>;
+export type IpodAppInstance = BaseAppInstance;
+
+export interface IpodAppManifest extends BaseAppManifest<IpodAppModule> {
+  icon: string; // 57x57 iOS 1 PNG
+  location: 'home' | 'dock';
+  order: number;
+  titleKey?: I18nKey; // live-translated title
+}
+```
+
+Registry (`apps/registry.ts`) — 4 dock apps + 5 home-grid apps:
+
+| ID           | Location | Module         |
+| ------------ | -------- | -------------- |
+| `safari`     | dock     | `./safari`     |
+| `mail`       | dock     | `./mail`       |
+| `notes`      | dock     | `./notes`      |
+| `music`      | dock     | `./music`      |
+| `calculator` | home     | `./calculator` |
+| `weather`    | home     | `./decorative` |
+| `stocks`     | home     | `./decorative` |
+| `maps`       | home     | `./decorative` |
+| `youtube`    | home     | `./decorative` |
+
+`./decorative` is one shared module — Weather/Stocks/Maps/YouTube all render
+the same "cannot connect to server" screen iOS 1 used when AT&T EDGE was out.
+
+### Navigator & AppFrame
+
+**`lib/navigator.ts::IpodNavigator`** is the singleton equivalent of the
+desktop's `windowManager`, ~150 lines:
+
+```ts
+type IpodScreen =
+  | { kind: 'home' }
+  | {
+      kind: 'app';
+      instanceId: string;
+      manifest: IpodAppManifest;
+      frame: AppFrame;
+      abort: AbortController;
+      instance: IpodAppInstance | null;
+    };
+
+class IpodNavigator {
+  private stack: IpodScreen[] = [{ kind: 'home' }];
+  private busy = false;
+
+  async openApp(manifest): Promise<void>;
+  async goHome(): Promise<void>;
+}
+```
+
+`openApp` is re-entrancy-guarded with `busy`: taps during an in-flight
+animation or while another app is already open are ignored (iOS 1 behaved
+the same way). It creates an `AppFrame`, pushes onto the stack _before_
+awaiting the loader (so a second tap sees `current().kind === 'app'`),
+dynamic-imports the app, mounts it, and waits for the slide-up animation.
+
+`goHome` aborts the app's `AbortController` (so signal-bound listeners clean
+up), calls `unmount()`, plays the slide-down animation, then removes the
+frame element and pops the stack.
+
+**`lib/appFrame.ts::createAppFrame(opts)`** builds the fullscreen chrome
+imperatively:
+
+```
+<section class="ipod-app-frame entering">
+  <header class="ipod-nav-bar">
+    <button class="back">Home</button>
+    <h1 class="title">…</h1>
+  </header>
+  <div class="ipod-app-root">  ← AppMountContext.root
+  </div>
+</section>
+```
+
+`playEnter()` forces a reflow before removing `.entering` so the CSS
+transition actually runs on first paint. `playExit()` adds `.exiting` and
+resolves after `SLIDE_MS` — keep that constant in sync with the CSS
+transition duration in `styles/global.css`.
+
+**`lib/ipod-host.ts::createIpodHost`** returns an `IpodAppHostAPI`:
+
+```ts
+createIpodHost({ setNavBarTitle: frame.setNavBarTitle }, navigator)
+  ⇒ { setTitle, setIcon, close }
+```
+
+`close()` calls `navigator.goHome()`. `setIcon` is a no-op on iPod (no icon
+chrome) but the signature matches `BaseAppHostAPI` for portability.
+
+### iPod bootstrap
+
+`shells/ipod/bootstrap.ts::mount()`:
+
+1. Patches SSR'd `[data-i18n]` labels to the live locale (fixes English
+   fallbacks emitted by Astro when the visitor is French).
+2. Starts the status-bar clock.
+3. Delegates clicks on `[data-app-id]` elements anywhere in `#ipod-shell` →
+   dispatches `ipod:launch` with `{ appId }`.
+4. Listens for `ipod:launch` → looks up the manifest → calls
+   `ipodNavigator.openApp(manifest)`.
+
+---
+
+## Astro layer and event bus
 
 Astro runs at build time. Everything in `.astro` files is rendered to HTML
-statically; the `<script>` blocks are the only client-side code shipped by
-Astro itself.
+statically; the only client code Astro itself ships is the inline scripts in
+`BaseLayout.astro` (locale + shell detection) and the module chooser in
+`index.astro`. Everything else loads through the dynamic `import('./bootstrap')`
+per shell.
 
-### `src/pages/index.astro`
+### Desktop event bus
 
-The top-level entry. It:
+Communication between desktop shell components is `document.dispatchEvent(new
+CustomEvent(...))`. Every listener lives on `document`, so nothing needs
+wiring up when windows come and go.
 
-1. Renders `<BaseLayout><Desktop /></BaseLayout>` (the desktop background and
-   icons).
-2. On `DOMContentLoaded`:
-   - `appHost.init(apps)` — registers manifests and subscribes to lifecycle
-     events.
-   - Listens for `xp:launch` → calls `shell.launch(detail)`.
-   - Forwards `xp:minimize`, `xp:maximize`, `xp:restore`, `xp:focus` to
-     `windowManager`. (`xp:close` is handled by the host, which also destroys
-     the window.)
-   - Delegates title-bar button clicks (`[data-action][data-window-target]`)
-     → dispatches the matching `xp:<action>` event.
-   - Delegates double-clicks on `.title-bar` → dispatches `xp:maximize`.
-
-### `src/components/Desktop.astro`
-
-Iterates `desktopNodes()` (children of the `/Desktop` VFS folder) and renders a
-`<DesktopIcon>` for each. Shortcuts get `isShortcut`, files get their own
-path, folders get an explorer launch.
-
-### `src/components/DesktopIcon.astro`
-
-Renders one icon. On double-click, dispatches `xp:launch` with
-`{ appId, path }` from `data-` attributes. Single-click toggles `is-selected`.
-Shortcut icons render with a badge via the
-`.desktop-icon.is-shortcut .desktop-icon__img-wrap::after` CSS rule.
-
-### `src/components/StartMenu.astro`
-
-- **Left pane**: iterates `apps.filter(a => a.showInStartMenu)` — driven by the
-  registry.
-- **Right pane**: a curated list of shortcuts (My Documents, My Computer, etc.)
-  dispatching `xp:launch` with the target path/app.
-- Toggles on start-button click, closes on outside click.
-
-### `src/components/Taskbar.astro`
-
-- Clock updates every second but only writes `textContent` when the value
-  actually changes (avoids dev-mode DOM audit churn).
-- Listens for `xp:taskbar-update` and rebuilds its window button list. Each
-  button uses the `WindowState.id` (= instance ID) to dispatch `xp:restore`,
-  `xp:minimize`, or `xp:focus`.
-
----
-
-## Styling (`src/styles/`)
-
-- `reset.css`, `global.css`, `variables.css` — base styles and theme. All XP
-  colors, gradients, and custom cursors live in `variables.css` as CSS custom
-  properties.
-- `window.css` — the window chrome (title bar, frame, `is-focused`,
-  `is-maximized`, resize cursors).
-- `desktop.css`, `taskbar.css`, `start-menu.css` — shell styles.
-- Apps own their body styles via per-app CSS files (`notepad.css`,
-  `explorer.css`) imported from `index.ts`. Vite bundles these into the app's
-  lazy chunk so the initial page doesn't pay for them.
-
-No CSS framework, no CSS-in-JS, no CSS modules. Just plain CSS with variables.
-
----
-
-## The event bus
-
-Communication between components is `document.dispatchEvent(new CustomEvent(...))`.
-Every listener lives on `document`, so there's nothing to wire and nothing to
-tear down as windows come and go.
-
-| Event               | Dispatched by                                    | Listener(s)                | Detail                                  |
-| ------------------- | ------------------------------------------------ | -------------------------- | --------------------------------------- |
-| `xp:launch`         | DesktopIcon, StartMenu, Explorer (via shell API) | `index.astro` → shell      | `{ appId?, path?, args? }`              |
-| `xp:close`          | Title-bar close button, `AppHostAPI.close()`     | `appHost.handleClose`      | `{ id }` (instance ID)                  |
-| `xp:minimize`       | Title-bar minimize, Taskbar button               | `windowManager`, `appHost` | `{ id }`                                |
-| `xp:maximize`       | Title-bar maximize, dblclick on title bar        | `windowManager`            | `{ id }`                                |
-| `xp:restore`        | Taskbar button                                   | `windowManager`, `appHost` | `{ id }`                                |
-| `xp:focus`          | Taskbar button                                   | `windowManager`, `appHost` | `{ id }`                                |
-| `xp:taskbar-update` | `windowManager.syncTaskbar()`                    | `Taskbar.astro`, `appHost` | `{ windows: WindowState[], focusedId }` |
+| Event               | Dispatched by                                  | Listener(s)                 | Detail                     |
+| ------------------- | ---------------------------------------------- | --------------------------- | -------------------------- |
+| `xp:launch`         | Desktop icons, Start menu, Explorer, shortcuts | `bootstrap.ts` → `launch()` | `{ appId?, path?, args? }` |
+| `xp:close`          | Title-bar X button, `AppHostAPI.close()`       | `appHost.handleClose`       | `{ id }` (instance ID)     |
+| `xp:minimize`       | Title-bar minimize, Taskbar button             | `windowManager`, `appHost`  | `{ id }`                   |
+| `xp:maximize`       | Title-bar maximize, dblclick on title bar      | `windowManager`             | `{ id }`                   |
+| `xp:restore`        | Taskbar button                                 | `windowManager`, `appHost`  | `{ id }`                   |
+| `xp:focus`          | Taskbar button                                 | `windowManager`, `appHost`  | `{ id }`                   |
+| `xp:taskbar-update` | `windowManager.syncTaskbar()`                  | `Taskbar.astro`, `appHost`  | `{ windows, focusedId }`   |
+| `xp:app-launch`     | `appHost.launch()` before loader               | `clippy.ts`                 | `{ appId }`                |
+| `xp:game-win`       | Minesweeper                                    | `clippy.ts`                 | `{ appId }`                |
+| `xp:game-lose`      | Minesweeper                                    | `clippy.ts`                 | `{ appId }`                |
 
 Important: `xp:launch` carries **app/file identifiers**. All other `xp:*`
 events carry **instance IDs** (whatever `windowManager.create()` was given).
 
+### iPod event bus
+
+The iPod shell uses one event on `document`:
+
+| Event         | Dispatched by                   | Listener                   | Detail      |
+| ------------- | ------------------------------- | -------------------------- | ----------- |
+| `ipod:launch` | `bootstrap.ts` click delegation | `bootstrap.ts` → navigator | `{ appId }` |
+
+### `pages/index.astro` + per-shell `bootstrap.ts`
+
+`index.astro` only wires the shell chooser and calls `mount()`. All event
+plumbing — title-bar delegation, `xp:*` routing, Clippy init, initial
+"About Me" launch — lives in `shells/desktop/bootstrap.ts` so it ships in the
+desktop chunk and not on mobile.
+
 ---
 
-## Launch lifecycle walkthroughs
+## Styling
 
-### Double-click `About Me.md` on the desktop
+- `shells/desktop/styles/variables.css` — theme tokens (colors, gradients,
+  shadows, cursors). All XP chrome references these.
+- `shells/desktop/styles/window.css` — window chrome, `is-focused`,
+  `is-maximized`, resize cursors.
+- `shells/desktop/styles/menubar.css` — shared `.xp-menubar` + dropdown
+  styles. Used by every app's menu; zero per-app menu CSS.
+- `shells/desktop/styles/{desktop,taskbar,start-menu}.css` — shell surfaces.
+- `shells/desktop/styles/clippy.css` — the Clippy overlay.
+- `shells/desktop/styles/global.css` — pulls everything together; imported
+  once by `DesktopShell.astro`.
+- Apps own their body styles via per-app CSS files imported from their
+  `index.ts`. Vite bundles them into the app's lazy chunk so the initial
+  page doesn't pay for them.
+- `shells/ipod/styles/global.css` — iOS 1 home screen, dock, status bar, and
+  app-frame transition timing. Imported once by `IpodShell.astro`.
 
-1. `DesktopIcon.astro` delegates the double-click and dispatches
-   `xp:launch` with `{ path: '/Desktop/About Me.md' }`.
-2. `index.astro` routes it to `shell.launch({ path: '/Desktop/About Me.md' })`.
-3. Launcher calls `resolve('/Desktop/About Me.md')` → `FileNode`, then
-   `readFile(...)` → `FileHandle`.
-4. File ext `.md` → file type registry → default app `notepad`.
-5. Launcher calls `appHost.launch({ appId: 'notepad', file, args: undefined })`.
-6. Host computes `instanceId = 'notepad:/Desktop/About Me.md'`. Not mounted.
-7. `await manifest.loader()` — lazy-imports `src/apps/notepad/index.ts` and
-   its CSS. `marked` is not yet loaded.
-8. `windowManager.create({...})` builds the window DOM, wires drag/resize,
-   appends it to `#desktop`, focuses it, dispatches `xp:taskbar-update`.
-9. Host calls `notepad.mount(ctx)`. Notepad calls `ctx.file.read()` (lazy
-   dynamic import of `about.md?raw`), calls `renderMarkdown()` (lazy import
-   of `marked`), sets `innerHTML`, calls `host.setTitle('About Me.md — Notepad')`.
-10. `ResizeObserver` starts observing the body. The host stores the entry.
+No CSS framework, no CSS-in-JS, no CSS modules. Plain CSS with variables.
 
-### Double-click the same file again
+---
 
-1. Steps 1–5 repeat.
-2. Host finds `'notepad:/Desktop/About Me.md'` already mounted.
-3. If minimized → `windowManager.restore(id)`, else `windowManager.focus(id)`.
-4. No remount, no new window.
+## Tooling & tests
 
-### Double-click `My Computer` shortcut
+`package.json` scripts:
 
-1. DesktopIcon dispatches `xp:launch` with `{ appId: 'explorer', path: '/' }`.
-2. Launcher sees `appId` explicit, resolves `/` → `FolderNode`, so it forwards
-   the path as `args.path`: `appHost.launch({ appId: 'explorer', file: null,
-args: { path: '/' } })`.
-3. Host computes `instanceId = 'explorer:/'` (document kind falls back to
-   `args.path`).
-4. Not mounted → lazy-load, create window, mount. Explorer reads `args.path`
-   and renders listing for `/`.
+| Script                 | What it does                       |
+| ---------------------- | ---------------------------------- |
+| `npm run dev`          | `astro dev`                        |
+| `npm run build`        | `astro build` (Cloudflare adapter) |
+| `npm run preview`      | `astro preview`                    |
+| `npm test`             | `vitest run`                       |
+| `npm run test:watch`   | `vitest` watch mode                |
+| `npm run format`       | `prettier --write .`               |
+| `npm run format:check` | `prettier --check .`               |
+| `npm run lint`         | `eslint .`                         |
 
-### Close the window
-
-1. User clicks the X. Title bar button delegation in `index.astro` fires
-   `xp:close` with `{ id: 'explorer:/' }`.
-2. `appHost.handleClose('explorer:/')` runs: finds the entry, calls
-   `unmount()`, aborts the signal (any listeners attached with `{ signal }`
-   auto-detach), disconnects the `ResizeObserver`, removes from map, calls
-   `windowManager.destroy('explorer:/')` which removes the DOM node and emits
-   `xp:taskbar-update`.
+- **TypeScript**: extends `astro/tsconfigs/strict` with
+  `noUncheckedIndexedAccess: true`. Array and record lookups return `T |
+undefined` — the codebase uses explicit non-null assertions (`!`) or
+  guards at each access site.
+- **vitest** suites cover the pure logic surfaces:
+  - `shells/desktop/fs/api.test.ts` — `resolve`, `parentPath`, `joinPath`,
+    `listChildren`.
+  - `shells/desktop/apps/minesweeper/game.test.ts` — `nearIndexes`,
+    `initCells`, `placeMines`, `autoOpenIndexes` flood-fill, `countRemainingSafe`,
+    `cycleMark`.
+  - `i18n/index.test.ts` — interpolation, fallback, en↔fr key parity.
+- **Prettier** is configured via `.prettierrc.json` (single quotes, trailing
+  commas, 100-col) with `prettier-plugin-astro` for `.astro` files. Content,
+  public, and build outputs are ignored.
+- **ESLint** uses the flat-config format in `eslint.config.js` with
+  `@typescript-eslint` recommended rules and `no-unused-vars` +
+  `no-explicit-any` as warnings.
 
 ---
 
@@ -663,59 +922,48 @@ args: { path: '/' } })`.
 
 ### Add a markdown file
 
-Three steps:
-
-1. **Write the content**:
+1. **Write the content** in `src/content/` (and the French translation in
+   `src/content/fr/`):
 
    ```
    src/content/hobbies.md
+   src/content/fr/hobbies.md
    ```
 
-   ```markdown
-   # Hobbies
-
-   - Woodworking
-   - Retro computing
-   ```
-
-2. **Reference it in `src/fs/tree.ts`** — drop a `FileNode` wherever you want
-   it to appear. Inside `My Documents`, for example:
+2. **Reference it in `src/shells/desktop/fs/tree.ts`** — drop a `FileNode`
+   anywhere you want it to appear:
 
    ```ts
    {
      kind: 'file',
      name: 'Hobbies.md',
      ext: '.md',
-     load: () => import('../content/hobbies.md?raw').then((m) => m.default),
+     load: () =>
+       getLocale() === 'fr'
+         ? import('../../../content/fr/hobbies.md?raw').then((m) => m.default)
+         : import('../../../content/hobbies.md?raw').then((m) => m.default),
    },
    ```
 
-   The `name` is what Explorer and the desktop show. The `load` path is the
-   source file; it ships as its own lazy chunk.
-
-3. **That's it.** Because `.md` already maps to `notepad` in the file-type
-   registry, double-click → Notepad opens it. No changes to apps, registry,
-   or components.
-
-Optional: give the file a custom `icon: '/icons/xxx.png'` on the node, or
-place it under `/Desktop` instead of `/My Documents` to make it a desktop icon.
+3. **That's it.** `.md` already maps to `notepad` in the file-type registry.
+   Double-click → Notepad opens it. No changes to apps, registry, or
+   components. Add a `desktopPosition: { row, col }` to make it a fixed
+   desktop icon.
 
 ### Add a folder or desktop shortcut
 
-**Folder** — add a `FolderNode` to any `children` array:
+**Folder** — append a `FolderNode` to any `children` array in `tree.ts`:
 
 ```ts
 {
   kind: 'folder',
   name: 'Blog',
   icon: '/icons/folder-32.png',
-  children: [
-    // ...FileNodes
-  ],
+  children: [ /* …FileNodes */ ],
 }
 ```
 
-**Desktop shortcut** — add a `ShortcutNode` under `/Desktop`:
+**Desktop shortcut** — append a `ShortcutNode` under `/Desktop`:
 
 ```ts
 {
@@ -723,18 +971,19 @@ place it under `/Desktop` instead of `/My Documents` to make it a desktop icon.
   name: 'My Blog',
   icon: '/icons/folder-32.png',
   target: { appId: 'explorer', path: '/My Documents/Blog' },
+  desktopPosition: { row: 5, col: 1 },
 }
 ```
 
-Shortcut icons automatically render with the shortcut-arrow overlay on both
-the desktop and inside Explorer.
+Shortcut icons render with the shortcut-arrow overlay on both the desktop
+and inside Explorer (disable via `displayShortcutArrow: false`).
 
 ### Add a file type
 
-For example, add support for plain JSON files shown in Notepad:
+Example: add JSON support mapped to Notepad.
 
 ```ts
-// src/shell/fileTypes.ts
+// src/shells/desktop/lib/fileTypes.ts
 '.json': {
   ext: '.json',
   icon: '/icons/notepad.png',
@@ -743,32 +992,21 @@ For example, add support for plain JSON files shown in Notepad:
 },
 ```
 
-Then add an `acceptsFileTypes: ['.md', '.txt', '.json']` entry to the Notepad
-manifest if you want it to advertise the type, and an `ext: '.json'` FileNode
-in the VFS tree pointing at whatever content you want to load.
+Optionally add `acceptsFileTypes: ['.md', '.txt', '.json']` to the Notepad
+manifest for discoverability. For a brand-new default app (`.png` → image
+viewer), write the app first (next recipe) then set `defaultAppId`.
 
-For a **new default app** (e.g. `.png` → new image viewer), create the app
-first (next recipe) and then set `defaultAppId: 'image-viewer'`.
+### Add a desktop app
 
-### Add a simple app (singleton)
-
-A singleton app has one instance and runs on launch with no file. Example:
-a clock.
-
-1. **Create the app module**:
-
-   ```
-   src/apps/clock/index.ts
-   src/apps/clock/clock.css
-   ```
+1. **Create the module** under `src/shells/desktop/apps/<id>/`:
 
    ```ts
-   // src/apps/clock/index.ts
+   // src/shells/desktop/apps/clock/index.ts
    import type { AppModule } from '../types';
    import './clock.css';
 
    const mod: AppModule = {
-     mount({ root, signal }) {
+     mount({ root, host, signal }) {
        root.classList.add('clock');
        const face = document.createElement('div');
        face.className = 'clock__face';
@@ -789,11 +1027,10 @@ a clock.
        };
      },
    };
-
    export default mod;
    ```
 
-2. **Register it** in `src/apps/registry.ts`:
+2. **Register it** in `src/shells/desktop/apps/registry.ts`:
 
    ```ts
    {
@@ -808,192 +1045,138 @@ a clock.
    },
    ```
 
-3. **Optional: add a desktop shortcut**:
+3. **Optional**: add a `ShortcutNode` under `/Desktop` in `fs/tree.ts`, or
+   open through the start menu.
+
+**App kind cheat-sheet**:
+
+- `singleton` — one instance at a time (Minesweeper, Outlook Express).
+  Re-launching focuses it.
+- `document` — one instance per file or `args.path` key (Notepad, About,
+  Adobe Reader).
+- `multi` — every launch spawns a new window (BSOD, Compose). Combine with
+  `findExistingInstance` if you want runtime-state-based dedup (Explorer).
+
+**Dialog-style chrome** (About): set `controls: ['close']`,
+`showWindowIcon: false`, `resizable: false`, `showInTaskbar: false`.
+
+**Shared menu bar**: import `createMenuBar` from `../../lib/menubar` and
+pass a `MenuSchema` + `onAction`. Bind teardown to `signal` so it dies with
+your app.
+
+**Interactive apps / games**: pause RAF loops on `onMinimize` and `onBlur`;
+size canvases from `onResize`; attach DOM listeners with `{ signal }` so
+they auto-remove on close.
+
+### Add an iPod app
+
+1. **Create the module** under `src/shells/ipod/apps/<id>/`:
+
    ```ts
-   // in src/fs/tree.ts, inside /Desktop children
+   // src/shells/ipod/apps/photos/index.ts
+   import type { IpodAppModule } from '../types';
+   import './photos.css';
+
+   const mod: IpodAppModule = {
+     mount({ root, host, signal }) {
+       root.classList.add('photos');
+       root.innerHTML = `<h2>Photos</h2>`;
+       host.setTitle('Photos');
+       return {
+         unmount() {
+           root.innerHTML = '';
+         },
+       };
+     },
+   };
+   export default mod;
+   ```
+
+2. **Register it** in `src/shells/ipod/apps/registry.ts`:
+
+   ```ts
    {
-     kind: 'shortcut',
-     name: 'Clock',
-     icon: '/icons/clock.png',
-     target: { appId: 'clock' },
+     id: 'photos',
+     title: 'Photos',
+     titleKey: 'ipod.app.photos',       // add to both i18n files
+     icon: icon('photos'),              // /ipod/icons/photos.png
+     location: 'home',
+     order: 5,
+     loader: () => import('./photos'),
    },
    ```
 
-That's the full surface. Launching from the start menu or the shortcut will
-focus the existing clock window if it's already open, thanks to `kind:
-'singleton'`.
+3. **Add the icon PNG** at `public/ipod/icons/photos.png` (57×57 iOS 1 style).
 
-### Add a document app
+The navigator picks it up automatically: tap the home-grid icon → slide-up
+animation → `mount(ctx)` → nav-bar back button → `goHome()`. Tear-down via
+the `signal` happens before `unmount()` so event listeners don't race the
+DOM removal.
 
-Document apps get a new window per opened file/path. Notepad is the reference
-implementation. The only differences from a singleton:
+### Add a translation key
 
-- `kind: 'document'`
-- `acceptsFileTypes: ['.ext1', '.ext2']`
-- Inside `mount`, use `ctx.file` (for files) or `ctx.args.path` (for folder-
-  aware apps) as the thing the window is "about". Call
-  `host.setTitle(\`${file.name} — MyApp\`)`.
-- Register the extension in `src/shell/fileTypes.ts` with
-  `defaultAppId: 'myapp'`.
-
-Every different file becomes its own window; opening the same file twice
-focuses the existing one.
-
-### Add a multi-instance app
-
-Use `kind: 'multi'` when you genuinely want a new window on every launch and
-no deduplication. Each instance gets a unique `#<counter>` suffix.
-
-```ts
-{
-  id: 'browser',
-  title: 'Web Browser',
-  icon: '/icons/ie.png',
-  defaultWidth: 800,
-  defaultHeight: 600,
-  kind: 'multi',
-  loader: () => import('./browser'),
-},
-```
-
-Good fits: browsers, editors that should always open a blank window, games
-where the user wants multiple simultaneous boards.
-
-### Add an interactive app or game
-
-The mount context gives you everything you need:
-
-```ts
-import type { AppModule } from '../types';
-import './minesweeper.css';
-
-const mod: AppModule = {
-  async mount({ root, signal }) {
-    root.classList.add('minesweeper');
-
-    const canvas = document.createElement('canvas');
-    root.appendChild(canvas);
-    const ctx = canvas.getContext('2d')!;
-
-    let paused = false;
-    let raf = 0;
-
-    const loop = () => {
-      if (paused) return;
-      // draw frame
-      raf = requestAnimationFrame(loop);
-    };
-
-    // Inputs — signal auto-removes on unmount
-    canvas.addEventListener('click', onClick, { signal });
-    canvas.addEventListener('keydown', onKey, { signal });
-
-    raf = requestAnimationFrame(loop);
-
-    return {
-      onResize(w, h) {
-        canvas.width = w;
-        canvas.height = h;
-      },
-      onMinimize() {
-        paused = true;
-        cancelAnimationFrame(raf);
-      },
-      onBlur() {
-        paused = true;
-        cancelAnimationFrame(raf);
-      },
-      onRestore() {
-        paused = false;
-        raf = requestAnimationFrame(loop);
-      },
-      onFocus() {
-        if (paused) {
-          paused = false;
-          raf = requestAnimationFrame(loop);
-        }
-      },
-      unmount() {
-        cancelAnimationFrame(raf);
-        root.classList.remove('minesweeper');
-        root.innerHTML = '';
-      },
-    };
-
-    function onClick(_e: MouseEvent) {
-      /* ... */
-    }
-    function onKey(_e: KeyboardEvent) {
-      /* ... */
-    }
-  },
-};
-
-export default mod;
-```
-
-Important patterns:
-
-- **Attach listeners with `{ signal }`** — they auto-remove on close.
-- **Pause RAF loops on `onMinimize` and `onBlur`** — the window is invisible
-  or backgrounded; don't burn CPU.
-- **Size the canvas in `onResize`** — the host runs a `ResizeObserver` on the
-  window body and forwards changes.
-- **Clear the DOM in `unmount`** — the window element itself is destroyed by
-  the window manager, but it's polite to drop references for GC.
-
-Register with `kind: 'singleton'` (one game at a time) or `'multi'` (several
-concurrent games). Add a desktop shortcut via `ShortcutNode`.
-
-If the game needs assets, use dynamic imports so they only load on first
-launch:
-
-```ts
-const { loadLevel } = await import('./levels');
-```
+1. Add the key to `src/i18n/en.ts`. English is the source of truth; `I18nKey`
+   is `keyof typeof en`.
+2. Add the matching key to `src/i18n/fr.ts`. Order doesn't matter; parity
+   does — `i18n/index.test.ts` fails if the two files diverge.
+3. Use it via `t('my.new.key', ...args)`. Pass it to `titleKey` on an
+   `IpodAppManifest` if it's an app title; on the iPod shell, `bootstrap.ts`
+   live-patches SSR'd `[data-i18n]` elements after mount.
 
 ---
 
 ## Architectural principles
 
-These are the rules the codebase is meant to keep as it grows:
+Rules the codebase is meant to keep as it grows:
 
-1. **One entry point for opening things.** Every "open X" action flows
-   through `shell.launch()`. Never call `appHost.launch()` directly from a UI
-   surface; let the shell resolve paths and defaults.
+1. **One entry point per shell.** Desktop: every "open X" goes through
+   `shells/desktop/lib/launcher.ts::launch()`. iPod: every launch goes through
+   `ipodNavigator.openApp()` via an `ipod:launch` event. Never bypass.
 
-2. **Instance IDs are opaque strings.** Everything downstream of the app host
-   (window manager, taskbar, event bus) treats them as keys. Never parse them.
+2. **`core/` has no shell imports.** Shells depend on `core/`, never the
+   reverse. If something feels shared, it goes in `core/`; if it references
+   anything shell-specific, it doesn't.
 
-3. **Apps are sandboxes.** An app's only contact surface is `AppMountContext`
-   - `AppInstance`. An app should not import the window manager, not know
-     about other apps, not reach into the DOM outside its `root`.
+3. **Instance IDs are opaque strings.** Everything downstream of the app host
+   / navigator (window manager, taskbar, event bus) treats them as keys.
+   Never parse them.
 
-4. **The window manager doesn't know about content.** It creates and destroys
-   DOM nodes, tracks geometry, and delegates everything else. If you find
-   yourself needing to teach it about apps or files, extend the app host
-   instead.
+4. **Apps are sandboxes.** An app's only contact surface is its mount context
+   plus the instance hooks it returns. An app should not import the window
+   manager, not know about other apps, not reach into the DOM outside its
+   `root`.
 
-5. **Code-split by default.** Apps (`loader: () => import(...)`) and content
-   files (`load: () => import('...?raw')`) use dynamic imports so they land
-   in separate chunks. Heavy things (a game, a markdown parser) should never
-   be in the initial bundle.
+5. **The window manager doesn't know about content.** It creates and destroys
+   DOM nodes and tracks geometry. If you need to teach it about apps or files,
+   extend the app host instead.
 
-6. **Prefer declarative over imperative.** The VFS tree, the app registry,
-   and the file-type registry are all plain data. Adding a file or an app is
+6. **Code-split by default.** Apps (`loader: () => import(...)`) and content
+   files (`load: () => import('...?raw')`) use dynamic imports so they ship
+   as separate chunks. Heavy libraries (`marked`, `pdfjs-dist`) must not land
+   in the initial bundle of either shell.
+
+7. **Shell isolation.** The mobile visitor never downloads the desktop shell
+   (CSS, components, window manager, Clippy, marked). Anything imported by
+   `shells/desktop/bootstrap.ts` belongs to the desktop chunk; same for iPod.
+   Only `core/`, `i18n/`, `layouts/`, and `content/` may be reached by both.
+
+8. **Prefer declarative over imperative.** The VFS tree, both app registries,
+   and the file-type registry are plain data. Adding a file or an app is
    usually one entry, not a new code path.
 
-7. **No framework runtime.** Astro renders the static shell; the rest is
-   vanilla TypeScript. No React, no signals, no store. Custom events on
-   `document` are the only message bus.
+9. **No framework runtime.** Astro renders the static scaffold; everything
+   at runtime is vanilla TypeScript. No React, no signals, no store. Custom
+   events on `document` are the only message bus.
 
-8. **Mutate DOM sparingly and intentionally.** Every avoidable mutation
-   retriggers Astro's dev-mode DOM audit. When writing to text content,
-   check for equality first (see the clock).
+10. **Typed indexed access.** `noUncheckedIndexedAccess` is on — trust that
+    `arr[i]` is `T | undefined` and either assert (`!`) at a known-safe site
+    or guard. Tests cover the pure surfaces (`fs/api`, `minesweeper/game`,
+    `i18n`).
 
-9. **Style stays in plain CSS.** Theme tokens live in `variables.css`; per-app
-   body styles live alongside the app. No Tailwind, no CSS-in-JS.
+11. **Fail loudly in dev, gracefully in production.** The host wraps every
+    app callback in try/catch with `[appHost]` / `[ipod/navigator]` prefixes.
+    The launcher warns on unresolved paths and returns cleanly.
 
-10. **Fail loudly in dev, gracefully in production.** The host wraps every
-    app callback in try/catch and logs with a `[appHost]` prefix. The shell
-    warns on unresolved paths but doesn't throw.
+12. **Style stays in plain CSS.** Theme tokens in `variables.css`, shared
+    chrome in dedicated files (`window.css`, `menubar.css`), per-app body
+    styles alongside the app. No Tailwind, no CSS-in-JS.
