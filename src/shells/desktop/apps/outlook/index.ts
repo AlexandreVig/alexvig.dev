@@ -19,42 +19,42 @@ const mod: AppModule = {
 
       <div class="outlook__toolbar">
         <button class="outlook__tbtn" data-action="create-mail">
-          <img src="/icons/outlook/create-mail.png" alt="" />
+          <img src="/icons/outlook/create-mail.webp" alt="" />
           <span>${t('outlook.createMail')}</span>
         </button>
         <div class="outlook__tsep"></div>
         <button class="outlook__tbtn" data-action="reply" disabled>
-          <img src="/icons/outlook/reply.png" alt="" />
+          <img src="/icons/outlook/reply.webp" alt="" />
           <span>${t('outlook.reply')}</span>
         </button>
         <button class="outlook__tbtn" data-action="reply-all" disabled>
-          <img src="/icons/outlook/reply-all.png" alt="" />
+          <img src="/icons/outlook/reply-all.webp" alt="" />
           <span>${t('outlook.replyAll')}</span>
         </button>
         <button class="outlook__tbtn" data-action="forward" disabled>
-          <img src="/icons/outlook/forward.png" alt="" />
+          <img src="/icons/outlook/forward.webp" alt="" />
           <span>${t('outlook.forward')}</span>
         </button>
         <div class="outlook__tsep"></div>
         <button class="outlook__tbtn" data-action="print" disabled>
-          <img src="/icons/outlook/print.png" alt="" />
+          <img src="/icons/outlook/print.webp" alt="" />
           <span>${t('outlook.print')}</span>
         </button>
         <button class="outlook__tbtn" data-action="delete" disabled>
-          <img src="/icons/outlook/delete.png" alt="" />
+          <img src="/icons/outlook/delete.webp" alt="" />
           <span>${t('outlook.delete')}</span>
         </button>
         <div class="outlook__tsep"></div>
         <button class="outlook__tbtn" data-action="send-recv" disabled>
-          <img src="/icons/outlook/send-recv.png" alt="" />
+          <img src="/icons/outlook/send-recv.webp" alt="" />
           <span>${t('outlook.sendRecv')}</span>
         </button>
         <button class="outlook__tbtn" data-action="addresses" disabled>
-          <img src="/icons/outlook/addresses.png" alt="" />
+          <img src="/icons/outlook/addresses.webp" alt="" />
           <span>${t('outlook.addresses')}</span>
         </button>
         <button class="outlook__tbtn" data-action="find" disabled>
-          <img src="/icons/outlook/find.png" alt="" />
+          <img src="/icons/outlook/find.webp" alt="" />
           <span>${t('outlook.find')}</span>
         </button>
       </div>
@@ -102,8 +102,8 @@ const mod: AppModule = {
             else if (action === 'refresh') render();
             else if (action === 'about') {
               openAbout('outlook', {
-                icon: '/icons/outlook.png',
-                appIcon: '/icons/outlook.png',
+                icon: '/icons/outlook.webp',
+                appIcon: '/icons/outlook.webp',
                 appTitle: 'Outlook Express',
                 version: 'Version 6.0',
                 copyright: '\u00a9 2026 Alexandre Vigneau',
@@ -143,7 +143,7 @@ const mod: AppModule = {
       const rootNode = document.createElement('div');
       rootNode.className = 'outlook__tree-node outlook__tree-node--root';
       rootNode.innerHTML = `
-        <img src="/icons/outlook/local-folders.png" class="outlook__tree-icon" alt="" />
+        <img src="/icons/outlook/local-folders.webp" class="outlook__tree-icon" alt="" />
         <span>Outlook Express</span>
       `;
       foldersTree.appendChild(rootNode);
@@ -223,8 +223,8 @@ const mod: AppModule = {
         if (email.id === selectedEmailId) row.classList.add('outlook__list-row--selected');
 
         const iconSrc = email.unread
-          ? '/icons/outlook/email-unread.png'
-          : '/icons/outlook/email-read.png';
+          ? '/icons/outlook/email-unread.webp'
+          : '/icons/outlook/email-read.webp';
 
         const dateStr = formatDate(email.date);
 

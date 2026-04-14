@@ -8,7 +8,7 @@ export const root: FolderNode = {
     {
       kind: 'folder',
       name: 'Recycle Bin',
-      icon: '/icons/recycle-bin-32.png',
+      icon: '/icons/recycle-bin-32.webp',
       children: [
         {
           kind: 'file',
@@ -21,12 +21,12 @@ export const root: FolderNode = {
     {
       kind: 'folder',
       name: 'Desktop',
-      icon: '/icons/folder-32.png',
+      icon: '/icons/folder-32.webp',
       children: [
         {
           kind: 'shortcut',
           name: 'Recycle Bin',
-          icon: '/icons/recycle-bin-32.png',
+          icon: '/icons/recycle-bin-32.webp',
           target: { appId: 'explorer', path: '/Recycle Bin' },
           desktopPosition: { row: 1, col: 1 },
           displayShortcutArrow: false,
@@ -34,28 +34,28 @@ export const root: FolderNode = {
         {
           kind: 'shortcut',
           name: 'My Computer',
-          icon: '/icons/my-computer.png',
+          icon: '/icons/my-computer.webp',
           target: { appId: 'explorer', path: '/' },
           desktopPosition: { row: 2, col: 1 },
         },
         {
           kind: 'shortcut',
           name: 'My Documents',
-          icon: '/icons/folder-32.png',
+          icon: '/icons/folder-32.webp',
           target: { appId: 'explorer', path: '/My Documents' },
           desktopPosition: { row: 3, col: 1 },
         },
         {
           kind: 'shortcut',
           name: 'Projects',
-          icon: '/icons/folder-32.png',
+          icon: '/icons/folder-32.webp',
           target: { appId: 'explorer', path: '/My Documents/Projects' },
           desktopPosition: { row: 4, col: 1 },
         },
         {
           kind: 'file',
           name: 'About Me.md',
-          icon: '/icons/user-2.png',
+          icon: '/icons/user-2.webp',
           ext: '.md',
           desktopPosition: { row: 1, col: 2 },
           load: () =>
@@ -66,7 +66,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'Skills.md',
-          icon: '/icons/notepad.png',
+          icon: '/icons/notepad.webp',
           ext: '.md',
           desktopPosition: { row: 2, col: 2 },
           load: () =>
@@ -77,7 +77,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'Contact.md',
-          icon: '/icons/mail.png',
+          icon: '/icons/mail.webp',
           ext: '.md',
           desktopPosition: { row: 3, col: 2 },
           load: () =>
@@ -88,14 +88,14 @@ export const root: FolderNode = {
         {
           kind: 'shortcut',
           name: 'Outlook Express',
-          icon: '/icons/outlook.png',
+          icon: '/icons/outlook.webp',
           target: { appId: 'outlook-express' },
           desktopPosition: { row: 5, col: 1 },
         },
         {
           kind: 'shortcut',
           name: 'Minesweeper',
-          icon: '/icons/minesweeper/mine-icon.png',
+          icon: '/icons/minesweeper/mine-icon.webp',
           target: { appId: 'minesweeper' },
           desktopPosition: { row: 6, col: 1 },
         },
@@ -111,12 +111,12 @@ export const root: FolderNode = {
     {
       kind: 'folder',
       name: 'My Documents',
-      icon: '/icons/folder-32.png',
+      icon: '/icons/folder-32.webp',
       children: [
         {
           kind: 'folder',
           name: 'Projects',
-          icon: '/icons/folder-32.png',
+          icon: '/icons/folder-32.webp',
           children: [
             {
               kind: 'file',
@@ -132,7 +132,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'Skills.md',
-          icon: '/icons/notepad.png',
+          icon: '/icons/notepad.webp',
           ext: '.md',
           load: () =>
             getLocale() === 'fr'
@@ -142,7 +142,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'Contact.md',
-          icon: '/icons/mail.png',
+          icon: '/icons/mail.webp',
           ext: '.md',
           load: () =>
             getLocale() === 'fr'
@@ -152,7 +152,7 @@ export const root: FolderNode = {
         {
           kind: 'file',
           name: 'About Me.md',
-          icon: '/icons/user-2.png',
+          icon: '/icons/user-2.webp',
           ext: '.md',
           load: () =>
             getLocale() === 'fr'

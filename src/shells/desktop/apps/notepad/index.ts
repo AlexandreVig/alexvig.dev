@@ -46,8 +46,8 @@ const mod: AppModule = {
               break;
             case 'about':
               openAbout('notepad', {
-                icon: '/icons/notepad.png',
-                appIcon: '/icons/notepad.png',
+                icon: '/icons/notepad.webp',
+                appIcon: '/icons/notepad.webp',
                 appTitle: 'Notepad',
                 version: 'Version 1.0',
                 copyright: '© 2026 Alexandre Vigneau',

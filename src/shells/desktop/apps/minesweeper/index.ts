@@ -20,28 +20,28 @@ import {
 } from './game';
 import { createDigits, setDigits } from './digits';
 
-const minesweeperIconUrl = '/icons/minesweeper/mine-icon.png';
+const minesweeperIconUrl = '/icons/minesweeper/mine-icon.webp';
 
-const deadUrl = '/icons/minesweeper/dead.png';
-const smileUrl = '/icons/minesweeper/smile.png';
-const winUrl = '/icons/minesweeper/win.png';
-const ohhUrl = '/icons/minesweeper/ohh.png';
+const deadUrl = '/icons/minesweeper/dead.webp';
+const smileUrl = '/icons/minesweeper/smile.webp';
+const winUrl = '/icons/minesweeper/win.webp';
+const ohhUrl = '/icons/minesweeper/ohh.webp';
 
-const emptyUrl = '/icons/minesweeper/empty.png';
-const open1Url = '/icons/minesweeper/open1.png';
-const open2Url = '/icons/minesweeper/open2.png';
-const open3Url = '/icons/minesweeper/open3.png';
-const open4Url = '/icons/minesweeper/open4.png';
-const open5Url = '/icons/minesweeper/open5.png';
-const open6Url = '/icons/minesweeper/open6.png';
-const open7Url = '/icons/minesweeper/open7.png';
-const open8Url = '/icons/minesweeper/open8.png';
+const emptyUrl = '/icons/minesweeper/empty.webp';
+const open1Url = '/icons/minesweeper/open1.webp';
+const open2Url = '/icons/minesweeper/open2.webp';
+const open3Url = '/icons/minesweeper/open3.webp';
+const open4Url = '/icons/minesweeper/open4.webp';
+const open5Url = '/icons/minesweeper/open5.webp';
+const open6Url = '/icons/minesweeper/open6.webp';
+const open7Url = '/icons/minesweeper/open7.webp';
+const open8Url = '/icons/minesweeper/open8.webp';
 
-const flagUrl = '/icons/minesweeper/flag.png';
-const mineUrl = '/icons/minesweeper/mine-ceil.png';
-const mineDeathUrl = '/icons/minesweeper/mine-death.png';
-const misflaggedUrl = '/icons/minesweeper/misflagged.png';
-const questionUrl = '/icons/minesweeper/question.png';
+const flagUrl = '/icons/minesweeper/flag.webp';
+const mineUrl = '/icons/minesweeper/mine-ceil.webp';
+const mineDeathUrl = '/icons/minesweeper/mine-death.webp';
+const misflaggedUrl = '/icons/minesweeper/misflagged.webp';
+const questionUrl = '/icons/minesweeper/question.webp';
 
 function numberCellUrl(n: number): string {
   return (

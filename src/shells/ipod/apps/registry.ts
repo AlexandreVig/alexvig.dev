@@ -11,7 +11,7 @@ import type { IpodAppManifest } from './types';
  * `public/ipod/icons/` in Step 6.
  */
 
-const icon = (name: string) => `/ipod/icons/${name}.png`;
+const icon = (name: string) => `/ipod/icons/${name}.webp`;
 
 export const ipodApps: IpodAppManifest[] = [
   // Dock — 4 slots, left-to-right.

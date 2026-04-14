@@ -26,29 +26,29 @@ const mod: AppModule = {
 
       <div class="explorer__toolbar">
         <button class="explorer__tbtn" data-action="back" disabled>
-          <img src="/icons/explorer/back.png" alt="" />
+          <img src="/icons/explorer/back.webp" alt="" />
           <span>${t('explorer.back')}</span>
           <span class="explorer__tbtn-caret"></span>
         </button>
         <button class="explorer__tbtn explorer__tbtn--icon" data-action="forward" disabled>
-          <img src="/icons/explorer/forward.png" alt="" />
+          <img src="/icons/explorer/forward.webp" alt="" />
           <span class="explorer__tbtn-caret"></span>
         </button>
         <button class="explorer__tbtn explorer__tbtn--icon" data-action="up" disabled title="${t('explorer.up')}">
-          <img src="/icons/explorer/up.png" alt="" />
+          <img src="/icons/explorer/up.webp" alt="" />
         </button>
         <div class="explorer__tsep"></div>
         <button class="explorer__tbtn" data-action="search">
-          <img src="/icons/explorer/search.png" alt="" />
+          <img src="/icons/explorer/search.webp" alt="" />
           <span>${t('explorer.search')}</span>
         </button>
         <button class="explorer__tbtn" data-action="folders">
-          <img src="/icons/explorer/folder.png" alt="" />
+          <img src="/icons/explorer/folder.webp" alt="" />
           <span>${t('explorer.folders')}</span>
         </button>
         <div class="explorer__tsep"></div>
         <button class="explorer__tbtn explorer__tbtn--icon" data-action="views" title="Views">
-          <img src="/icons/explorer/views.png" alt="" />
+          <img src="/icons/explorer/views.webp" alt="" />
           <span class="explorer__tbtn-caret"></span>
         </button>
       </div>
@@ -61,7 +61,7 @@ const mod: AppModule = {
           <button class="explorer__address-caret" data-action="address-dropdown" tabindex="-1" aria-label="Address history"></button>
         </div>
         <button class="explorer__address-go" data-action="go">
-          <img src="/icons/explorer/forward.png" alt="" />
+          <img src="/icons/explorer/forward.webp" alt="" />
           <span>${t('explorer.go')}</span>
         </button>
       </div>
@@ -74,14 +74,14 @@ const mod: AppModule = {
     menuSlot.replaceWith(
       createMenu(
         {
-          logo: { src: '/icons/explorer/windows.png' },
+          logo: { src: '/icons/explorer/windows.webp' },
           onAction: (action) => {
             if (action === 'exit') host.close();
             else if (action === 'refresh') render();
             else if (action === 'about-windows') {
               openAbout('explorer', {
-                icon: '/icons/my-computer.png',
-                appIcon: '/icons/my-computer.png',
+                icon: '/icons/my-computer.webp',
+                appIcon: '/icons/my-computer.webp',
                 appTitle: 'Windows Explorer',
                 version: 'Version 1.0',
                 copyright: '\u00a9 2026 Alexandre Vigneau',
@@ -128,10 +128,10 @@ const mod: AppModule = {
 
       host.setIcon(
         currentPath === '/'
-          ? '/icons/my-computer.png'
+          ? '/icons/my-computer.webp'
           : node?.kind === 'file' || node?.kind === 'shortcut'
             ? iconForNode(node)
-            : '/icons/folder-32.png',
+            : '/icons/folder-32.webp',
       );
 
       const children = listChildren(currentPath);

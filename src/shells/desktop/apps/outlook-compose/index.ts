@@ -11,21 +11,21 @@ const mod: AppModule = {
     root.innerHTML = `
       <div class="compose__toolbar">
         <button class="compose__btn compose__btn--send" data-action="send">
-          <img src="/icons/outlook/send-recv.png" alt="" />
+          <img src="/icons/outlook/send-recv.webp" alt="" />
           <span>${t('compose.send')}</span>
         </button>
         <div class="compose__tsep"></div>
         <button class="compose__btn" disabled>
-          <img src="/icons/outlook/delete.png" alt="" />
+          <img src="/icons/outlook/delete.webp" alt="" />
           <span>${t('compose.cut')}</span>
         </button>
         <button class="compose__btn" disabled>
-          <img src="/icons/outlook/find.png" alt="" />
+          <img src="/icons/outlook/find.webp" alt="" />
           <span>${t('compose.paste')}</span>
         </button>
         <div class="compose__tsep"></div>
         <button class="compose__btn" disabled>
-          <img src="/icons/outlook/print.png" alt="" />
+          <img src="/icons/outlook/print.webp" alt="" />
           <span>${t('compose.check')}</span>
         </button>
       </div>
@@ -158,7 +158,7 @@ const mod: AppModule = {
 
     // Set title
     host.setTitle('New Message');
-    host.setIcon('/icons/outlook/create-mail.png');
+    host.setIcon('/icons/outlook/create-mail.webp');
   },
 };
 

@@ -100,8 +100,8 @@ const mod: AppModule = {
               break;
             case 'about':
               openAbout('adobe-reader', {
-                icon: '/icons/adobe-reader.png',
-                appIcon: '/icons/adobe-reader.png',
+                icon: '/icons/adobe-reader.webp',
+                appIcon: '/icons/adobe-reader.webp',
                 appTitle: 'Adobe Reader',
                 version: 'Version 7.0',
                 copyright: '\u00a9 2026 Alexandre Vigneau',

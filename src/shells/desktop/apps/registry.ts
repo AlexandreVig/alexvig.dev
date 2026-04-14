@@ -5,7 +5,7 @@ export const apps: AppManifest[] = [
   {
     id: 'explorer',
     title: 'My Computer',
-    icon: '/icons/my-computer.png',
+    icon: '/icons/my-computer.webp',
     defaultWidth: 640,
     defaultHeight: 440,
     // multi + findExistingInstance: each launch creates a new explorer window,
@@ -24,7 +24,7 @@ export const apps: AppManifest[] = [
   {
     id: 'notepad',
     title: 'Notepad',
-    icon: '/icons/notepad.png',
+    icon: '/icons/notepad.webp',
     defaultWidth: 560,
     defaultHeight: 440,
     kind: 'document',
@@ -35,7 +35,7 @@ export const apps: AppManifest[] = [
   {
     id: 'about',
     title: 'About',
-    icon: '/icons/notepad.png',
+    icon: '/icons/notepad.webp',
     defaultWidth: 420,
     defaultHeight: 320,
     // Keyed by args.path (e.g. "about:notepad") so each parent app gets
@@ -53,7 +53,7 @@ export const apps: AppManifest[] = [
   {
     id: 'outlook-express',
     title: 'Outlook Express',
-    icon: '/icons/outlook.png',
+    icon: '/icons/outlook.webp',
     defaultWidth: 720,
     defaultHeight: 520,
     kind: 'singleton',
@@ -63,7 +63,7 @@ export const apps: AppManifest[] = [
   {
     id: 'outlook-compose',
     title: 'New Message',
-    icon: '/icons/outlook/create-mail.png',
+    icon: '/icons/outlook/create-mail.webp',
     defaultWidth: 560,
     defaultHeight: 460,
     kind: 'multi',
@@ -73,7 +73,7 @@ export const apps: AppManifest[] = [
   {
     id: 'adobe-reader',
     title: 'Adobe Reader',
-    icon: '/icons/adobe-reader.png',
+    icon: '/icons/adobe-reader.webp',
     defaultWidth: 760,
     defaultHeight: 580,
     kind: 'document',
@@ -84,7 +84,7 @@ export const apps: AppManifest[] = [
   {
     id: 'bsod',
     title: 'BSOD',
-    icon: '/icons/notepad.png',
+    icon: '/icons/notepad.webp',
     defaultWidth: 0,
     defaultHeight: 0,
     kind: 'multi',
@@ -96,7 +96,7 @@ export const apps: AppManifest[] = [
   {
     id: 'minesweeper',
     title: 'Minesweeper',
-    icon: '/icons/minesweeper/mine-icon.png',
+    icon: '/icons/minesweeper/mine-icon.webp',
     defaultWidth: 220,
     defaultHeight: 260,
     kind: 'singleton',

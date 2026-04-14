@@ -1,16 +1,16 @@
 const digitUrls = [
-  '/icons/minesweeper/digit0.png',
-  '/icons/minesweeper/digit1.png',
-  '/icons/minesweeper/digit2.png',
-  '/icons/minesweeper/digit3.png',
-  '/icons/minesweeper/digit4.png',
-  '/icons/minesweeper/digit5.png',
-  '/icons/minesweeper/digit6.png',
-  '/icons/minesweeper/digit7.png',
-  '/icons/minesweeper/digit8.png',
-  '/icons/minesweeper/digit9.png',
+  '/icons/minesweeper/digit0.webp',
+  '/icons/minesweeper/digit1.webp',
+  '/icons/minesweeper/digit2.webp',
+  '/icons/minesweeper/digit3.webp',
+  '/icons/minesweeper/digit4.webp',
+  '/icons/minesweeper/digit5.webp',
+  '/icons/minesweeper/digit6.webp',
+  '/icons/minesweeper/digit7.webp',
+  '/icons/minesweeper/digit8.webp',
+  '/icons/minesweeper/digit9.webp',
 ];
-const digitMinusUrl = '/icons/minesweeper/digit-.png';
+const digitMinusUrl = '/icons/minesweeper/digit-.webp';
 
 export function createDigits(container: HTMLElement): HTMLImageElement[] {
   container.innerHTML = '';

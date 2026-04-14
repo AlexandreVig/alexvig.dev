@@ -60,11 +60,11 @@ export function parseAddress(input: string): string | null {
 
 /** Pick the small icon shown to the left of the address text. */
 export function iconFor(vfsPath: string): string {
-  if (vfsPath === '/') return '/icons/my-computer-16.png';
+  if (vfsPath === '/') return '/icons/my-computer-16.webp';
   const node = resolve(vfsPath);
-  if (!node) return '/icons/folder-16.png';
-  if (node.kind === 'folder') return '/icons/folder-16.png';
-  return node.icon ?? '/icons/folder-16.png';
+  if (!node) return '/icons/folder-16.webp';
+  if (node.kind === 'folder') return '/icons/folder-16.webp';
+  return node.icon ?? '/icons/folder-16.webp';
 }
 
 export interface TreeEntry {

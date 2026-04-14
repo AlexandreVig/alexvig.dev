@@ -71,8 +71,8 @@ export function makeFileHandle(path: string, node: FileNode): FileHandle {
 export function iconForNode(node: FsNode): string {
   if (node.icon) return node.icon;
   if (node.kind === 'file') return getFileType(node.ext).icon;
-  if (node.kind === 'folder') return '/icons/folder-32.png';
-  return '/icons/file-unknown.png';
+  if (node.kind === 'folder') return '/icons/folder-32.webp';
+  return '/icons/file-unknown.webp';
 }
 
 /** List the Desktop folder contents — used by Desktop.astro. */

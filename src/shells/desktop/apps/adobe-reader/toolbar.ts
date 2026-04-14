@@ -36,13 +36,13 @@ export function createToolbar(cb: ToolbarCallbacks): ToolbarControls {
   const saveBtn = document.createElement('button');
   saveBtn.className = 'ar__btn ar__btn--icon';
   saveBtn.title = t('reader.download');
-  saveBtn.innerHTML = '<img src="/icons/adobe-reader/save.png" alt="Save" />';
+  saveBtn.innerHTML = '<img src="/icons/adobe-reader/save.webp" alt="Save" />';
   saveBtn.addEventListener('click', () => cb.onSave());
 
   const printBtn = document.createElement('button');
   printBtn.className = 'ar__btn ar__btn--icon';
   printBtn.title = t('reader.print');
-  printBtn.innerHTML = '<img src="/icons/adobe-reader/print.png" alt="Print" />';
+  printBtn.innerHTML = '<img src="/icons/adobe-reader/print.webp" alt="Print" />';
   printBtn.addEventListener('click', () => cb.onPrint());
 
   actionsGroup.append(saveBtn, printBtn);

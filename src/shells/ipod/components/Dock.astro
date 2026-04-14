@@ -43,11 +43,11 @@ const dockApps = ipodApps.filter((a) => a.location === 'dock').sort((a, b) => a.
     justify-items: center;
     padding: 0 13px;
     margin: 0 3px;
-    background: url('/ipod/dock-grid.png') repeat-x center;
+    background: url('/ipod/dock-grid.webp') repeat-x center;
   }
 
   /* Left and right vertical border strips that frame the dock well.
-     dock-border.png is natively 3x76 — same size as the dock itself —
+     dock-border.webp is natively 3x76 — same size as the dock itself —
      so the pseudo is sized explicitly to match and the image renders
      at its natural dimensions with no scaling or repetition. */
   .ipod-dock::before,
@@ -57,7 +57,7 @@ const dockApps = ipodApps.filter((a) => a.location === 'dock').sort((a, b) => a.
     top: 0;
     width: 3px;
     height: 76px;
-    background: url('/ipod/dock-border.png') center;
+    background: url('/ipod/dock-border.webp') center;
     pointer-events: none;
   }
   .ipod-dock::before {

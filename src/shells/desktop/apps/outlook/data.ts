@@ -6,13 +6,13 @@ export function getFolders(): Folder[] {
     {
       id: 'inbox',
       name: t('outlook.folder.inbox'),
-      icon: '/icons/outlook/folder-inbox.png',
+      icon: '/icons/outlook/folder-inbox.webp',
       unread: 1,
     },
-    { id: 'outbox', name: t('outlook.folder.outbox'), icon: '/icons/outlook/folder-outbox.png' },
-    { id: 'sent', name: t('outlook.folder.sent'), icon: '/icons/outlook/folder-sent.png' },
-    { id: 'deleted', name: t('outlook.folder.deleted'), icon: '/icons/outlook/folder-deleted.png' },
-    { id: 'drafts', name: t('outlook.folder.drafts'), icon: '/icons/outlook/folder-drafts.png' },
+    { id: 'outbox', name: t('outlook.folder.outbox'), icon: '/icons/outlook/folder-outbox.webp' },
+    { id: 'sent', name: t('outlook.folder.sent'), icon: '/icons/outlook/folder-sent.webp' },
+    { id: 'deleted', name: t('outlook.folder.deleted'), icon: '/icons/outlook/folder-deleted.webp' },
+    { id: 'drafts', name: t('outlook.folder.drafts'), icon: '/icons/outlook/folder-drafts.webp' },
   ];
 }
 
@@ -89,7 +89,7 @@ export function getEmails(): Email[] {
 }
 
 export const contacts: Contact[] = [
-  { name: 'Clippy', email: 'clippy@microsoft.com', icon: '/icons/outlook/contact.png' },
-  { name: 'Bill Gates', email: 'bill@microsoft.com', icon: '/icons/outlook/contact.png' },
-  { name: 'Alexandre', email: 'alexandre.vigneau@epitech.eu', icon: '/icons/outlook/contact.png' },
+  { name: 'Clippy', email: 'clippy@microsoft.com', icon: '/icons/outlook/contact.webp' },
+  { name: 'Bill Gates', email: 'bill@microsoft.com', icon: '/icons/outlook/contact.webp' },
+  { name: 'Alexandre', email: 'alexandre.vigneau@epitech.eu', icon: '/icons/outlook/contact.webp' },
 ];
