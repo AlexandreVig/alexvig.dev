@@ -55,7 +55,8 @@ type CellState =
 
 interface Cell {
   state: CellState;
-  minesAround: number; // negative => mine
+  isMine: boolean;
+  minesAround: number;
 }
 
 interface GameConfig {
@@ -151,6 +152,7 @@ function nearIndexes(index: number, rows: number, columns: number): number[] {
 function initCells({ rows, columns }: GameConfig): Cell[] {
   return Array.from({ length: rows * columns }, () => ({
     state: 'cover',
+    isMine: false,
     minesAround: 0,
   }));
 }
@@ -172,9 +174,9 @@ function placeMines(cells: Cell[], cfg: GameConfig, excludeIndex: number): void 
   const { rows, columns, mines } = cfg;
   const mineIndexes = shufflePick(mines, rows * columns, excludeIndex);
   mineIndexes.forEach((chosen) => {
-    cells[chosen].minesAround = -10;
+    cells[chosen].isMine = true;
     nearIndexes(chosen, rows, columns).forEach((ni) => {
-      if (cells[ni].minesAround >= 0) cells[ni].minesAround += 1;
+      if (!cells[ni].isMine) cells[ni].minesAround += 1;
     });
   });
 }
@@ -188,7 +190,7 @@ function autoOpenIndexes(cells: Cell[], cfg: GameConfig, startIndex: number): nu
     if (!cell) return [];
     if (walked[idx]) return [];
     if (cell.state === 'flag') return [];
-    if (cell.minesAround < 0) return [];
+    if (cell.isMine) return [];
     walked[idx] = true;
     if (cell.minesAround > 0) return [idx];
 
@@ -203,7 +205,7 @@ function autoOpenIndexes(cells: Cell[], cfg: GameConfig, startIndex: number): nu
 }
 
 function countRemainingSafe(cells: Cell[]): number {
-  return cells.filter((c) => c.state !== 'open' && c.minesAround >= 0).length;
+  return cells.filter((c) => c.state !== 'open' && !c.isMine).length;
 }
 
 function computeRemainingMines(cells: Cell[], mines: number): number {
@@ -410,7 +412,7 @@ const mod: AppModule = {
       let src = '';
       switch (c.state) {
         case 'open':
-          src = numberCellUrl(Math.max(0, c.minesAround));
+          src = numberCellUrl(c.minesAround);
           break;
         case 'flag':
           src = flagUrl;
@@ -428,7 +430,7 @@ const mod: AppModule = {
           src = misflaggedUrl;
           break;
         default:
-          src = numberCellUrl(Math.max(0, c.minesAround));
+          src = numberCellUrl(c.minesAround);
       }
       img.src = src;
     };
@@ -470,8 +472,8 @@ const mod: AppModule = {
       stopTimer();
 
       cells = cells.map((c) => {
-        if (c.minesAround < 0 && c.state !== 'flag') return { ...c, state: 'mine' };
-        if (c.state === 'flag' && c.minesAround >= 0) return { ...c, state: 'misflagged' };
+        if (c.isMine && c.state !== 'flag') return { ...c, state: 'mine' };
+        if (c.state === 'flag' && !c.isMine) return { ...c, state: 'misflagged' };
         return c;
       });
       cells[dieIndex] = { ...cells[dieIndex], state: 'die' };
@@ -486,7 +488,7 @@ const mod: AppModule = {
       stopTimer();
 
       cells = cells.map((c) => {
-        if (c.minesAround < 0) return { ...c, state: 'flag' };
+        if (c.isMine) return { ...c, state: 'flag' };
         return { ...c, state: 'open' };
       });
 
@@ -504,7 +506,7 @@ const mod: AppModule = {
 
       ensureStarted(index);
 
-      if (c.minesAround < 0) {
+      if (c.isMine) {
         gameOver(index);
         return;
       }
@@ -531,7 +533,7 @@ const mod: AppModule = {
       const flags = near.filter((n) => n.state === 'flag').length;
       if (flags !== c.minesAround) return;
 
-      const mineIndex = neighbors.find((i) => cells[i].minesAround < 0 && cells[i].state !== 'flag');
+      const mineIndex = neighbors.find((i) => cells[i].isMine && cells[i].state !== 'flag');
       if (mineIndex !== undefined) {
         gameOver(mineIndex);
         return;
