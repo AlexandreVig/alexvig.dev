@@ -16,7 +16,7 @@ import { t } from '../../../../i18n';
 import './notes.css';
 
 const mod: IpodAppModule = {
-  mount({ root, host, signal }) {
+  mount({ root, host, signal, args }) {
     host.setTitle(t('ipod.app.notes'));
     root.classList.add('ipod-notes');
 
@@ -86,7 +86,10 @@ const mod: IpodAppModule = {
       }
     };
 
-    renderList();
+    const initialNoteId = typeof args.noteId === 'string' ? (args.noteId as string) : null;
+    const initialNote = initialNoteId ? NOTES.find((n) => n.id === initialNoteId) : undefined;
+    if (initialNote) void renderNote(initialNote);
+    else renderList();
 
     return {
       unmount() {

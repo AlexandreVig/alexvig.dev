@@ -29,7 +29,7 @@ peuvent résoudre presque tout. L'architecture et l'optimisation me tiennent
 
   Développement de la plateforme Netmo sur **WeWeb** avec des composants
   **Vue** personnalisés, connectée à un backend **Xano**, et déploiement
-  de microservices **Python** sur **GCP**.
+  de microservices **Python** sur **Google Cloud Platform**.
 
 - **Abomicro** : _Stage administrateur système_ · Jul → Déc 2023
 

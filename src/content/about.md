@@ -27,7 +27,7 @@ a lot about architecture and optimisation.
 
   Built the Netmo platform on **WeWeb** with custom **Vue** components,
   wired it to a **Xano** backend, and shipped a handful of **Python**
-  microservices on **GCP**.
+  microservices on **Google Cloud Platform**.
 
 - **Abomicro** : _Sysadmin intern_ · Jul → Dec 2023
 

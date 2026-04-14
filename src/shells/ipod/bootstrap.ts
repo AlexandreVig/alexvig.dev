@@ -68,6 +68,11 @@ function init(): void {
   console.info(
     `[ipod] shell mounted (${ipodApps.length} app${ipodApps.length === 1 ? '' : 's'} registered)`,
   );
+
+  // Match the desktop shell's "open About on startup" by opening the Notes
+  // app directly to the About note.
+  const notes = ipodApps.find((a) => a.id === 'notes');
+  if (notes) void ipodNavigator.openApp(notes, { noteId: 'about' });
 }
 
 /**

@@ -53,7 +53,7 @@ export class IpodNavigator {
    * or while another app is already open are ignored. iOS 1 behaved
    * the same way — only one app visible at a time.
    */
-  async openApp(manifest: IpodAppManifest): Promise<void> {
+  async openApp(manifest: IpodAppManifest, args: Record<string, unknown> = {}): Promise<void> {
     if (this.busy) return;
     if (this.current().kind !== 'home') return;
 
@@ -110,7 +110,7 @@ export class IpodNavigator {
     const ctx: IpodAppMountContext = {
       root: frame.root,
       instanceId,
-      args: {},
+      args,
       signal: abort.signal,
       host,
     };
