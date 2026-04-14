@@ -1,16 +1,12 @@
 import { iconForNode, listChildren, parentPath, pathOf, resolve } from '../../fs/api';
 import type { FsNode } from '../../fs/types';
-import {
-  buildLocationTree,
-  displayPathFor,
-  iconFor,
-  parseAddress,
-} from './address';
 import { launch } from '../../lib/launcher';
 import { t } from '../../../../i18n';
 import type { AppModule } from '../types';
 import { explorerInstances } from './instances';
 import { createMenu } from './menu';
+import { createHistory } from './history';
+import { setupAddressBar } from './addressBar';
 import './explorer.css';
 
 const mod: AppModule = {
@@ -19,11 +15,8 @@ const mod: AppModule = {
       typeof args.path === 'string' && resolve(args.path) ? (args.path as string) : '/';
 
     let currentPath = initialPath;
-    const history: string[] = [];
-    const forwardStack: string[] = [];
+    const history = createHistory();
 
-    // Live-path registration so external launches can find this window by its
-    // *current* folder rather than the path it was originally opened at.
     explorerInstances.set(instanceId, () => currentPath);
 
     root.classList.add('explorer');
@@ -112,28 +105,32 @@ const mod: AppModule = {
     const upBtn = root.querySelector<HTMLButtonElement>('[data-action="up"]')!;
     const goBtn = root.querySelector<HTMLButtonElement>('[data-action="go"]')!;
     const addressCombo = root.querySelector<HTMLElement>('.explorer__address-combo')!;
-    const addressCaret = root.querySelector<HTMLButtonElement>(
-      '[data-action="address-dropdown"]',
-    )!;
+    const addressCaret = root.querySelector<HTMLButtonElement>('[data-action="address-dropdown"]')!;
     const addressInput = root.querySelector<HTMLInputElement>('.explorer__address-input')!;
     const addressIcon = root.querySelector<HTMLImageElement>('.explorer__address-icon')!;
     const body = root.querySelector<HTMLElement>('.explorer__body')!;
     const status = root.querySelector<HTMLElement>('.explorer__status')!;
 
-    /** Recently typed paths, newest first. Backed by the dropdown. */
-    const typedHistory: string[] = [];
+    const addressBar = setupAddressBar({
+      addressCombo,
+      addressCaret,
+      addressInput,
+      addressIcon,
+      goBtn,
+      getCurrentPath: () => currentPath,
+      navigateTo,
+      signal,
+    });
 
     function render() {
       const node = resolve(currentPath);
       const title = currentPath === '/' ? 'My Computer' : node?.name ?? currentPath;
 
-      addressInput.value = displayPathFor(currentPath);
-      addressIcon.src = iconFor(currentPath);
-      backBtn.disabled = history.length === 0;
-      forwardBtn.disabled = forwardStack.length === 0;
+      addressBar.syncToPath(currentPath);
+      backBtn.disabled = !history.canBack();
+      forwardBtn.disabled = !history.canForward();
       upBtn.disabled = currentPath === '/';
 
-      // Mirror the current location into the title-bar / taskbar icon.
       host.setIcon(
         currentPath === '/'
           ? '/icons/my-computer.png'
@@ -156,7 +153,10 @@ const mod: AppModule = {
         }
       }
 
-      status.textContent = t(children.length === 1 ? 'explorer.items.one' : 'explorer.items.other', children.length);
+      status.textContent = t(
+        children.length === 1 ? 'explorer.items.one' : 'explorer.items.other',
+        children.length,
+      );
       host.setTitle(title);
     }
 
@@ -180,23 +180,27 @@ const mod: AppModule = {
       item.appendChild(label);
 
       let clickTimer: ReturnType<typeof setTimeout> | null = null;
-      item.addEventListener('click', (e) => {
-        e.stopPropagation();
-        body.querySelectorAll('.explorer__item.is-selected').forEach((el) =>
-          el.classList.remove('is-selected'),
-        );
-        item.classList.add('is-selected');
+      item.addEventListener(
+        'click',
+        (e) => {
+          e.stopPropagation();
+          body.querySelectorAll('.explorer__item.is-selected').forEach((el) =>
+            el.classList.remove('is-selected'),
+          );
+          item.classList.add('is-selected');
 
-        if (clickTimer) {
-          clearTimeout(clickTimer);
-          clickTimer = null;
-          activate(node);
-        } else {
-          clickTimer = setTimeout(() => {
+          if (clickTimer) {
+            clearTimeout(clickTimer);
             clickTimer = null;
-          }, 400);
-        }
-      });
+            activate(node);
+          } else {
+            clickTimer = setTimeout(() => {
+              clickTimer = null;
+            }, 400);
+          }
+        },
+        { signal },
+      );
 
       return item;
     }
@@ -207,12 +211,7 @@ const mod: AppModule = {
       } else if (node.kind === 'file') {
         void launch({ path: pathOf(currentPath, node) });
       } else if (node.kind === 'shortcut') {
-        // A shortcut to a folder in *this* explorer should navigate in place
-        // rather than spawning another window.
-        if (
-          node.target.appId === 'explorer' &&
-          typeof node.target.path === 'string'
-        ) {
+        if (node.target.appId === 'explorer' && typeof node.target.path === 'string') {
           const targetNode = resolve(node.target.path);
           if (targetNode?.kind === 'folder') {
             navigateTo(node.target.path);
@@ -225,169 +224,51 @@ const mod: AppModule = {
 
     function navigateTo(path: string) {
       history.push(currentPath);
-      forwardStack.length = 0;
       currentPath = path;
       render();
     }
 
-    backBtn.addEventListener('click', () => {
-      const prev = history.pop();
-      if (prev !== undefined) {
-        forwardStack.push(currentPath);
-        currentPath = prev;
-        render();
-      }
-    });
-
-    forwardBtn.addEventListener('click', () => {
-      const next = forwardStack.pop();
-      if (next !== undefined) {
-        history.push(currentPath);
-        currentPath = next;
-        render();
-      }
-    });
-
-    upBtn.addEventListener('click', () => {
-      if (currentPath === '/') return;
-      history.push(currentPath);
-      forwardStack.length = 0;
-      currentPath = parentPath(currentPath);
-      render();
-    });
-
-    body.addEventListener('click', (e) => {
-      if (e.target === body) {
-        body.querySelectorAll('.explorer__item.is-selected').forEach((el) =>
-          el.classList.remove('is-selected'),
-        );
-      }
-    });
-
-    // ── Address bar editing ────────────────────────────────────────────────
-    function commitAddress() {
-      const raw = addressInput.value;
-      const resolved = parseAddress(raw);
-      if (resolved !== null && resolved !== currentPath) {
-        // Remember the typed entry (display form, deduped, newest first).
-        const display = displayPathFor(resolved);
-        const idx = typedHistory.indexOf(display);
-        if (idx !== -1) typedHistory.splice(idx, 1);
-        typedHistory.unshift(display);
-        if (typedHistory.length > 10) typedHistory.length = 10;
-        navigateTo(resolved);
-      } else {
-        // Bad path or unchanged — revert display so user sees the truth.
-        addressInput.value = displayPathFor(currentPath);
-      }
-    }
-
-    addressInput.addEventListener('focus', () => {
-      addressInput.select();
-    });
-    addressInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        commitAddress();
-        addressInput.blur();
-      } else if (e.key === 'Escape') {
-        addressInput.value = displayPathFor(currentPath);
-        addressInput.blur();
-      }
-    });
-    goBtn.addEventListener('click', () => commitAddress());
-
-    // ── Address dropdown (caret) ───────────────────────────────────────────
-    let openDropdown: HTMLElement | null = null;
-
-    function closeDropdown() {
-      if (openDropdown) {
-        openDropdown.remove();
-        openDropdown = null;
-        addressCaret.classList.remove('is-active');
-      }
-    }
-
-    function toggleDropdown() {
-      if (openDropdown) {
-        closeDropdown();
-        return;
-      }
-      const panel = document.createElement('div');
-      panel.className = 'explorer__address-dropdown';
-      panel.addEventListener('mousedown', (e) => e.stopPropagation());
-
-      const addRow = (
-        path: string,
-        display: string,
-        icon: string,
-        depth: number,
-      ) => {
-        const row = document.createElement('div');
-        row.className = 'explorer__address-dropdown-row';
-        if (path === currentPath) row.classList.add('is-current');
-        row.style.paddingLeft = `${6 + depth * 16}px`;
-        const img = document.createElement('img');
-        img.src = icon;
-        img.alt = '';
-        const label = document.createElement('span');
-        label.textContent = display;
-        row.appendChild(img);
-        row.appendChild(label);
-        row.addEventListener('click', () => {
-          closeDropdown();
-          if (path !== currentPath) navigateTo(path);
-        });
-        panel.appendChild(row);
-      };
-
-      // Typed history at the top, flat (no indent).
-      const seenTyped = new Set<string>();
-      let historyShown = 0;
-      for (const display of typedHistory) {
-        const p = parseAddress(display);
-        if (!p || seenTyped.has(p)) continue;
-        seenTyped.add(p);
-        addRow(p, display, iconFor(p), 0);
-        historyShown++;
-      }
-      if (historyShown > 0) {
-        const sep = document.createElement('div');
-        sep.className = 'explorer__address-dropdown-separator';
-        panel.appendChild(sep);
-      }
-
-      // Hierarchical folder tree of the VFS.
-      for (const entry of buildLocationTree()) {
-        addRow(entry.path, entry.display, entry.icon, entry.depth);
-      }
-
-      addressCombo.appendChild(panel);
-      openDropdown = panel;
-      addressCaret.classList.add('is-active');
-    }
-
-    addressCaret.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleDropdown();
-    });
-    document.addEventListener(
-      'mousedown',
-      (e) => {
-        if (
-          openDropdown &&
-          !addressCombo.contains(e.target as Node)
-        ) {
-          closeDropdown();
+    backBtn.addEventListener(
+      'click',
+      () => {
+        const prev = history.back(currentPath);
+        if (prev !== undefined) {
+          currentPath = prev;
+          render();
         }
       },
       { signal },
     );
-    document.addEventListener(
-      'keydown',
+
+    forwardBtn.addEventListener(
+      'click',
+      () => {
+        const next = history.forward(currentPath);
+        if (next !== undefined) {
+          currentPath = next;
+          render();
+        }
+      },
+      { signal },
+    );
+
+    upBtn.addEventListener(
+      'click',
+      () => {
+        if (currentPath === '/') return;
+        navigateTo(parentPath(currentPath));
+      },
+      { signal },
+    );
+
+    body.addEventListener(
+      'click',
       (e) => {
-        if (e.key === 'Escape') closeDropdown();
+        if (e.target === body) {
+          body.querySelectorAll('.explorer__item.is-selected').forEach((el) =>
+            el.classList.remove('is-selected'),
+          );
+        }
       },
       { signal },
     );
@@ -396,8 +277,6 @@ const mod: AppModule = {
 
     return {
       onLaunchArgs(newArgs) {
-        // Instance keying already dedupes by start path, so most onLaunchArgs
-        // calls arrive with the same path — only navigate on a real change.
         if (
           typeof newArgs.path === 'string' &&
           newArgs.path !== currentPath &&
