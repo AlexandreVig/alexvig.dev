@@ -33,20 +33,20 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     body = await request.json();
   } catch {
-    return new Response(
-      JSON.stringify({ ok: false, error: 'Invalid request body.' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ ok: false, error: 'Invalid request body.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const { name, email, subject, message, website } = body as Record<string, string>;
 
   // Honeypot
   if (website) {
-    return new Response(
-      JSON.stringify({ ok: true }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   // Validation
@@ -96,10 +96,10 @@ export const POST: APIRoute = async ({ request }) => {
       return jsonError('Failed to send email. Please try again.', 500);
     }
 
-    return new Response(
-      JSON.stringify({ ok: true }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
-    );
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (err) {
     console.error('[contact] fetch error:', err);
     return jsonError('Failed to send email. Please try again.', 500);
@@ -107,9 +107,8 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 function jsonError(error: string, status: number): Response {
-  return new Response(
-    JSON.stringify({ ok: false, error }),
-    { status, headers: { 'Content-Type': 'application/json' } },
-  );
+  return new Response(JSON.stringify({ ok: false, error }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
-

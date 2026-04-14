@@ -119,7 +119,7 @@ const mod: AppModule = {
 
     function render() {
       const node = resolve(currentPath);
-      const title = currentPath === '/' ? 'My Computer' : node?.name ?? currentPath;
+      const title = currentPath === '/' ? 'My Computer' : (node?.name ?? currentPath);
 
       addressBar.syncToPath(currentPath);
       backBtn.disabled = !history.canBack();
@@ -179,9 +179,9 @@ const mod: AppModule = {
         'click',
         (e) => {
           e.stopPropagation();
-          body.querySelectorAll('.explorer__item.is-selected').forEach((el) =>
-            el.classList.remove('is-selected'),
-          );
+          body
+            .querySelectorAll('.explorer__item.is-selected')
+            .forEach((el) => el.classList.remove('is-selected'));
           item.classList.add('is-selected');
 
           if (clickTimer) {
@@ -260,9 +260,9 @@ const mod: AppModule = {
       'click',
       (e) => {
         if (e.target === body) {
-          body.querySelectorAll('.explorer__item.is-selected').forEach((el) =>
-            el.classList.remove('is-selected'),
-          );
+          body
+            .querySelectorAll('.explorer__item.is-selected')
+            .forEach((el) => el.classList.remove('is-selected'));
         }
       },
       { signal },

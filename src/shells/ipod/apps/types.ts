@@ -20,11 +20,8 @@ export type IpodAppMountContext = BaseAppMountContext<IpodAppHostAPI>;
 
 export type IpodAppInstance = BaseAppInstance;
 
-export interface IpodAppModule
-  extends BaseAppModule<IpodAppMountContext, IpodAppInstance> {
-  mount(
-    ctx: IpodAppMountContext,
-  ): IpodAppInstance | void | Promise<IpodAppInstance | void>;
+export interface IpodAppModule extends BaseAppModule<IpodAppMountContext, IpodAppInstance> {
+  mount(ctx: IpodAppMountContext): IpodAppInstance | void | Promise<IpodAppInstance | void>;
 }
 
 /** Where an app lives on the iPod home screen. */

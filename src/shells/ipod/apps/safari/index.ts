@@ -36,9 +36,7 @@ const mod: IpodAppModule = {
 
     const urlEl = root.querySelector<HTMLElement>('#ipod-safari-url')!;
     const viewport = root.querySelector<HTMLElement>('#ipod-safari-viewport')!;
-    const navBack = root.querySelector<HTMLButtonElement>(
-      '#ipod-safari-nav-back',
-    )!;
+    const navBack = root.querySelector<HTMLButtonElement>('#ipod-safari-nav-back')!;
 
     navBack.addEventListener('click', () => renderList(), { signal });
 
@@ -64,15 +62,11 @@ const mod: IpodAppModule = {
         </ul>
       `;
 
-      const list = viewport.querySelector<HTMLElement>(
-        '.ipod-safari__bookmarks',
-      )!;
+      const list = viewport.querySelector<HTMLElement>('.ipod-safari__bookmarks')!;
       list.addEventListener(
         'click',
         (e) => {
-          const row = (e.target as Element).closest<HTMLElement>(
-            '[data-project-id]',
-          );
+          const row = (e.target as Element).closest<HTMLElement>('[data-project-id]');
           if (!row) return;
           const project = PROJECTS.find((p) => p.id === row.dataset.projectId);
           if (project) void renderProject(project);

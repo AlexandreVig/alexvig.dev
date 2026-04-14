@@ -58,9 +58,7 @@ export class MovementController {
   gravitateTo(windowId: string): void {
     if (this.state === 'paused') return;
 
-    const win = document.querySelector<HTMLElement>(
-      `[data-window-id="${CSS.escape(windowId)}"]`,
-    );
+    const win = document.querySelector<HTMLElement>(`[data-window-id="${CSS.escape(windowId)}"]`);
     if (!win) return;
 
     this.clearWanderTimeout();
@@ -68,7 +66,7 @@ export class MovementController {
 
     // Prefer right side of window; fallback left if too close to edge
     let targetX = rect.right + 10;
-    let targetY = rect.top + rect.height / 2 - SPRITE_H / 2;
+    const targetY = rect.top + rect.height / 2 - SPRITE_H / 2;
 
     if (targetX + SPRITE_W > window.innerWidth) {
       targetX = rect.left - SPRITE_W - 10;
@@ -100,9 +98,7 @@ export class MovementController {
 
   private scheduleWander(): void {
     this.clearWanderTimeout();
-    const delay =
-      WANDER_MIN_DELAY +
-      Math.random() * (WANDER_MAX_DELAY - WANDER_MIN_DELAY);
+    const delay = WANDER_MIN_DELAY + Math.random() * (WANDER_MAX_DELAY - WANDER_MIN_DELAY);
     this.wanderTimeoutId = window.setTimeout(() => {
       this.wander();
     }, delay);

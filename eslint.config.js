@@ -1,0 +1,57 @@
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+
+export default [
+  { ignores: ['dist/**', '.astro/**', 'node_modules/**', 'public/**', '**/*.astro'] },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    languageOptions: {
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        location: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        CustomEvent: 'readonly',
+        Event: 'readonly',
+        EventListener: 'readonly',
+        MouseEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        IntersectionObserver: 'readonly',
+        ResizeObserver: 'readonly',
+        Storage: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        console: 'readonly',
+        performance: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        Response: 'readonly',
+        Request: 'readonly',
+        Promise: 'readonly',
+        process: 'readonly',
+        globalThis: 'readonly',
+        Infinity: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-empty': ['error', { allowEmptyCatch: true }],
+    },
+  },
+];

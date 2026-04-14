@@ -1,24 +1,24 @@
 ---
-import { apps } from "../apps/registry";
+import { apps } from '../apps/registry';
 
 const startApps = apps.filter((a) => a.showInStartMenu);
 
 const rightItems = [
   {
-    icon: "/icons/folder-32.png",
-    label: "My Documents",
-    launchAppId: "explorer",
-    launchPath: "/My Documents",
+    icon: '/icons/folder-32.png',
+    label: 'My Documents',
+    launchAppId: 'explorer',
+    launchPath: '/My Documents',
   },
   {
-    icon: "/icons/my-computer.png",
-    label: "My Computer",
-    launchAppId: "explorer",
-    launchPath: "/",
+    icon: '/icons/my-computer.png',
+    label: 'My Computer',
+    launchAppId: 'explorer',
+    launchPath: '/',
   },
-  { icon: "/icons/control-panel.png", label: "Control Panel" },
-  { icon: "/icons/help.png", label: "Help and Support" },
-  { icon: "/icons/search.png", label: "Search" },
+  { icon: '/icons/control-panel.png', label: 'Control Panel' },
+  { icon: '/icons/help.png', label: 'Help and Support' },
+  { icon: '/icons/search.png', label: 'Search' },
 ];
 ---
 
@@ -46,8 +46,8 @@ const rightItems = [
         rightItems.map((item) => (
           <div
             class="start-menu__item"
-            data-launch-app={item.launchAppId ?? ""}
-            data-launch-path={item.launchPath ?? ""}
+            data-launch-app={item.launchAppId ?? ''}
+            data-launch-path={item.launchPath ?? ''}
           >
             <img src={item.icon} alt="" class="start-menu__item-icon" />
             <span class="start-menu__item-text">{item.label}</span>
@@ -75,34 +75,29 @@ const rightItems = [
 </div>
 
 <script>
-  const startBtn = document.getElementById("taskbar-start")!;
-  const startMenu = document.getElementById("start-menu")!;
+  const startBtn = document.getElementById('taskbar-start')!;
+  const startMenu = document.getElementById('start-menu')!;
 
-  startBtn.addEventListener("mousedown", (e) => {
+  startBtn.addEventListener('mousedown', (e) => {
     e.stopPropagation();
-    startMenu.classList.toggle("is-open");
+    startMenu.classList.toggle('is-open');
   });
 
-  window.addEventListener("mousedown", (e) => {
-    if (
-      !startMenu.contains(e.target as Node) &&
-      !startBtn.contains(e.target as Node)
-    ) {
-      startMenu.classList.remove("is-open");
+  window.addEventListener('mousedown', (e) => {
+    if (!startMenu.contains(e.target as Node) && !startBtn.contains(e.target as Node)) {
+      startMenu.classList.remove('is-open');
     }
   });
 
   startMenu
-    .querySelectorAll<HTMLElement>("[data-launch-app], [data-launch-path]")
+    .querySelectorAll<HTMLElement>('[data-launch-app], [data-launch-path]')
     .forEach((item) => {
-      item.addEventListener("click", () => {
+      item.addEventListener('click', () => {
         const appId = item.dataset.launchApp || undefined;
         const path = item.dataset.launchPath || undefined;
         if (!appId && !path) return;
-        document.dispatchEvent(
-          new CustomEvent("xp:launch", { detail: { appId, path } }),
-        );
-        startMenu.classList.remove("is-open");
+        document.dispatchEvent(new CustomEvent('xp:launch', { detail: { appId, path } }));
+        startMenu.classList.remove('is-open');
       });
     });
 </script>

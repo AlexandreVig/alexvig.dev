@@ -13,7 +13,7 @@ export function resolve(path: string): FsNode | null {
   let current: FsNode = root;
   for (const seg of segs) {
     if (current.kind !== 'folder') return null;
-    const next = current.children.find((c) => c.name === seg);
+    const next: FsNode | undefined = current.children.find((c) => c.name === seg);
     if (!next) return null;
     current = next;
   }

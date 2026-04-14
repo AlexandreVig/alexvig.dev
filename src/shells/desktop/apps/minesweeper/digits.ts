@@ -26,19 +26,25 @@ export function createDigits(container: HTMLElement): HTMLImageElement[] {
   return imgs;
 }
 
+function digitUrl(digit: string): string {
+  return digitUrls[Number(digit)] ?? digitUrls[0]!;
+}
+
 export function setDigits(imgs: HTMLImageElement[], number: number): void {
+  const [a, b, c] = imgs;
+  if (!a || !b || !c) return;
   if (number < 0) {
-    const n = (-number) % 100;
+    const n = -number % 100;
     const str = n < 10 ? `0${n}` : String(n);
-    imgs[0].src = digitMinusUrl;
-    imgs[1].src = digitUrls[Number(str[0])];
-    imgs[2].src = digitUrls[Number(str[1])];
+    a.src = digitMinusUrl;
+    b.src = digitUrl(str[0]!);
+    c.src = digitUrl(str[1]!);
     return;
   }
 
   const n = Math.min(999, number);
   const str = String(n).padStart(3, '0');
-  imgs[0].src = digitUrls[Number(str[0])];
-  imgs[1].src = digitUrls[Number(str[1])];
-  imgs[2].src = digitUrls[Number(str[2])];
+  a.src = digitUrl(str[0]!);
+  b.src = digitUrl(str[1]!);
+  c.src = digitUrl(str[2]!);
 }

@@ -1,9 +1,9 @@
 ---
 export const prerender = true;
 
-import BaseLayout from "../layouts/BaseLayout.astro";
-import DesktopShell from "../shells/desktop/DesktopShell.astro";
-import IpodShell from "../shells/ipod/IpodShell.astro";
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DesktopShell from '../shells/desktop/DesktopShell.astro';
+import IpodShell from '../shells/ipod/IpodShell.astro';
 ---
 
 <BaseLayout>
@@ -23,13 +23,13 @@ import IpodShell from "../shells/ipod/IpodShell.astro";
    */
   const shell = document.documentElement.dataset.shell;
 
-  if (shell === "ipod") {
-    document.getElementById("desktop-shell")?.remove();
-    const { mount } = await import("../shells/ipod/bootstrap");
+  if (shell === 'ipod') {
+    document.getElementById('desktop-shell')?.remove();
+    const { mount } = await import('../shells/ipod/bootstrap');
     mount();
   } else {
-    document.getElementById("ipod-shell")?.remove();
-    const { mount } = await import("../shells/desktop/bootstrap");
+    document.getElementById('ipod-shell')?.remove();
+    const { mount } = await import('../shells/desktop/bootstrap');
     mount();
   }
 </script>

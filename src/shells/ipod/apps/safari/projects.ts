@@ -39,9 +39,6 @@ export const PROJECTS: Project[] = [
     title: t('ipod.safari.project.portfolio.title'),
     description: t('ipod.safari.project.portfolio.description'),
     url: 'alexandre.dev/projects/portfolio',
-    load: () =>
-      import('../../../../content/projects/portfolio.md?raw').then(
-        (m) => m.default,
-      ),
+    load: () => import('../../../../content/projects/portfolio.md?raw').then((m) => m.default),
   },
 ];

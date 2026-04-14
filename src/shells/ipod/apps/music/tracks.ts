@@ -18,12 +18,12 @@ export interface Track {
 }
 
 export const PLAYLIST: Track[] = [
-  { title: 'Nemesis',            artist: 'David Guetta',     duration: '3:24' },
-  { title: 'Hold On',            artist: 'Extra Terra',      duration: '3:24' },
-  { title: 'Bezier',             artist: 'Omtil',            duration: '6:32' },
-  { title: 'Prismatic Heart',    artist: 'Camellia',         duration: '6:05' },
-  { title: 'Don\u2019t Ask',     artist: '2hollis',          duration: '2:22' },
-  { title: 'Lunar Disco',        artist: 'Omtil',            duration: '3:53' },
-  { title: 'Supa Dupa Skr',      artist: 'Luciano',          duration: '1:58' },
-  { title: 'Wyrmhole',           artist: 'Periphery',        duration: '7:17' },
+  { title: 'Nemesis', artist: 'David Guetta', duration: '3:24' },
+  { title: 'Hold On', artist: 'Extra Terra', duration: '3:24' },
+  { title: 'Bezier', artist: 'Omtil', duration: '6:32' },
+  { title: 'Prismatic Heart', artist: 'Camellia', duration: '6:05' },
+  { title: 'Don\u2019t Ask', artist: '2hollis', duration: '2:22' },
+  { title: 'Lunar Disco', artist: 'Omtil', duration: '3:53' },
+  { title: 'Supa Dupa Skr', artist: 'Luciano', duration: '1:58' },
+  { title: 'Wyrmhole', artist: 'Periphery', duration: '7:17' },
 ];

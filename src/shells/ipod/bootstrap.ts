@@ -49,9 +49,7 @@ function init(): void {
     if (!btn) return;
     const appId = btn.dataset.appId;
     if (!appId) return;
-    document.dispatchEvent(
-      new CustomEvent<IpodLaunchDetail>('ipod:launch', { detail: { appId } }),
-    );
+    document.dispatchEvent(new CustomEvent<IpodLaunchDetail>('ipod:launch', { detail: { appId } }));
   });
 
   // Icon tap → navigator.openApp. Listener is live even though the
@@ -116,8 +114,7 @@ function startClock(): void {
     }
 
     // Schedule the next tick for the start of the next wall-clock minute.
-    const msUntilNextMinute =
-      (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+    const msUntilNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
     window.setTimeout(tick, msUntilNextMinute);
   };
 

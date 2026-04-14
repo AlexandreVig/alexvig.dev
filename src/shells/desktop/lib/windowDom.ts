@@ -53,7 +53,7 @@ export function createWindowElement(opts: CreateWindowOptions): {
   controls.className = 'title-bar-controls';
   for (const action of controlList) {
     const btn = document.createElement('button');
-    btn.setAttribute('aria-label', action[0].toUpperCase() + action.slice(1));
+    btn.setAttribute('aria-label', action.charAt(0).toUpperCase() + action.slice(1));
     btn.dataset.action = action;
     btn.dataset.windowTarget = opts.instanceId;
     controls.appendChild(btn);

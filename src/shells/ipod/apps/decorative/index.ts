@@ -29,9 +29,7 @@ const mod: IpodAppModule = {
       </div>
     `;
 
-    const ok = root.querySelector<HTMLButtonElement>(
-      '.ipod-decorative__alert-ok',
-    )!;
+    const ok = root.querySelector<HTMLButtonElement>('.ipod-decorative__alert-ok')!;
     ok.addEventListener('click', () => host.close());
     // Defer focus so the in-flight slide-up animation doesn't steal it.
     queueMicrotask(() => ok.focus());

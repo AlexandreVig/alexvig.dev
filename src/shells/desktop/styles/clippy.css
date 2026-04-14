@@ -11,7 +11,7 @@
 }
 
 #clippy-overlay.is-walking {
-  transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  transition: transform 1.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 #clippy-overlay.is-dragging {

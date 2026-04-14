@@ -3,7 +3,12 @@ import type { Folder, Email, Contact } from './types';
 
 export function getFolders(): Folder[] {
   return [
-    { id: 'inbox', name: t('outlook.folder.inbox'), icon: '/icons/outlook/folder-inbox.png', unread: 1 },
+    {
+      id: 'inbox',
+      name: t('outlook.folder.inbox'),
+      icon: '/icons/outlook/folder-inbox.png',
+      unread: 1,
+    },
     { id: 'outbox', name: t('outlook.folder.outbox'), icon: '/icons/outlook/folder-outbox.png' },
     { id: 'sent', name: t('outlook.folder.sent'), icon: '/icons/outlook/folder-sent.png' },
     { id: 'deleted', name: t('outlook.folder.deleted'), icon: '/icons/outlook/folder-deleted.png' },

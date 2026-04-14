@@ -57,11 +57,9 @@ const mod: IpodAppModule = {
     };
 
     const setDisabled = (disabled: boolean) => {
-      [nameInput, emailInput, subjectInput, messageArea, sendBtn].forEach(
-        (el) => {
-          el.disabled = disabled;
-        },
-      );
+      [nameInput, emailInput, subjectInput, messageArea, sendBtn].forEach((el) => {
+        el.disabled = disabled;
+      });
     };
 
     const validate = (): string | null => {

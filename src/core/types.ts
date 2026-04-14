@@ -30,9 +30,7 @@ export interface BaseAppHostAPI {
  * apps needing casts. `args` is the bag of launch-time arguments passed through
  * from whatever triggered the launch (icon click, deep link, etc.).
  */
-export interface BaseAppMountContext<
-  Host extends BaseAppHostAPI = BaseAppHostAPI,
-> {
+export interface BaseAppMountContext<Host extends BaseAppHostAPI = BaseAppHostAPI> {
   /** The DOM element this app owns and should render into. */
   root: HTMLElement;
   /** Unique per-instance id assigned by the shell. */

@@ -67,7 +67,9 @@ const mod: IpodAppModule = {
       // Trim very long floats that pop out of JS arithmetic.
       let out = state.display;
       if (out.length > 10 && out.includes('.')) {
-        out = Number(out).toPrecision(8).replace(/\.?0+$/, '');
+        out = Number(out)
+          .toPrecision(8)
+          .replace(/\.?0+$/, '');
       }
       displayEl.textContent = out;
     };
@@ -76,10 +78,14 @@ const mod: IpodAppModule = {
 
     const apply = (a: number, op: Op, b: number): number => {
       switch (op) {
-        case '+': return a + b;
-        case '-': return a - b;
-        case '×': return a * b;
-        case '÷': return b === 0 ? NaN : a / b;
+        case '+':
+          return a + b;
+        case '-':
+          return a - b;
+        case '×':
+          return a * b;
+        case '÷':
+          return b === 0 ? NaN : a / b;
       }
     };
 
@@ -127,9 +133,7 @@ const mod: IpodAppModule = {
 
     const negate = () => {
       if (state.display === '0') return;
-      state.display = state.display.startsWith('-')
-        ? state.display.slice(1)
-        : '-' + state.display;
+      state.display = state.display.startsWith('-') ? state.display.slice(1) : '-' + state.display;
     };
 
     const percent = () => {

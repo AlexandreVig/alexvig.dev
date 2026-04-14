@@ -140,12 +140,12 @@
 }
 
 /* ── Minimize button ───────────────────────────────────────────────────────── */
-.title-bar-controls button[aria-label="Minimize"] {
+.title-bar-controls button[aria-label='Minimize'] {
   box-shadow: var(--xp-btn-blue-shadow);
   background-image: var(--xp-btn-blue);
 }
 
-.title-bar-controls button[aria-label="Minimize"]::before {
+.title-bar-controls button[aria-label='Minimize']::before {
   content: '';
   position: absolute;
   left: 4px;
@@ -156,50 +156,57 @@
 }
 
 /* ── Maximize button ───────────────────────────────────────────────────────── */
-.title-bar-controls button[aria-label="Maximize"] {
+.title-bar-controls button[aria-label='Maximize'] {
   box-shadow: var(--xp-btn-blue-shadow);
   background-image: var(--xp-btn-blue);
 }
 
-.title-bar-controls button[aria-label="Maximize"]::before {
+.title-bar-controls button[aria-label='Maximize']::before {
   content: '';
   position: absolute;
   display: block;
   left: 4px;
   top: 4px;
-  box-shadow: inset 0 3px white, inset 0 0 0 1px white;
+  box-shadow:
+    inset 0 3px white,
+    inset 0 0 0 1px white;
   height: 12px;
   width: 12px;
 }
 
 /* ── Maximize button (maximized state — restore icon) ──────────────────────── */
-.window.is-maximized .title-bar-controls button[aria-label="Maximize"]::before {
+.window.is-maximized .title-bar-controls button[aria-label='Maximize']::before {
   left: 7px;
   top: 4px;
-  box-shadow: inset 0 2px white, inset 0 0 0 1px white;
+  box-shadow:
+    inset 0 2px white,
+    inset 0 0 0 1px white;
   height: 8px;
   width: 8px;
 }
 
-.window.is-maximized .title-bar-controls button[aria-label="Maximize"]::after {
+.window.is-maximized .title-bar-controls button[aria-label='Maximize']::after {
   content: '';
   position: absolute;
   display: block;
   left: 4px;
   top: 7px;
-  box-shadow: inset 0 2px white, inset 0 0 0 1px white, 1px -1px #136dff;
+  box-shadow:
+    inset 0 2px white,
+    inset 0 0 0 1px white,
+    1px -1px #136dff;
   height: 8px;
   width: 8px;
   background-color: #136dff;
 }
 
 /* ── Close button ──────────────────────────────────────────────────────────── */
-.title-bar-controls button[aria-label="Close"] {
+.title-bar-controls button[aria-label='Close'] {
   box-shadow: var(--xp-btn-close-shadow);
   background-image: var(--xp-btn-close);
 }
 
-.title-bar-controls button[aria-label="Close"]::before {
+.title-bar-controls button[aria-label='Close']::before {
   content: '';
   position: absolute;
   left: 9px;
@@ -210,7 +217,7 @@
   background-color: white;
 }
 
-.title-bar-controls button[aria-label="Close"]::after {
+.title-bar-controls button[aria-label='Close']::after {
   content: '';
   position: absolute;
   left: 9px;

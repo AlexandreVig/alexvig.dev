@@ -1,8 +1,4 @@
-import {
-  createMenuBar,
-  type MenuBarOptions,
-  type MenuSchema,
-} from '../../lib/menubar';
+import { createMenuBar, type MenuBarOptions, type MenuSchema } from '../../lib/menubar';
 
 const SCHEMA: MenuSchema = {
   File: [
@@ -21,9 +17,7 @@ const SCHEMA: MenuSchema = {
     { type: 'item', text: 'Zoom In', hotkey: 'Ctrl++', action: 'zoom-in' },
     { type: 'item', text: 'Zoom Out', hotkey: 'Ctrl+-', action: 'zoom-out' },
   ],
-  Help: [
-    { type: 'item', text: 'About Adobe Reader', action: 'about' },
-  ],
+  Help: [{ type: 'item', text: 'About Adobe Reader', action: 'about' }],
 };
 
 export type MenuOptions = Omit<MenuBarOptions, 'schema' | 'logo'>;

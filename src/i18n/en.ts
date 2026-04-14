@@ -192,11 +192,10 @@ const en = {
     'Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
   'reader.about.footer': 'Built with Astro, TypeScript and PDF.js.',
 
-
   // ── Minesweeper ───────────────────────────────────────────────────────────────
   'minesweeper.about.description':
-      'A recreation of the classic Minesweeper game, styled like the Windows XP original. ' +
-      'Built as part of this portfolio. Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
+    'A recreation of the classic Minesweeper game, styled like the Windows XP original. ' +
+    'Built as part of this portfolio. Source on [GitHub](https://github.com/AlexandreVig/alexvig.dev).',
   'minesweeper.about.footer': 'Built with Astro and TypeScript.',
 
   // ── iPod ────────────────────────────────────────────────────────────────────
@@ -223,11 +222,9 @@ const en = {
 
   'ipod.notes.back': '\u2039 Notes',
   'ipod.notes.items.about.title': 'About Me',
-  'ipod.notes.items.about.snippet':
-    "Who I am, what I'm working on, and what I'm into.",
+  'ipod.notes.items.about.snippet': "Who I am, what I'm working on, and what I'm into.",
   'ipod.notes.items.skills.title': 'Skills',
-  'ipod.notes.items.skills.snippet':
-    'Languages, frameworks, infra, networking, security, AI.',
+  'ipod.notes.items.skills.snippet': 'Languages, frameworks, infra, networking, security, AI.',
 
   'ipod.mail.title': 'New Message',
   'ipod.mail.field.from': 'From',
@@ -243,8 +240,7 @@ const en = {
   'ipod.calculator.error': 'Error',
 
   'ipod.decorative.alertTitle': 'Cannot Connect to Server',
-  'ipod.decorative.alertBody':
-    'A connection to the server could not be established.',
+  'ipod.decorative.alertBody': 'A connection to the server could not be established.',
   'ipod.decorative.ok': 'OK',
 } as const;
 

@@ -161,9 +161,7 @@ class WindowManager {
   // ─── Internals ──────────────────────────────────────────────────────────────
 
   private getElement(id: string): HTMLElement | null {
-    return document.querySelector<HTMLElement>(
-      `[data-window-id="${CSS.escape(id)}"]`,
-    );
+    return document.querySelector<HTMLElement>(`[data-window-id="${CSS.escape(id)}"]`);
   }
 
   private applyState(id: string): void {
@@ -205,8 +203,7 @@ class WindowManager {
     let startH = 0;
 
     const cover = document.createElement('div');
-    cover.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;';
+    cover.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;';
 
     const getCursorPosition = (e: MouseEvent): string => {
       if (e.target !== el) return '';

@@ -92,7 +92,8 @@ const fr: Record<I18nKey, string> = {
       </p>
     </div>
   `,
-  'email.nigerianPrince.subject': 'URGENT\u00a0: Vous avez \u00e9t\u00e9 s\u00e9lectionn\u00e9\u00a0!!!',
+  'email.nigerianPrince.subject':
+    'URGENT\u00a0: Vous avez \u00e9t\u00e9 s\u00e9lectionn\u00e9\u00a0!!!',
   'email.nigerianPrince.body': `
     <div style="font-family: Tahoma, sans-serif; font-size: 11px; padding: 12px;">
       <p>CHER AMI,</p>
@@ -245,8 +246,7 @@ const fr: Record<I18nKey, string> = {
   'ipod.calculator.error': 'Erreur',
 
   'ipod.decorative.alertTitle': 'Impossible de se connecter au serveur',
-  'ipod.decorative.alertBody':
-    'La connexion au serveur n\u2019a pas pu \u00eatre \u00e9tablie.',
+  'ipod.decorative.alertBody': 'La connexion au serveur n\u2019a pas pu \u00eatre \u00e9tablie.',
   'ipod.decorative.ok': 'OK',
 };
 

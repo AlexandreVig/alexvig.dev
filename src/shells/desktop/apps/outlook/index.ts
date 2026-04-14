@@ -120,9 +120,7 @@ const mod: AppModule = {
     root.addEventListener(
       'click',
       (e) => {
-        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>(
-          'button[data-action]',
-        );
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
         if (!btn || btn.disabled) return;
         const action = btn.dataset.action;
         if (action === 'create-mail') openCompose();
@@ -215,7 +213,7 @@ const mod: AppModule = {
 
       // Auto-select first email
       if (!selectedEmailId || !folderEmails.find((e) => e.id === selectedEmailId)) {
-        selectedEmailId = folderEmails[0].id;
+        selectedEmailId = folderEmails[0]?.id ?? null;
       }
 
       for (const email of folderEmails) {

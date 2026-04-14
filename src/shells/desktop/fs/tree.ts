@@ -15,7 +15,7 @@ export const root: FolderNode = {
           name: 'totally-not-a-virus.exe',
           ext: '.exe',
           load: () => Promise.resolve(''),
-        }
+        },
       ],
     },
     {
@@ -104,7 +104,7 @@ export const root: FolderNode = {
           name: 'Resume.pdf',
           ext: '.pdf',
           desktopPosition: { row: 4, col: 2 },
-          load: () => Promise.resolve("/pdf/test.pdf"),
+          load: () => Promise.resolve('/pdf/test.pdf'),
         },
       ],
     },
@@ -163,7 +163,7 @@ export const root: FolderNode = {
           kind: 'file',
           name: 'Resume.pdf',
           ext: '.pdf',
-          load: () => Promise.resolve("/pdf/test.pdf"),
+          load: () => Promise.resolve('/pdf/test.pdf'),
         },
       ],
     },

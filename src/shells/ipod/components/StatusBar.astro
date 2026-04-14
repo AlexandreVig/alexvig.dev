@@ -16,8 +16,8 @@
         id="ipod-lang-btn"
         type="button"
         aria-haspopup="listbox"
-        aria-expanded="false"
-      >EN</button>
+        aria-expanded="false">EN</button
+      >
       <img src="/ipod/wifi.png" alt="wifi" />
     </span>
     <span class="center" id="ipod-clock">9:41 AM</span>
@@ -25,12 +25,7 @@
       <img src="/ipod/battery.png" alt="battery" />
     </span>
   </div>
-  <div
-    class="ipod-lang-dropdown"
-    id="ipod-lang-dropdown"
-    role="listbox"
-    hidden
-  >
+  <div class="ipod-lang-dropdown" id="ipod-lang-dropdown" role="listbox" hidden>
     <button class="ipod-lang-option" data-locale="en" type="button" role="option">
       <span class="check"></span><span class="name">English</span>
     </button>
@@ -41,50 +36,50 @@
 </div>
 
 <script>
-  import { getLocale, setLocale, type Locale } from "../../../i18n";
+  import { getLocale, setLocale, type Locale } from '../../../i18n';
 
-  const btn = document.getElementById("ipod-lang-btn") as HTMLButtonElement;
-  const dropdown = document.getElementById("ipod-lang-dropdown") as HTMLElement;
-  const options = dropdown.querySelectorAll<HTMLButtonElement>(".ipod-lang-option");
+  const btn = document.getElementById('ipod-lang-btn') as HTMLButtonElement;
+  const dropdown = document.getElementById('ipod-lang-dropdown') as HTMLElement;
+  const options = dropdown.querySelectorAll<HTMLButtonElement>('.ipod-lang-option');
 
   const locale = getLocale();
   btn.textContent = locale.toUpperCase();
 
   options.forEach((opt) => {
     if (opt.dataset.locale === locale) {
-      opt.querySelector(".check")!.textContent = "\u2713";
-      opt.classList.add("is-selected");
+      opt.querySelector('.check')!.textContent = '\u2713';
+      opt.classList.add('is-selected');
     }
-    opt.addEventListener("click", () => {
+    opt.addEventListener('click', () => {
       const target = opt.dataset.locale as Locale | undefined;
-      if (target === "en" || target === "fr") setLocale(target);
+      if (target === 'en' || target === 'fr') setLocale(target);
     });
   });
 
   function closeDropdown() {
     dropdown.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute('aria-expanded', 'false');
   }
   function openDropdown() {
     dropdown.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
+    btn.setAttribute('aria-expanded', 'true');
   }
 
-  btn.addEventListener("click", (e) => {
+  btn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (dropdown.hidden) openDropdown();
     else closeDropdown();
   });
 
-  window.addEventListener("pointerdown", (e) => {
+  window.addEventListener('pointerdown', (e) => {
     const target = e.target as HTMLElement;
-    if (!target.closest("#ipod-lang-dropdown, #ipod-lang-btn")) {
+    if (!target.closest('#ipod-lang-dropdown, #ipod-lang-btn')) {
       closeDropdown();
     }
   });
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeDropdown();
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDropdown();
   });
 </script>
 
@@ -110,7 +105,7 @@
     letter-spacing: 0.3px;
   }
   .ipod-lang-btn:active,
-  .ipod-lang-btn[aria-expanded="true"] {
+  .ipod-lang-btn[aria-expanded='true'] {
     background: rgba(255, 255, 255, 0.18);
   }
 
@@ -172,12 +167,7 @@
     font-size: 12px;
     font-weight: 600;
     color: #fff;
-    background: linear-gradient(
-      to bottom,
-      #3a3a3a 0%,
-      #1a1a1a 50%,
-      #0a0a0a 100%
-    );
+    background: linear-gradient(to bottom, #3a3a3a 0%, #1a1a1a 50%, #0a0a0a 100%);
     border-bottom: 1px solid #000;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
   }
@@ -210,7 +200,7 @@
     border-radius: 1px;
   }
   .battery::after {
-    content: "";
+    content: '';
     position: absolute;
     right: -3px;
     top: 2px;

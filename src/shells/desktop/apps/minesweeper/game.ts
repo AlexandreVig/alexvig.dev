@@ -2,14 +2,7 @@ export type Difficulty = 'Beginner' | 'Intermediate' | 'Expert';
 
 export type GameStatus = 'new' | 'started' | 'died' | 'won';
 
-export type CellState =
-  | 'cover'
-  | 'flag'
-  | 'unknown'
-  | 'open'
-  | 'mine'
-  | 'die'
-  | 'misflagged';
+export type CellState = 'cover' | 'flag' | 'unknown' | 'open' | 'mine' | 'die' | 'misflagged';
 
 export interface Cell {
   state: CellState;
@@ -67,7 +60,9 @@ function shufflePick(count: number, maxExclusive: number, exclude: number): numb
   }
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    const tmp = arr[i]!;
+    arr[i] = arr[j]!;
+    arr[j] = tmp;
   }
   return arr.slice(0, count);
 }
@@ -76,9 +71,10 @@ export function placeMines(cells: Cell[], cfg: GameConfig, excludeIndex: number)
   const { rows, columns, mines } = cfg;
   const mineIndexes = shufflePick(mines, rows * columns, excludeIndex);
   mineIndexes.forEach((chosen) => {
-    cells[chosen].isMine = true;
+    cells[chosen]!.isMine = true;
     nearIndexes(chosen, rows, columns).forEach((ni) => {
-      if (!cells[ni].isMine) cells[ni].minesAround += 1;
+      const n = cells[ni]!;
+      if (!n.isMine) n.minesAround += 1;
     });
   });
 }

@@ -1,4 +1,4 @@
-import { ANIMATIONS, FRAME_W, FRAME_H, getRandomIdleAnimation, preloadSpritesheet } from './animations';
+import { FRAME_W, FRAME_H, getRandomIdleAnimation, preloadSpritesheet } from './animations';
 import { AnimationEngine } from './engine';
 import { MovementController } from './movement';
 
@@ -153,13 +153,11 @@ const CLOSE_ANIMATIONS = ['Wave', 'GoodBye'];
 const ARRIVAL_ANIMATIONS = ['IdleEyeBrowRaise', 'IdleFingerTap', 'Explain', 'IdleHeadScratch'];
 
 function pickRandom(arr: string[]): string {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
 function setupEventListeners(): void {
-  document.addEventListener('xp:app-launch', ((
-    e: CustomEvent<{ appId: string }>,
-  ) => {
+  document.addEventListener('xp:app-launch', ((e: CustomEvent<{ appId: string }>) => {
     const options = LAUNCH_ANIMATION_MAP[e.detail.appId] ?? ['Explain'];
     playLocked(pickRandom(options));
   }) as EventListener);
@@ -182,9 +180,7 @@ function setupEventListeners(): void {
     }
   });
 
-  document.addEventListener('xp:focus', ((
-    e: CustomEvent<{ id: string }>,
-  ) => {
+  document.addEventListener('xp:focus', ((e: CustomEvent<{ id: string }>) => {
     movement.gravitateTo(e.detail.id);
   }) as EventListener);
 

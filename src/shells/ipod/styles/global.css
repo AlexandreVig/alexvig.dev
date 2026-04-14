@@ -97,12 +97,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    to bottom,
-    #7a93b5 0%,
-    #4c6a90 50%,
-    #3a587e 100%
-  );
+  background: linear-gradient(to bottom, #7a93b5 0%, #4c6a90 50%, #3a587e 100%);
   border-bottom: 1px solid #1a2a3f;
   color: #fff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
@@ -133,8 +128,7 @@
    * `preserveAspectRatio='none'` lets the middle stretch with the button
    * width while the arrow tip and rounded right corners stay intact.
    */
-  background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 34' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%238ca5c6'/><stop offset='0.5' stop-color='%235878a0'/><stop offset='1' stop-color='%23415f85'/></linearGradient></defs><path d='M1 17 L8.5 1 L56 1 Q59 1 59 4 L59 30 Q59 33 56 33 L8.5 33 Z' fill='url(%23g)' stroke='%231a2a3f' stroke-width='1' stroke-linejoin='round'/></svg>")
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 34' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%238ca5c6'/><stop offset='0.5' stop-color='%235878a0'/><stop offset='1' stop-color='%23415f85'/></linearGradient></defs><path d='M1 17 L8.5 1 L56 1 Q59 1 59 4 L59 30 Q59 33 56 33 L8.5 33 Z' fill='url(%23g)' stroke='%231a2a3f' stroke-width='1' stroke-linejoin='round'/></svg>")
     no-repeat center / 100% 100%;
   color: #fff;
   font: inherit;

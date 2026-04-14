@@ -44,17 +44,10 @@ const misflaggedUrl = '/icons/minesweeper/misflagged.png';
 const questionUrl = '/icons/minesweeper/question.png';
 
 function numberCellUrl(n: number): string {
-  return [
-    emptyUrl,
-    open1Url,
-    open2Url,
-    open3Url,
-    open4Url,
-    open5Url,
-    open6Url,
-    open7Url,
-    open8Url,
-  ][n] ?? emptyUrl;
+  return (
+    [emptyUrl, open1Url, open2Url, open3Url, open4Url, open5Url, open6Url, open7Url, open8Url][n] ??
+    emptyUrl
+  );
 }
 
 const mod: AppModule = {
@@ -62,9 +55,7 @@ const mod: AppModule = {
     root.classList.add('minesweeper');
 
     const difficultyArg =
-      typeof args.difficulty === 'string'
-        ? (args.difficulty as Difficulty)
-        : 'Beginner';
+      typeof args.difficulty === 'string' ? (args.difficulty as Difficulty) : 'Beginner';
     let difficulty: Difficulty = difficultyArg in CONFIG ? difficultyArg : 'Beginner';
 
     let cfg: GameConfig = CONFIG[difficulty];
@@ -80,8 +71,7 @@ const mod: AppModule = {
 
     const menuBar = createMenu(
       {
-        isChecked: (action) =>
-          action === `difficulty:${difficulty}`,
+        isChecked: (action) => action === `difficulty:${difficulty}`,
         onAction: (action) => {
           if (action === 'new') reset();
           else if (action === 'exit') host.close();
@@ -226,16 +216,17 @@ const mod: AppModule = {
     };
 
     const renderCell = (i: number) => {
-      const c = cells[i];
-      const el = cellEls[i];
+      const c = cells[i]!;
+      const el = cellEls[i]!;
       const bg = el.firstElementChild as HTMLDivElement;
       const img = el.lastElementChild as HTMLImageElement;
 
-      const showOpen = c.state === 'open' || c.state === 'mine' || c.state === 'die' || c.state === 'misflagged';
+      const showOpen =
+        c.state === 'open' || c.state === 'mine' || c.state === 'die' || c.state === 'misflagged';
       bg.classList.toggle('minesweeper__cellBg--cover', !showOpen);
       bg.classList.toggle('minesweeper__cellBg--open', showOpen);
 
-      let src = '';
+      let src: string;
       switch (c.state) {
         case 'open':
           src = numberCellUrl(c.minesAround);
@@ -301,7 +292,7 @@ const mod: AppModule = {
         if (c.state === 'flag' && !c.isMine) return { ...c, state: 'misflagged' };
         return c;
       });
-      cells[dieIndex] = { ...cells[dieIndex], state: 'die' };
+      cells[dieIndex] = { ...cells[dieIndex]!, state: 'die' };
 
       for (let i = 0; i < cells.length; i++) renderCell(i);
       updateFace(false);
@@ -338,7 +329,8 @@ const mod: AppModule = {
 
       const toOpen = autoOpenIndexes(cells, cfg, index);
       toOpen.forEach((i) => {
-        if (cells[i].state !== 'flag') cells[i] = { ...cells[i], state: 'open' };
+        const cell = cells[i]!;
+        if (cell.state !== 'flag') cells[i] = { ...cell, state: 'open' };
       });
 
       toOpen.forEach(renderCell);
@@ -354,11 +346,11 @@ const mod: AppModule = {
       if (!c || c.state !== 'open' || c.minesAround <= 0) return;
 
       const neighbors = nearIndexes(index, cfg.rows, cfg.columns);
-      const near = neighbors.map((i) => cells[i]);
+      const near = neighbors.map((i) => cells[i]!);
       const flags = near.filter((n) => n.state === 'flag').length;
       if (flags !== c.minesAround) return;
 
-      const mineIndex = neighbors.find((i) => cells[i].isMine && cells[i].state !== 'flag');
+      const mineIndex = neighbors.find((i) => cells[i]!.isMine && cells[i]!.state !== 'flag');
       if (mineIndex !== undefined) {
         gameOver(mineIndex);
         return;

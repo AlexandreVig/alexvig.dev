@@ -1,10 +1,4 @@
-import {
-  ANIMATIONS,
-  SPRITE_URL,
-  FRAME_W,
-  FRAME_H,
-  getLookDirection,
-} from './animations';
+import { ANIMATIONS, SPRITE_URL, FRAME_W, FRAME_H, getLookDirection } from './animations';
 
 /**
  * Sprite-based animation engine.

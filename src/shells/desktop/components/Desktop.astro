@@ -1,6 +1,6 @@
 ---
-import { desktopNodes, iconForNode } from "../fs/api";
-import DesktopIcon from "./DesktopIcon.astro";
+import { desktopNodes, iconForNode } from '../fs/api';
+import DesktopIcon from './DesktopIcon.astro';
 
 const items = desktopNodes();
 ---
@@ -10,7 +10,7 @@ const items = desktopNodes();
     {
       items.map((node) => {
         const pos = node.desktopPosition;
-        if (node.kind === "shortcut") {
+        if (node.kind === 'shortcut') {
           return (
             <DesktopIcon
               label={node.name}
@@ -23,7 +23,7 @@ const items = desktopNodes();
             />
           );
         }
-        if (node.kind === "file") {
+        if (node.kind === 'file') {
           return (
             <DesktopIcon
               label={node.name}

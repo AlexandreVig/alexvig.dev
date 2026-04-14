@@ -35,13 +35,11 @@ const mod: IpodAppModule = {
           ).join('')}
         </ul>
       `;
-      root
-        .querySelector<HTMLElement>('.ipod-music__list')!
-        .addEventListener('click', (e) => {
-          const row = (e.target as Element).closest<HTMLElement>('[data-idx]');
-          if (!row) return;
-          renderNowPlaying(Number(row.dataset.idx));
-        });
+      root.querySelector<HTMLElement>('.ipod-music__list')!.addEventListener('click', (e) => {
+        const row = (e.target as Element).closest<HTMLElement>('[data-idx]');
+        if (!row) return;
+        renderNowPlaying(Number(row.dataset.idx));
+      });
     };
 
     const renderNowPlaying = (idx: number) => {
@@ -82,10 +80,7 @@ const mod: IpodAppModule = {
 };
 
 function escape(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export default mod;

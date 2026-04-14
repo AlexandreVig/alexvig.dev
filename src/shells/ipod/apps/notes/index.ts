@@ -46,9 +46,7 @@ const mod: IpodAppModule = {
       list.addEventListener(
         'click',
         (e) => {
-          const row = (e.target as Element).closest<HTMLElement>(
-            '[data-note-id]',
-          );
+          const row = (e.target as Element).closest<HTMLElement>('[data-note-id]');
           if (!row) return;
           const note = NOTES.find((n) => n.id === row.dataset.noteId);
           if (note) void renderNote(note);

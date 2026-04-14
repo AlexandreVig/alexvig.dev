@@ -29,7 +29,13 @@ const { id, title, icon, titleKey, hideLabel = false } = Astro.props;
   data-i18n={titleKey}
 >
   <img src={icon} alt="" draggable={false} />
-  {!hideLabel && <span class="label" data-i18n={titleKey}>{title}</span>}
+  {
+    !hideLabel && (
+      <span class="label" data-i18n={titleKey}>
+        {title}
+      </span>
+    )
+  }
 </button>
 
 <style>

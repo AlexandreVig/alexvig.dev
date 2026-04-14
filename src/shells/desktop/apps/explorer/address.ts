@@ -48,9 +48,7 @@ export function parseAddress(input: string): string | null {
   for (const seg of segments) {
     if (node.kind !== 'folder') return null;
     const lower = seg.toLowerCase();
-    const match: FsNode | undefined = node.children.find(
-      (c) => c.name.toLowerCase() === lower,
-    );
+    const match: FsNode | undefined = node.children.find((c) => c.name.toLowerCase() === lower);
     if (!match) return null;
     canonical.push(match.name);
     node = match;
@@ -88,9 +86,7 @@ export interface TreeEntry {
  * Files and shortcuts are skipped — the dropdown is a folder navigator.
  */
 export function buildLocationTree(): TreeEntry[] {
-  const entries: TreeEntry[] = [
-    { path: '/', display: MY_COMPUTER, depth: 0, icon: iconFor('/') },
-  ];
+  const entries: TreeEntry[] = [{ path: '/', display: MY_COMPUTER, depth: 0, icon: iconFor('/') }];
 
   function walk(node: FsNode, path: string, depth: number): void {
     if (node.kind !== 'folder') return;

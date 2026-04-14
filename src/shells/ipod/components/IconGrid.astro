@@ -9,9 +9,7 @@
 import { ipodApps } from '../apps/registry';
 import AppIcon from './AppIcon.astro';
 
-const homeApps = ipodApps
-  .filter((a) => a.location === 'home')
-  .sort((a, b) => a.order - b.order);
+const homeApps = ipodApps.filter((a) => a.location === 'home').sort((a, b) => a.order - b.order);
 ---
 
 <div class="ipod-icon-grid">

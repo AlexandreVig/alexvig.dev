@@ -1,8 +1,4 @@
-import {
-  createMenuBar,
-  type MenuBarOptions,
-  type MenuSchema,
-} from '../../lib/menubar';
+import { createMenuBar, type MenuBarOptions, type MenuSchema } from '../../lib/menubar';
 
 const SCHEMA: MenuSchema = {
   File: [

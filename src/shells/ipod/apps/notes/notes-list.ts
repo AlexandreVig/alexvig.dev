@@ -32,11 +32,13 @@ export interface Note {
  * Tiny helper that keeps every note's loader shape identical — avoids
  * repeating the same locale-branch boilerplate inside each `load()`.
  */
-const localized = (
-  en: () => Promise<{ default: string }>,
-  fr: () => Promise<{ default: string }>,
-): (() => Promise<string>) =>
-  () => (getLocale() === 'fr' ? fr() : en()).then((m) => m.default);
+const localized =
+  (
+    en: () => Promise<{ default: string }>,
+    fr: () => Promise<{ default: string }>,
+  ): (() => Promise<string>) =>
+  () =>
+    (getLocale() === 'fr' ? fr() : en()).then((m) => m.default);
 
 export const NOTES: Note[] = [
   {

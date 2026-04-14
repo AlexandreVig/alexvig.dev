@@ -19,9 +19,7 @@ async function getParser(): Promise<MarkedParseFn> {
     renderer: {
       link({ href, title, text }) {
         const safeHref = href ? href.replace(/"/g, '&quot;') : '';
-        const titleAttr = title
-          ? ` title="${title.replace(/"/g, '&quot;')}"`
-          : '';
+        const titleAttr = title ? ` title="${title.replace(/"/g, '&quot;')}"` : '';
         return `<a href="${safeHref}"${titleAttr} target="_blank" rel="noreferrer noopener">${text}</a>`;
       },
     },

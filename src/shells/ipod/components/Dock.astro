@@ -5,12 +5,10 @@
  * Reads the iPod registry, keeps `location === 'dock'`, sorts by `order`.
  * Labels are hidden here to match iOS 1's dock styling.
  */
-import { ipodApps } from "../apps/registry";
-import AppIcon from "./AppIcon.astro";
+import { ipodApps } from '../apps/registry';
+import AppIcon from './AppIcon.astro';
 
-const dockApps = ipodApps
-  .filter((a) => a.location === "dock")
-  .sort((a, b) => a.order - b.order);
+const dockApps = ipodApps.filter((a) => a.location === 'dock').sort((a, b) => a.order - b.order);
 ---
 
 <div class="ipod-dock">
@@ -45,7 +43,7 @@ const dockApps = ipodApps
     justify-items: center;
     padding: 0 13px;
     margin: 0 3px;
-    background: url("/ipod/dock-grid.png") repeat-x center;
+    background: url('/ipod/dock-grid.png') repeat-x center;
   }
 
   /* Left and right vertical border strips that frame the dock well.
@@ -54,12 +52,12 @@ const dockApps = ipodApps
      at its natural dimensions with no scaling or repetition. */
   .ipod-dock::before,
   .ipod-dock::after {
-    content: "";
+    content: '';
     position: absolute;
     top: 0;
     width: 3px;
     height: 76px;
-    background: url("/ipod/dock-border.png") center;
+    background: url('/ipod/dock-border.png') center;
     pointer-events: none;
   }
   .ipod-dock::before {

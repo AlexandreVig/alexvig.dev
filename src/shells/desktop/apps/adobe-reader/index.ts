@@ -17,7 +17,12 @@ const mod: AppModule = {
 
     if (!file) {
       root.innerHTML = '<div class="ar__loading">No file specified.</div>';
-      return { unmount() { root.classList.remove('adobe-reader'); root.innerHTML = ''; } };
+      return {
+        unmount() {
+          root.classList.remove('adobe-reader');
+          root.innerHTML = '';
+        },
+      };
     }
 
     host.setTitle(`${file.name} — Adobe Reader`);
@@ -66,60 +71,65 @@ const mod: AppModule = {
     }
 
     // Menu bar
-    const menuBar = createMenu({
-      onAction(action) {
-        switch (action) {
-          case 'exit':
-            host.close();
-            break;
-          case 'save':
-            savePdf();
-            break;
-          case 'print':
-            printPdf();
-            break;
-          case 'fit-page':
-            zoomMode = 'fit-page';
-            void applyZoom();
-            break;
-          case 'fit-width':
-            zoomMode = 'fit-width';
-            void applyZoom();
-            break;
-          case 'zoom-in':
-            toolbarControls.onZoomIn();
-            break;
-          case 'zoom-out':
-            toolbarControls.onZoomOut();
-            break;
-          case 'about':
-            openAbout('adobe-reader', {
-              icon: '/icons/adobe-reader.png',
-              appIcon: '/icons/adobe-reader.png',
-              appTitle: 'Adobe Reader',
-              version: 'Version 7.0',
-              copyright: '\u00a9 2026 Alexandre Vigneau',
-              description: t('reader.about.description'),
-              footer: t('reader.about.footer'),
-            });
-            break;
-        }
+    const menuBar = createMenu(
+      {
+        onAction(action) {
+          switch (action) {
+            case 'exit':
+              host.close();
+              break;
+            case 'save':
+              savePdf();
+              break;
+            case 'print':
+              printPdf();
+              break;
+            case 'fit-page':
+              zoomMode = 'fit-page';
+              void applyZoom();
+              break;
+            case 'fit-width':
+              zoomMode = 'fit-width';
+              void applyZoom();
+              break;
+            case 'zoom-in':
+              toolbarControls.onZoomIn();
+              break;
+            case 'zoom-out':
+              toolbarControls.onZoomOut();
+              break;
+            case 'about':
+              openAbout('adobe-reader', {
+                icon: '/icons/adobe-reader.png',
+                appIcon: '/icons/adobe-reader.png',
+                appTitle: 'Adobe Reader',
+                version: 'Version 7.0',
+                copyright: '\u00a9 2026 Alexandre Vigneau',
+                description: t('reader.about.description'),
+                footer: t('reader.about.footer'),
+              });
+              break;
+          }
+        },
       },
-    }, signal);
+      signal,
+    );
 
     // Toolbar actions exposed for menu reuse
     const toolbarControls = {
       onZoomIn() {
         const idx = ZOOM_PRESETS.findIndex((z) => z > currentZoom + 0.01);
-        if (idx !== -1) {
-          zoomMode = ZOOM_PRESETS[idx];
+        const next = ZOOM_PRESETS[idx];
+        if (idx !== -1 && next !== undefined) {
+          zoomMode = next;
           void applyZoom();
         }
       },
       onZoomOut() {
         const candidates = ZOOM_PRESETS.filter((z) => z < currentZoom - 0.01);
-        if (candidates.length) {
-          zoomMode = candidates[candidates.length - 1];
+        const last = candidates[candidates.length - 1];
+        if (last !== undefined) {
+          zoomMode = last;
           void applyZoom();
         }
       },
@@ -231,6 +241,7 @@ const mod: AppModule = {
         const dpr = window.devicePixelRatio || 1;
         const pv = page.getViewport({ scale: currentZoom * dpr });
         const canvas = canvases[pageNum - 1];
+        if (!canvas) return;
 
         canvas.width = Math.floor(pv.width);
         canvas.height = Math.floor(pv.height);
@@ -328,7 +339,7 @@ const mod: AppModule = {
         let bestDist = Infinity;
         const vpTop = viewport.getBoundingClientRect().top;
         for (let i = 0; i < canvases.length; i++) {
-          const rect = canvases[i].getBoundingClientRect();
+          const rect = canvases[i]!.getBoundingClientRect();
           const dist = Math.abs(rect.top - vpTop);
           if (dist < bestDist) {
             bestDist = dist;

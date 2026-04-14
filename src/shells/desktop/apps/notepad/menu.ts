@@ -1,8 +1,4 @@
-import {
-  createMenuBar,
-  type MenuBarOptions,
-  type MenuSchema,
-} from '../../lib/menubar';
+import { createMenuBar, type MenuBarOptions, type MenuSchema } from '../../lib/menubar';
 
 const SCHEMA: MenuSchema = {
   File: [
@@ -36,9 +32,7 @@ const SCHEMA: MenuSchema = {
     { type: 'item', text: 'Word Wrap', disabled: true },
     { type: 'item', text: 'Font...', disabled: true },
   ],
-  View: [
-    { type: 'item', text: 'Status Bar', action: 'toggle-status-bar' },
-  ],
+  View: [{ type: 'item', text: 'Status Bar', action: 'toggle-status-bar' }],
   Help: [
     { type: 'item', text: 'Help Topics', disabled: true },
     { type: 'separator' },

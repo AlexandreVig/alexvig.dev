@@ -47,9 +47,7 @@ const { label, icon, path = null, appId = null, isShortcut = false, row, col } =
         clickTimer = null;
         const appId = icon.dataset.launchApp || undefined;
         const path = icon.dataset.launchPath || undefined;
-        document.dispatchEvent(
-          new CustomEvent('xp:launch', { detail: { appId, path } }),
-        );
+        document.dispatchEvent(new CustomEvent('xp:launch', { detail: { appId, path } }));
       } else {
         clickTimer = setTimeout(() => {
           clickTimer = null;

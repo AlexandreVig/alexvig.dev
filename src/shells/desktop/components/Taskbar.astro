@@ -34,51 +34,50 @@
 </div>
 
 <script>
-  import type { WindowState } from "../lib/types";
-  import { getLocale, setLocale } from "../../../i18n";
+  import type { WindowState } from '../lib/types';
+  import { getLocale, setLocale } from '../../../i18n';
 
   // ── Language switcher ──────────────────────────────────────────────────────
-  const langBtn = document.getElementById("tray-lang-btn")!;
-  const langDropdown = document.getElementById("tray-lang-dropdown")!;
-  const langOptions =
-    langDropdown.querySelectorAll<HTMLElement>(".tray__lang-option");
+  const langBtn = document.getElementById('tray-lang-btn')!;
+  const langDropdown = document.getElementById('tray-lang-dropdown')!;
+  const langOptions = langDropdown.querySelectorAll<HTMLElement>('.tray__lang-option');
 
   const locale = getLocale();
   langBtn.textContent = locale.toUpperCase();
 
   langOptions.forEach((opt) => {
-    const check = opt.querySelector(".tray__lang-check")!;
-    if (opt.dataset.locale === locale) check.textContent = "\u2713";
-    opt.addEventListener("click", () => {
+    const check = opt.querySelector('.tray__lang-check')!;
+    if (opt.dataset.locale === locale) check.textContent = '\u2713';
+    opt.addEventListener('click', () => {
       const target = opt.dataset.locale;
-      if (target === "en" || target === "fr") setLocale(target);
+      if (target === 'en' || target === 'fr') setLocale(target);
     });
   });
 
-  langBtn.addEventListener("click", (e) => {
+  langBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    langDropdown.classList.toggle("is-open");
+    langDropdown.classList.toggle('is-open');
   });
 
-  window.addEventListener("mousedown", (e) => {
-    if (!(e.target as HTMLElement).closest("#tray-lang")) {
-      langDropdown.classList.remove("is-open");
+  window.addEventListener('mousedown', (e) => {
+    if (!(e.target as HTMLElement).closest('#tray-lang')) {
+      langDropdown.classList.remove('is-open');
     }
   });
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") langDropdown.classList.remove("is-open");
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') langDropdown.classList.remove('is-open');
   });
 
   // ── Clock ──────────────────────────────────────────────────────────────────
-  const clockEl = document.getElementById("taskbar-clock")!;
-  const isFr = locale === "fr";
+  const clockEl = document.getElementById('taskbar-clock')!;
+  const isFr = locale === 'fr';
 
   function getTime() {
     const date = new Date();
     const hour = date.getHours();
     let min: string | number = date.getMinutes();
-    if (min < 10) min = "0" + min;
+    if (min < 10) min = '0' + min;
 
     if (isFr) {
       return `${hour}:${min}`;
@@ -86,7 +85,7 @@
 
     let h12 = hour % 12;
     if (h12 === 0) h12 = 12;
-    return `${h12}:${min} ${hour >= 12 ? "PM" : "AM"}`;
+    return `${h12}:${min} ${hour >= 12 ? 'PM' : 'AM'}`;
   }
 
   function updateClock() {
@@ -95,58 +94,54 @@
   }
   updateClock();
   const clockInterval = setInterval(updateClock, 1000);
-  document.addEventListener('astro:before-swap', () => clearInterval(clockInterval), { once: true });
+  document.addEventListener('astro:before-swap', () => clearInterval(clockInterval), {
+    once: true,
+  });
 
   // ── Window buttons ─────────────────────────────────────────────────────────
-  const windowsEl = document.getElementById("taskbar-windows")!;
+  const windowsEl = document.getElementById('taskbar-windows')!;
 
-  document.addEventListener("xp:taskbar-update", (e) => {
+  document.addEventListener('xp:taskbar-update', (e) => {
     const { windows: states, focusedId } = (
       e as CustomEvent<{ windows: WindowState[]; focusedId: string | null }>
     ).detail;
-    windowsEl.innerHTML = "";
+    windowsEl.innerHTML = '';
 
     states.forEach((state) => {
-      const btn = document.createElement("div");
-      btn.className = "taskbar-win-btn";
-      btn.setAttribute("role", "button");
-      btn.setAttribute("tabindex", "0");
+      const btn = document.createElement('div');
+      btn.className = 'taskbar-win-btn';
+      btn.setAttribute('role', 'button');
+      btn.setAttribute('tabindex', '0');
       btn.dataset.windowId = state.id;
 
       if (state.icon) {
-        const img = document.createElement("img");
+        const img = document.createElement('img');
         img.src = state.icon;
         img.width = 15;
         img.height = 15;
-        img.setAttribute("aria-hidden", "true");
+        img.setAttribute('aria-hidden', 'true');
         btn.appendChild(img);
       }
 
-      const label = document.createElement("span");
+      const label = document.createElement('span');
       label.textContent = state.title;
       btn.appendChild(label);
 
-      if (state.id === focusedId) btn.classList.add("is-active");
+      if (state.id === focusedId) btn.classList.add('is-active');
 
       const handleClick = () => {
         if (state.isMinimized) {
-          document.dispatchEvent(
-            new CustomEvent("xp:restore", { detail: { id: state.id } }),
-          );
+          document.dispatchEvent(new CustomEvent('xp:restore', { detail: { id: state.id } }));
         } else if (state.id === focusedId) {
-          document.dispatchEvent(
-            new CustomEvent("xp:minimize", { detail: { id: state.id } }),
-          );
+          document.dispatchEvent(new CustomEvent('xp:minimize', { detail: { id: state.id } }));
         } else {
-          document.dispatchEvent(
-            new CustomEvent("xp:focus", { detail: { id: state.id } }),
-          );
+          document.dispatchEvent(new CustomEvent('xp:focus', { detail: { id: state.id } }));
         }
       };
 
-      btn.addEventListener("click", handleClick);
-      btn.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter" || ev.key === " ") handleClick();
+      btn.addEventListener('click', handleClick);
+      btn.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') handleClick();
       });
 
       windowsEl.appendChild(btn);

@@ -41,14 +41,14 @@
   image-rendering: auto;
 }
 
-.explorer__tbtn[data-action="back"] img,
-.explorer__tbtn[data-action="forward"] img {
+.explorer__tbtn[data-action='back'] img,
+.explorer__tbtn[data-action='forward'] img {
   width: 30px;
   height: 30px;
   margin: 0 -1px;
 }
 
-.explorer__tbtn[data-action="up"] img {
+.explorer__tbtn[data-action='up'] img {
   width: 30px;
   height: 30px;
   margin: 0 -1px;

@@ -1,11 +1,6 @@
 import type { FileHandle } from '../fs/types';
 import { windowManager } from '../lib/windowManager';
-import type {
-  AppHostAPI,
-  AppInstance,
-  AppManifest,
-  AppMountContext,
-} from './types';
+import type { AppHostAPI, AppInstance, AppManifest, AppMountContext } from './types';
 
 interface HostLaunchRequest {
   appId: string;
@@ -61,8 +56,7 @@ class AppHost {
     });
 
     document.addEventListener('xp:taskbar-update', (e) => {
-      const focusedId = (e as CustomEvent<{ focusedId: string | null }>).detail
-        .focusedId;
+      const focusedId = (e as CustomEvent<{ focusedId: string | null }>).detail.focusedId;
       this.mounted.forEach((_, id) => {
         this.setFocused(id, id === focusedId);
       });
@@ -89,9 +83,7 @@ class AppHost {
     this.loading.add(instanceId);
 
     // Notify listeners (e.g. Clippy) that an app is being launched.
-    document.dispatchEvent(
-      new CustomEvent('xp:app-launch', { detail: { appId: req.appId } }),
-    );
+    document.dispatchEvent(new CustomEvent('xp:app-launch', { detail: { appId: req.appId } }));
 
     try {
       const mod = await manifest.loader();
@@ -99,13 +91,10 @@ class AppHost {
       // Race guard: if unmounted or re-requested during load, bail gracefully.
       if (!this.loading.has(instanceId)) return;
 
-      const title = req.file
-        ? `${req.file.name} — ${manifest.title}`
-        : manifest.title;
+      const title = req.file ? `${req.file.name} — ${manifest.title}` : manifest.title;
       // Window chrome icon precedence: explicit args.icon > file icon > manifest icon.
       // Lets apps (e.g. the templated About dialog) adopt their parent app's icon.
-      const argsIcon =
-        typeof req.args?.icon === 'string' ? (req.args.icon as string) : null;
+      const argsIcon = typeof req.args?.icon === 'string' ? (req.args.icon as string) : null;
       const icon = argsIcon ?? req.file?.icon ?? manifest.icon;
 
       const body = windowManager.create({
@@ -128,9 +117,7 @@ class AppHost {
         setIcon: (i) => windowManager.setIcon(instanceId, i),
         setSize: (w, h) => windowManager.setSize(instanceId, w, h),
         close: () =>
-          document.dispatchEvent(
-            new CustomEvent('xp:close', { detail: { id: instanceId } }),
-          ),
+          document.dispatchEvent(new CustomEvent('xp:close', { detail: { id: instanceId } })),
       };
       const ctx: AppMountContext = {
         root: body,
@@ -175,10 +162,7 @@ class AppHost {
    * If `id` is mounted, restore/focus it and forward `args` via onLaunchArgs.
    * Returns true if the launch was satisfied by an existing instance.
    */
-  private focusExisting(
-    id: string,
-    args: Record<string, unknown> | undefined,
-  ): boolean {
+  private focusExisting(id: string, args: Record<string, unknown> | undefined): boolean {
     const existing = this.mounted.get(id);
     if (!existing) return false;
     if (windowManager.getState(id)?.isMinimized) {

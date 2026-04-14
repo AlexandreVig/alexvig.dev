@@ -1,16 +1,8 @@
-import {
-  createMenuBar,
-  type MenuBarOptions,
-  type MenuSchema,
-} from '../../lib/menubar';
+import { createMenuBar, type MenuBarOptions, type MenuSchema } from '../../lib/menubar';
 
 type Difficulty = 'Beginner' | 'Intermediate' | 'Expert';
 
-export type MinesweeperMenuAction =
-  | 'new'
-  | 'exit'
-  | 'about'
-  | `difficulty:${Difficulty}`;
+export type MinesweeperMenuAction = 'new' | 'exit' | 'about' | `difficulty:${Difficulty}`;
 
 const SCHEMA: MenuSchema = {
   Game: [

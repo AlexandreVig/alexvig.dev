@@ -161,14 +161,14 @@ computer-portfolio/
 
 Every layer has one job:
 
-| Layer           | Knows about                      | Doesn't know about            |
-| --------------- | -------------------------------- | ----------------------------- |
-| `fs/`           | Folders, files, content loading  | Apps, windows, events         |
-| `shell/`        | File types, app IDs, VFS         | Window chrome, DOM            |
-| `lib/`          | Window DOM, geometry, drag, z    | Apps, file types, shell       |
-| `apps/host.ts`  | Apps, lifecycle, instance map    | Geometry, markdown, explorer  |
-| `apps/<id>/`    | Its own content and UI           | Other apps, window chrome     |
-| `components/`   | Astro SSR of the page shell      | Runtime app state             |
+| Layer          | Knows about                     | Doesn't know about           |
+| -------------- | ------------------------------- | ---------------------------- |
+| `fs/`          | Folders, files, content loading | Apps, windows, events        |
+| `shell/`       | File types, app IDs, VFS        | Window chrome, DOM           |
+| `lib/`         | Window DOM, geometry, drag, z   | Apps, file types, shell      |
+| `apps/host.ts` | Apps, lifecycle, instance map   | Geometry, markdown, explorer |
+| `apps/<id>/`   | Its own content and UI          | Other apps, window chrome    |
+| `components/`  | Astro SSR of the page shell     | Runtime app state            |
 
 ---
 
@@ -190,8 +190,8 @@ export interface FileNode {
   kind: 'file';
   name: string;
   icon?: string;
-  ext: string;                              // ".md"
-  load: () => Promise<string>;              // lazy — one chunk per file
+  ext: string; // ".md"
+  load: () => Promise<string>; // lazy — one chunk per file
 }
 
 export interface ShortcutNode {
@@ -202,11 +202,11 @@ export interface ShortcutNode {
 }
 
 export interface FileHandle {
-  path: string;                             // canonical VFS path
+  path: string; // canonical VFS path
   name: string;
   ext: string;
   icon: string;
-  read(): Promise<string>;                  // memoized per handle
+  read(): Promise<string>; // memoized per handle
 }
 ```
 
@@ -236,15 +236,15 @@ disk until requested.
 
 Pure functions over the tree. No state, no caching beyond `FileHandle.read()`.
 
-| Function                                     | Returns                       | Used by              |
-| --------------------------------------------- | ----------------------------- | -------------------- |
-| `resolve(path)`                               | `FsNode \| null`              | shell, explorer      |
-| `listChildren(path)`                          | `FsNode[]`                    | explorer             |
-| `readFile(path)`                              | `Promise<FileHandle \| null>` | shell                |
-| `parentPath(path)`                            | `string`                      | explorer "Up" button |
-| `joinPath(parent, name)` / `pathOf(…)`        | `string`                      | explorer, desktop    |
-| `iconForNode(node)`                           | `string`                      | desktop, explorer    |
-| `desktopNodes()`                              | `FsNode[]`                    | Desktop.astro        |
+| Function                               | Returns                       | Used by              |
+| -------------------------------------- | ----------------------------- | -------------------- |
+| `resolve(path)`                        | `FsNode \| null`              | shell, explorer      |
+| `listChildren(path)`                   | `FsNode[]`                    | explorer             |
+| `readFile(path)`                       | `Promise<FileHandle \| null>` | shell                |
+| `parentPath(path)`                     | `string`                      | explorer "Up" button |
+| `joinPath(parent, name)` / `pathOf(…)` | `string`                      | explorer, desktop    |
+| `iconForNode(node)`                    | `string`                      | desktop, explorer    |
+| `desktopNodes()`                       | `FsNode[]`                    | Desktop.astro        |
 
 Paths are slash-delimited strings. No case normalization, no backslashes, no
 trailing-slash magic. `segments()` internally drops empty segments so `/` and
@@ -260,8 +260,18 @@ A flat `Record<string, FileTypeDef>` keyed by lowercased extension:
 
 ```ts
 const registry: Record<string, FileTypeDef> = {
-  '.md':  { ext: '.md', icon: '/icons/notepad.png', defaultAppId: 'notepad', displayName: 'Markdown Document' },
-  '.txt': { ext: '.txt', icon: '/icons/notepad.png', defaultAppId: 'notepad', displayName: 'Text Document' },
+  '.md': {
+    ext: '.md',
+    icon: '/icons/notepad.png',
+    defaultAppId: 'notepad',
+    displayName: 'Markdown Document',
+  },
+  '.txt': {
+    ext: '.txt',
+    icon: '/icons/notepad.png',
+    defaultAppId: 'notepad',
+    displayName: 'Text Document',
+  },
 };
 ```
 
@@ -319,12 +329,18 @@ export interface CreateWindowOptions {
 }
 
 export interface WindowState {
-  id: string;                 // instance ID
-  title: string; icon: string;
-  isOpen: boolean; isMinimized: boolean; isMaximized: boolean;
+  id: string; // instance ID
+  title: string;
+  icon: string;
+  isOpen: boolean;
+  isMinimized: boolean;
+  isMaximized: boolean;
   zIndex: number;
-  x: number; y: number; width: number; height: number;
-  openedAt?: number;          // counter for taskbar ordering
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  openedAt?: number; // counter for taskbar ordering
 }
 ```
 
@@ -352,16 +368,16 @@ styling keeps working unchanged.
 
 Singleton class exported as `windowManager`. Public API:
 
-| Method                            | Effect                                               |
-| --------------------------------- | ---------------------------------------------------- |
+| Method                            | Effect                                                                                                                       |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `create(opts): HTMLElement`       | Builds a window, appends to `#desktop`, wires drag/resize, focuses it. Returns the `.window-body` the app should mount into. |
-| `destroy(id)`                     | Removes the DOM node and deletes state.              |
-| `has(id)`                         | Is this instance id tracked?                         |
-| `focus(id)`                       | Raises z-index, toggles `is-focused` / `is-unfocused` classes, dispatches taskbar update. |
-| `minimize(id)` / `restore(id)`    | Hides/shows and updates taskbar.                     |
-| `maximize(id)`                    | Toggles the `is-maximized` class (CSS handles sizing). |
-| `setTitle(id, title)`             | Updates title-bar text and taskbar.                  |
-| `getState(id)` / `getAllStates()` | State introspection.                                 |
+| `destroy(id)`                     | Removes the DOM node and deletes state.                                                                                      |
+| `has(id)`                         | Is this instance id tracked?                                                                                                 |
+| `focus(id)`                       | Raises z-index, toggles `is-focused` / `is-unfocused` classes, dispatches taskbar update.                                    |
+| `minimize(id)` / `restore(id)`    | Hides/shows and updates taskbar.                                                                                             |
+| `maximize(id)`                    | Toggles the `is-maximized` class (CSS handles sizing).                                                                       |
+| `setTitle(id, title)`             | Updates title-bar text and taskbar.                                                                                          |
+| `getState(id)` / `getAllStates()` | State introspection.                                                                                                         |
 
 Internals:
 
@@ -403,12 +419,12 @@ export interface AppModule {
 }
 
 export interface AppMountContext {
-  root: HTMLElement;                        // .window-body
+  root: HTMLElement; // .window-body
   instanceId: string;
-  file: FileHandle | null;                  // null unless launched with a file
-  args: Record<string, unknown>;            // extra launch arguments
+  file: FileHandle | null; // null unless launched with a file
+  args: Record<string, unknown>; // extra launch arguments
   host: AppHostAPI;
-  signal: AbortSignal;                      // aborted on unmount
+  signal: AbortSignal; // aborted on unmount
 }
 
 export interface AppInstance {
@@ -432,14 +448,14 @@ export interface AppHostAPI {
 Instance IDs drive everything. The `host.computeInstanceId(manifest, file, args)`
 rule:
 
-| Kind        | Instance ID                                      | Behavior on relaunch                  |
-| ----------- | ------------------------------------------------ | ------------------------------------- |
-| `singleton` | `<appId>` (e.g. `minesweeper`)                   | Focus existing, never a new window    |
-| `document`  | `<appId>:<file.path or args.path or "">`         | Focus existing if same key; else new  |
-| `multi`     | `<appId>#<++counter>` (always unique)            | Every launch spawns a new window      |
+| Kind        | Instance ID                              | Behavior on relaunch                 |
+| ----------- | ---------------------------------------- | ------------------------------------ |
+| `singleton` | `<appId>` (e.g. `minesweeper`)           | Focus existing, never a new window   |
+| `document`  | `<appId>:<file.path or args.path or "">` | Focus existing if same key; else new |
+| `multi`     | `<appId>#<++counter>` (always unique)    | Every launch spawns a new window     |
 
 `document` is the clever one: it's keyed on file path **or** `args.path`. That's
-why Notepad opens one window per markdown file *and* Explorer opens one window
+why Notepad opens one window per markdown file _and_ Explorer opens one window
 per starting folder — same code path.
 
 ### Host (`src/apps/host.ts`)
@@ -577,15 +593,15 @@ Communication between components is `document.dispatchEvent(new CustomEvent(...)
 Every listener lives on `document`, so there's nothing to wire and nothing to
 tear down as windows come and go.
 
-| Event               | Dispatched by                                  | Listener(s)              | Detail                                 |
-| ------------------- | ---------------------------------------------- | ------------------------ | -------------------------------------- |
-| `xp:launch`         | DesktopIcon, StartMenu, Explorer (via shell API) | `index.astro` → shell   | `{ appId?, path?, args? }`             |
-| `xp:close`          | Title-bar close button, `AppHostAPI.close()`   | `appHost.handleClose`    | `{ id }` (instance ID)                 |
-| `xp:minimize`       | Title-bar minimize, Taskbar button             | `windowManager`, `appHost` | `{ id }`                             |
-| `xp:maximize`       | Title-bar maximize, dblclick on title bar      | `windowManager`          | `{ id }`                               |
-| `xp:restore`        | Taskbar button                                 | `windowManager`, `appHost` | `{ id }`                             |
-| `xp:focus`          | Taskbar button                                 | `windowManager`, `appHost` | `{ id }`                             |
-| `xp:taskbar-update` | `windowManager.syncTaskbar()`                  | `Taskbar.astro`, `appHost` | `{ windows: WindowState[], focusedId }` |
+| Event               | Dispatched by                                    | Listener(s)                | Detail                                  |
+| ------------------- | ------------------------------------------------ | -------------------------- | --------------------------------------- |
+| `xp:launch`         | DesktopIcon, StartMenu, Explorer (via shell API) | `index.astro` → shell      | `{ appId?, path?, args? }`              |
+| `xp:close`          | Title-bar close button, `AppHostAPI.close()`     | `appHost.handleClose`      | `{ id }` (instance ID)                  |
+| `xp:minimize`       | Title-bar minimize, Taskbar button               | `windowManager`, `appHost` | `{ id }`                                |
+| `xp:maximize`       | Title-bar maximize, dblclick on title bar        | `windowManager`            | `{ id }`                                |
+| `xp:restore`        | Taskbar button                                   | `windowManager`, `appHost` | `{ id }`                                |
+| `xp:focus`          | Taskbar button                                   | `windowManager`, `appHost` | `{ id }`                                |
+| `xp:taskbar-update` | `windowManager.syncTaskbar()`                    | `Taskbar.astro`, `appHost` | `{ windows: WindowState[], focusedId }` |
 
 Important: `xp:launch` carries **app/file identifiers**. All other `xp:*`
 events carry **instance IDs** (whatever `windowManager.create()` was given).
@@ -625,7 +641,7 @@ events carry **instance IDs** (whatever `windowManager.create()` was given).
 1. DesktopIcon dispatches `xp:launch` with `{ appId: 'explorer', path: '/' }`.
 2. Launcher sees `appId` explicit, resolves `/` → `FolderNode`, so it forwards
    the path as `args.path`: `appHost.launch({ appId: 'explorer', file: null,
-   args: { path: '/' } })`.
+args: { path: '/' } })`.
 3. Host computes `instanceId = 'explorer:/'` (document kind falls back to
    `args.path`).
 4. Not mounted → lazy-load, create window, mount. Explorer reads `args.path`
@@ -650,9 +666,11 @@ events carry **instance IDs** (whatever `windowManager.create()` was given).
 Three steps:
 
 1. **Write the content**:
+
    ```
    src/content/hobbies.md
    ```
+
    ```markdown
    # Hobbies
 
@@ -662,6 +680,7 @@ Three steps:
 
 2. **Reference it in `src/fs/tree.ts`** — drop a `FileNode` wherever you want
    it to appear. Inside `My Documents`, for example:
+
    ```ts
    {
      kind: 'file',
@@ -670,6 +689,7 @@ Three steps:
      load: () => import('../content/hobbies.md?raw').then((m) => m.default),
    },
    ```
+
    The `name` is what Explorer and the desktop show. The `load` path is the
    source file; it ships as its own lazy chunk.
 
@@ -736,6 +756,7 @@ A singleton app has one instance and runs on launch with no file. Example:
 a clock.
 
 1. **Create the app module**:
+
    ```
    src/apps/clock/index.ts
    src/apps/clock/clock.css
@@ -773,6 +794,7 @@ a clock.
    ```
 
 2. **Register it** in `src/apps/registry.ts`:
+
    ```ts
    {
      id: 'clock',
@@ -898,8 +920,12 @@ const mod: AppModule = {
       },
     };
 
-    function onClick(_e: MouseEvent) { /* ... */ }
-    function onKey(_e: KeyboardEvent) { /* ... */ }
+    function onClick(_e: MouseEvent) {
+      /* ... */
+    }
+    function onKey(_e: KeyboardEvent) {
+      /* ... */
+    }
   },
 };
 
@@ -940,8 +966,8 @@ These are the rules the codebase is meant to keep as it grows:
    (window manager, taskbar, event bus) treats them as keys. Never parse them.
 
 3. **Apps are sandboxes.** An app's only contact surface is `AppMountContext`
-   + `AppInstance`. An app should not import the window manager, not know
-   about other apps, not reach into the DOM outside its `root`.
+   - `AppInstance`. An app should not import the window manager, not know
+     about other apps, not reach into the DOM outside its `root`.
 
 4. **The window manager doesn't know about content.** It creates and destroys
    DOM nodes, tracks geometry, and delegates everything else. If you find

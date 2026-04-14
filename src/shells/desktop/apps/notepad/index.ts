@@ -21,8 +21,7 @@ const mod: AppModule = {
 
     const menuBar = createMenu(
       {
-        isChecked: (action) =>
-          action === 'toggle-status-bar' ? statusBarVisible : false,
+        isChecked: (action) => (action === 'toggle-status-bar' ? statusBarVisible : false),
         onAction: (action) => {
           switch (action) {
             case 'exit':
@@ -81,9 +80,7 @@ const mod: AppModule = {
 
     const source = await file.read();
     body.innerHTML =
-      file.ext === '.md'
-        ? await renderMarkdown(source)
-        : `<pre>${escapeHtml(source)}</pre>`;
+      file.ext === '.md' ? await renderMarkdown(source) : `<pre>${escapeHtml(source)}</pre>`;
 
     const lines = source.split('\n').length;
     statusBar.textContent = `${file.path}    Ln ${lines}, Col 1`;

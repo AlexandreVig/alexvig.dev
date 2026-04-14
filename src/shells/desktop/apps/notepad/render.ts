@@ -47,4 +47,3 @@ export async function renderMarkdown(source: string): Promise<string> {
   const parser = await getParser();
   return parser(source, { async: false });
 }
-

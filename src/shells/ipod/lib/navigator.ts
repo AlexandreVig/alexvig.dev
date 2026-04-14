@@ -1,8 +1,4 @@
-import type {
-  IpodAppInstance,
-  IpodAppManifest,
-  IpodAppMountContext,
-} from '../apps/types';
+import type { IpodAppInstance, IpodAppManifest, IpodAppMountContext } from '../apps/types';
 import type { AppFrame } from './appFrame';
 import { createAppFrame } from './appFrame';
 import { createIpodHost } from './ipod-host';
@@ -109,10 +105,7 @@ export class IpodNavigator {
       return;
     }
 
-    const host = createIpodHost(
-      { setNavBarTitle: (t) => frame.setNavBarTitle(t) },
-      this,
-    );
+    const host = createIpodHost({ setNavBarTitle: (t) => frame.setNavBarTitle(t) }, this);
 
     const ctx: IpodAppMountContext = {
       root: frame.root,
@@ -170,10 +163,7 @@ export class IpodNavigator {
     try {
       screen.instance?.unmount?.();
     } catch (err) {
-      console.error(
-        `[ipod/navigator] "${screen.manifest.id}".unmount() threw`,
-        err,
-      );
+      console.error(`[ipod/navigator] "${screen.manifest.id}".unmount() threw`, err);
     }
 
     await screen.frame.playExit();
