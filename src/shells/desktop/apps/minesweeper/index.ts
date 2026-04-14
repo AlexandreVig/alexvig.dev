@@ -4,6 +4,21 @@ import './minesweeper.css';
 import { launch } from '../../lib/launcher';
 import { createMenu } from './menu';
 import { t } from '../../../../i18n';
+import {
+  CONFIG,
+  type Cell,
+  type Difficulty,
+  type GameConfig,
+  type GameStatus,
+  autoOpenIndexes,
+  computeRemainingMines,
+  countRemainingSafe,
+  cycleMark,
+  initCells,
+  nearIndexes,
+  placeMines,
+} from './game';
+import { createDigits, setDigits } from './digits';
 
 const minesweeperIconUrl = '/icons/minesweeper/mine-icon.png';
 
@@ -28,62 +43,6 @@ const mineDeathUrl = '/icons/minesweeper/mine-death.png';
 const misflaggedUrl = '/icons/minesweeper/misflagged.png';
 const questionUrl = '/icons/minesweeper/question.png';
 
-const digit0Url = '/icons/minesweeper/digit0.png';
-const digit1Url = '/icons/minesweeper/digit1.png';
-const digit2Url = '/icons/minesweeper/digit2.png';
-const digit3Url = '/icons/minesweeper/digit3.png';
-const digit4Url = '/icons/minesweeper/digit4.png';
-const digit5Url = '/icons/minesweeper/digit5.png';
-const digit6Url = '/icons/minesweeper/digit6.png';
-const digit7Url = '/icons/minesweeper/digit7.png';
-const digit8Url = '/icons/minesweeper/digit8.png';
-const digit9Url = '/icons/minesweeper/digit9.png';
-const digitMinusUrl = '/icons/minesweeper/digit-.png';
-
-type Difficulty = 'Beginner' | 'Intermediate' | 'Expert';
-
-type GameStatus = 'new' | 'started' | 'died' | 'won';
-
-type CellState =
-  | 'cover'
-  | 'flag'
-  | 'unknown'
-  | 'open'
-  | 'mine'
-  | 'die'
-  | 'misflagged';
-
-interface Cell {
-  state: CellState;
-  isMine: boolean;
-  minesAround: number;
-}
-
-interface GameConfig {
-  rows: number;
-  columns: number;
-  mines: number;
-}
-
-const CONFIG: Record<Difficulty, GameConfig> = {
-  Beginner: { rows: 9, columns: 9, mines: 10 },
-  Intermediate: { rows: 16, columns: 16, mines: 40 },
-  Expert: { rows: 16, columns: 30, mines: 99 },
-};
-
-const digits = [
-  digit0Url,
-  digit1Url,
-  digit2Url,
-  digit3Url,
-  digit4Url,
-  digit5Url,
-  digit6Url,
-  digit7Url,
-  digit8Url,
-  digit9Url,
-];
-
 function numberCellUrl(n: number): string {
   return [
     emptyUrl,
@@ -96,134 +55,6 @@ function numberCellUrl(n: number): string {
     open7Url,
     open8Url,
   ][n] ?? emptyUrl;
-}
-
-function createDigits(container: HTMLElement): HTMLImageElement[] {
-  container.innerHTML = '';
-  const imgs = [document.createElement('img'), document.createElement('img'), document.createElement('img')];
-  imgs.forEach((img) => {
-    img.alt = '';
-    container.appendChild(img);
-  });
-  return imgs;
-}
-
-function setDigits(imgs: HTMLImageElement[], number: number): void {
-  // XP-style 3-digit display, clamped 0..999, negative shows -XX.
-  if (number < 0) {
-    const n = (-number) % 100;
-    const str = n < 10 ? `0${n}` : String(n);
-    imgs[0].src = digitMinusUrl;
-    imgs[1].src = digits[Number(str[0])];
-    imgs[2].src = digits[Number(str[1])];
-    return;
-  }
-
-  const n = Math.min(999, number);
-  const str = String(n).padStart(3, '0');
-  imgs[0].src = digits[Number(str[0])];
-  imgs[1].src = digits[Number(str[1])];
-  imgs[2].src = digits[Number(str[2])];
-}
-
-function nearIndexes(index: number, rows: number, columns: number): number[] {
-  if (index < 0 || index >= rows * columns) return [];
-  const row = Math.floor(index / columns);
-  const column = index % columns;
-  const candidates = [
-    index - columns - 1,
-    index - columns,
-    index - columns + 1,
-    index - 1,
-    index + 1,
-    index + columns - 1,
-    index + columns,
-    index + columns + 1,
-  ];
-  return candidates.filter((_, arrayIndex) => {
-    if (row === 0 && arrayIndex < 3) return false;
-    if (row === rows - 1 && arrayIndex > 4) return false;
-    if (column === 0 && [0, 3, 5].includes(arrayIndex)) return false;
-    if (column === columns - 1 && [2, 4, 7].includes(arrayIndex)) return false;
-    return true;
-  });
-}
-
-function initCells({ rows, columns }: GameConfig): Cell[] {
-  return Array.from({ length: rows * columns }, () => ({
-    state: 'cover',
-    isMine: false,
-    minesAround: 0,
-  }));
-}
-
-function shufflePick(count: number, maxExclusive: number, exclude: number): number[] {
-  const arr: number[] = [];
-  for (let i = 0; i < maxExclusive; i++) {
-    if (i !== exclude) arr.push(i);
-  }
-  // Fisher–Yates partially
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr.slice(0, count);
-}
-
-function placeMines(cells: Cell[], cfg: GameConfig, excludeIndex: number): void {
-  const { rows, columns, mines } = cfg;
-  const mineIndexes = shufflePick(mines, rows * columns, excludeIndex);
-  mineIndexes.forEach((chosen) => {
-    cells[chosen].isMine = true;
-    nearIndexes(chosen, rows, columns).forEach((ni) => {
-      if (!cells[ni].isMine) cells[ni].minesAround += 1;
-    });
-  });
-}
-
-function autoOpenIndexes(cells: Cell[], cfg: GameConfig, startIndex: number): number[] {
-  const { rows, columns } = cfg;
-  const walked = new Array<boolean>(cells.length).fill(false);
-
-  const walk = (idx: number): number[] => {
-    const cell = cells[idx];
-    if (!cell) return [];
-    if (walked[idx]) return [];
-    if (cell.state === 'flag') return [];
-    if (cell.isMine) return [];
-    walked[idx] = true;
-    if (cell.minesAround > 0) return [idx];
-
-    const out: number[] = [idx];
-    for (const n of nearIndexes(idx, rows, columns)) {
-      out.push(...walk(n));
-    }
-    return out;
-  };
-
-  return Array.from(new Set(walk(startIndex)));
-}
-
-function countRemainingSafe(cells: Cell[]): number {
-  return cells.filter((c) => c.state !== 'open' && !c.isMine).length;
-}
-
-function computeRemainingMines(cells: Cell[], mines: number): number {
-  const marked = cells.filter((c) => c.state === 'flag' || c.state === 'misflagged').length;
-  return mines - marked;
-}
-
-function cycleMark(state: CellState): CellState {
-  switch (state) {
-    case 'cover':
-      return 'flag';
-    case 'flag':
-      return 'unknown';
-    case 'unknown':
-      return 'cover';
-    default:
-      return state;
-  }
 }
 
 const mod: AppModule = {
@@ -348,7 +179,6 @@ const mod: AppModule = {
       const titleBar = win.querySelector<HTMLElement>('.title-bar');
       const titleH = titleBar?.getBoundingClientRect().height ?? 25;
 
-      // Add a tiny buffer so we never end up 1px short due to subpixel rounding.
       host.setSize(bodyW + winPadX + 1, bodyH + titleH + winPadY + 1);
     };
 
@@ -455,7 +285,6 @@ const mod: AppModule = {
       renderAll();
       host.setTitle('Minesweeper');
 
-      // Let layout settle, then size the window to fit.
       requestAnimationFrame(() => fitWindowToContent());
     };
 
@@ -554,7 +383,6 @@ const mod: AppModule = {
 
     root.addEventListener('contextmenu', (e) => e.preventDefault(), { signal });
 
-    // Face button resets the game.
     faceBtn.addEventListener(
       'click',
       () => {
@@ -563,7 +391,6 @@ const mod: AppModule = {
       { signal },
     );
 
-    // Render pressed face while holding mouse on the grid.
     const onPointerDown = (e: PointerEvent) => {
       const target = (e.target as HTMLElement).closest<HTMLElement>('[data-index]');
       if (!target) return;
