@@ -1,43 +1,46 @@
-# Astro Starter Kit: Minimal
+# computer-portfolio
 
-```sh
-npm create astro@latest -- --template minimal
+An interactive portfolio with two fully-themed shells that swap based on viewport:
+
+- **Desktop** — a Windows XP experience with draggable/resizable windows, Start menu, taskbar, and a small suite of apps (About, Explorer, Notepad, Adobe Reader, Outlook, Minesweeper, BSOD, Clippy).
+- **Mobile** — an iPod-style home screen with its own apps (Music, Safari, Mail, Notes, Calculator).
+
+Built with Astro, hand-crafted CSS, vanilla TypeScript for window management and shell logic, and deployed on Cloudflare Pages.
+
+## Stack
+
+- Astro 6 (static + Cloudflare adapter)
+- TypeScript, vanilla DOM (no UI framework)
+- Vitest, ESLint, Prettier
+- `marked` + `highlight.js` for Notepad/markdown rendering, `pdfjs-dist` for Adobe Reader
+
+## Project layout
+
+```
+src/
+├── core/                 shared bootstrap + types
+├── i18n/                 en/fr translations
+├── layouts/BaseLayout.astro
+├── pages/
+│   ├── index.astro       shell switcher
+│   └── api/contact.ts
+└── shells/
+    ├── desktop/          Windows XP shell (windowManager, apps, fs, clippy)
+    └── ipod/             iPod shell (home screen, dock, apps)
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Each shell owns its own components, apps registry, and bootstrap entry.
 
-## 🚀 Project Structure
+## Commands
 
-Inside of your Astro project, you'll see the following folders and files:
+| Command           | Action                               |
+| :---------------- | :----------------------------------- |
+| `npm install`     | Install dependencies                 |
+| `npm run dev`     | Start dev server at `localhost:4321` |
+| `npm run build`   | Build for production to `./dist/`    |
+| `npm run preview` | Preview the production build         |
+| `npm test`        | Run Vitest suite                     |
+| `npm run lint`    | ESLint                               |
+| `npm run format`  | Prettier                             |
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
-
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Requires Node `>=22.12.0`.

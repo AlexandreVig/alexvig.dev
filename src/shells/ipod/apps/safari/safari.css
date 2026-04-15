@@ -52,7 +52,7 @@
 }
 
 .ipod-safari__lock {
-  font-size: 11px;
+  height: 11px;
 }
 
 .ipod-safari__url {
@@ -120,6 +120,12 @@
   font-size: 18px;
   background: linear-gradient(to bottom, #f3f5f9 0%, #c9cfda 100%);
   border: 1px solid #9097a3;
+}
+
+.ipod-safari__bookmark-icon img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .ipod-safari__bookmark-meta {

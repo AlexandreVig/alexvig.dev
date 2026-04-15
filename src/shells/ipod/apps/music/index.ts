@@ -48,7 +48,9 @@ const mod: IpodAppModule = {
       root.innerHTML = `
         <div class="ipod-music__np">
           <button type="button" class="ipod-music__back-to-list">${escape(t('ipod.music.backToList'))}</button>
-          <div class="ipod-music__art" aria-hidden="true">♪</div>
+          <div class="ipod-music__art" aria-hidden="true">
+            <img src="/ipod/album-placeholder.webp" alt="♪" />
+          </div>
           <div class="ipod-music__np-title">${escape(track.title)}</div>
           <div class="ipod-music__np-artist">${escape(track.artist)}</div>
           <div class="ipod-music__scrubber">
@@ -57,9 +59,15 @@ const mod: IpodAppModule = {
             <span>${track.duration}</span>
           </div>
           <div class="ipod-music__controls">
-            <button type="button" disabled>⏮</button>
-            <button type="button" disabled>⏯</button>
-            <button type="button" disabled>⏭</button>
+            <button type="button" disabled>
+              <img src="/ipod/back.webp" alt="⏮" />
+            </button>
+            <button type="button" disabled>
+              <img src="/ipod/play.webp" alt="⏯" />
+            </button>
+            <button type="button" disabled>
+              <img src="/ipod/next.webp" alt="⏭" />
+            </button>
           </div>
         </div>
       `;

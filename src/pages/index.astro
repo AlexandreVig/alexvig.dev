@@ -2,11 +2,13 @@
 export const prerender = true;
 
 import BaseLayout from '../layouts/BaseLayout.astro';
+import SeoContent from '../components/SeoContent.astro';
 import DesktopShell from '../shells/desktop/DesktopShell.astro';
 import IpodShell from '../shells/ipod/IpodShell.astro';
 ---
 
 <BaseLayout>
+  <SeoContent />
   <DesktopShell />
   <IpodShell />
 </BaseLayout>

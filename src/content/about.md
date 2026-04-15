@@ -1,4 +1,4 @@
-# About Me
+# Alexandre Vigneau — Full-stack developer
 
 Hi, I'm **Alexandre Vigneau**. I'm a French computer science student, currently a
 long way from home.

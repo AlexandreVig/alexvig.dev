@@ -9,7 +9,7 @@
 
 import { escapeHtml } from '../../../../core/html';
 import type { IpodAppModule } from '../types';
-import { renderMarkdown } from '../../lib/markdown';
+import { renderMarkdown } from '../../../../core/markdown';
 import { PROJECTS, type Project } from './projects';
 import { t } from '../../../../i18n';
 import './safari.css';
@@ -28,7 +28,7 @@ const mod: IpodAppModule = {
           aria-label="${t('ipod.safari.bookmarks')}"
           hidden
         >‹</button>
-        <span class="ipod-safari__lock">🔒</span>
+        <img class="ipod-safari__lock" src="/ipod/lock.png" alt="🔒"></span>
         <span class="ipod-safari__url" id="ipod-safari-url"></span>
       </div>
       <div class="ipod-safari__viewport" id="ipod-safari-viewport"></div>
@@ -50,7 +50,9 @@ const mod: IpodAppModule = {
           ${PROJECTS.map(
             (p) => `
               <li class="ipod-safari__bookmark" data-project-id="${escapeHtml(p.id)}">
-                <div class="ipod-safari__bookmark-icon" aria-hidden="true">🔖</div>
+                <div class="ipod-safari__bookmark-icon" aria-hidden="true">
+                  <img src="/ipod/bookmark.webp" alt="🔖" onerror="this.style.display='none'">
+                </div>
                 <div class="ipod-safari__bookmark-meta">
                   <div class="ipod-safari__bookmark-title">${escapeHtml(p.title)}</div>
                   <div class="ipod-safari__bookmark-desc">${escapeHtml(p.description)}</div>

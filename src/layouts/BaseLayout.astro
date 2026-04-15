@@ -17,9 +17,54 @@
  */
 interface Props {
   title?: string;
+  description?: string;
+  ogImage?: string;
+  noindex?: boolean;
 }
 
-const { title = "Alexandre's Computer" } = Astro.props;
+const {
+  title = "Alexandre's Computer — Alexandre Vigneau",
+  description = "Alexandre Vigneau's interactive portfolio. A Windows XP desktop on the web (and an iPod on mobile) showcasing full-stack projects, experience, and contact.",
+  ogImage = '/og-image.png',
+  noindex = false,
+} = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const ogImageUrl = new URL(ogImage, Astro.site).toString();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Person',
+      name: 'Alexandre Vigneau',
+      url: Astro.site?.toString(),
+      jobTitle: 'Full-stack developer',
+      email: 'mailto:alexandre.vigneau@gmail.com',
+      sameAs: [
+        'https://github.com/AlexandreVig',
+        'https://www.linkedin.com/in/alexandre-vigneau-228812253/',
+      ],
+      knowsAbout: [
+        'Full-stack web development',
+        'TypeScript',
+        'Astro',
+        'Vue',
+        'Python',
+        'Networking',
+        'Network security',
+        'AI',
+        'GenAI',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      name: "Alexandre's Computer",
+      url: Astro.site?.toString(),
+      inLanguage: ['en', 'fr'],
+    },
+  ],
+};
 ---
 
 <!doctype html>
@@ -75,12 +120,58 @@ const { title = "Alexandre's Computer" } = Astro.props;
         padding: 0;
         overflow: hidden;
       }
+
+      /*
+       * Screen-reader-only block: keeps the SEO content layer in the
+       * accessibility tree and indexable by crawlers, but visually hidden
+       * so the XP/iPod shells stay pristine. Do not use display:none.
+       */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
     </style>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Alexandre's portfolio — Windows XP edition" />
     <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content={noindex ? 'noindex,nofollow' : 'index,follow'} />
+    <meta name="theme-color" content="#0058e6" />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link
+      rel="preload"
+      as="image"
+      href="/wallpaper.webp"
+      fetchpriority="high"
+      media="(min-width: 769px)"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Alexandre's Computer" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
     <slot />

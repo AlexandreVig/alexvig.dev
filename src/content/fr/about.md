@@ -1,4 +1,4 @@
-# À propos de moi
+# Alexandre Vigneau — Développeur full-stack
 
 Salut, je suis **Alexandre Vigneau**. Je suis étudiant en informatique,
 actuellement loin de chez moi.
