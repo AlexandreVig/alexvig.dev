@@ -116,6 +116,25 @@
   display: block;
 }
 
+/* ---- Link overlay ---- */
+.ar__link-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.ar__link {
+  position: absolute;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.ar__page-wrapper {
+  position: relative;
+  line-height: 0;
+}
+
 /* ---- Loading state ---- */
 .ar__loading {
   display: flex;

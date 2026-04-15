@@ -104,7 +104,10 @@ export const root: FolderNode = {
           name: 'Resume.pdf',
           ext: '.pdf',
           desktopPosition: { row: 4, col: 2 },
-          load: () => Promise.resolve('/pdf/test.pdf'),
+          load: () =>
+            getLocale() === 'fr'
+              ?Promise.resolve('/pdf/resume-fr.pdf')
+              : Promise.resolve('/pdf/resume-en.pdf'),
         },
       ],
     },
@@ -172,7 +175,10 @@ export const root: FolderNode = {
           kind: 'file',
           name: 'Resume.pdf',
           ext: '.pdf',
-          load: () => Promise.resolve('/pdf/test.pdf'),
+          load: () =>
+            getLocale() === 'fr'
+              ?Promise.resolve('/pdf/resume-fr.pdf')
+              : Promise.resolve('/pdf/resume-en.pdf'),
         },
       ],
     },

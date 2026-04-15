@@ -204,12 +204,18 @@ const mod: AppModule = {
     pageContainer.innerHTML = '';
     toolbar.setPage(1, totalPages);
 
-    // Create canvas placeholders
+    // Create canvas placeholders, each wrapped so the link overlay
+    // can be positioned relative to its own page.
     for (let i = 1; i <= totalPages; i++) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'ar__page-wrapper';
+
       const canvas = document.createElement('canvas');
       canvas.className = 'ar__page';
       canvas.dataset.page = String(i);
-      pageContainer.appendChild(canvas);
+
+      wrapper.appendChild(canvas);
+      pageContainer.appendChild(wrapper);
       canvases.push(canvas);
     }
 
@@ -250,9 +256,63 @@ const mod: AppModule = {
 
         await page.render({ canvas, viewport: pv }).promise;
         rendered.add(pageNum);
+
+        // Overlay clickable links on top of the canvas.
+        await overlayLinks(page, canvas, currentZoom);
       } finally {
         rendering.delete(pageNum);
       }
+    }
+
+    async function overlayLinks(
+      page: pdfjsLib.PDFPageProxy,
+      canvas: HTMLCanvasElement,
+      zoom: number,
+    ) {
+      // Remove any previously rendered link layer for this canvas.
+      canvas.parentElement?.querySelectorAll(`.ar__link-layer[data-page="${canvas.dataset.page}"]`)
+        .forEach((el) => el.remove());
+
+      const annotations = await page.getAnnotations();
+      const links = annotations.filter((a) => a.subtype === 'Link' && a.url);
+      if (links.length === 0) return;
+
+      const pv = page.getViewport({ scale: zoom });
+      const layer = document.createElement('div');
+      layer.className = 'ar__link-layer';
+      layer.dataset.page = canvas.dataset.page;
+      layer.style.width = canvas.style.width;
+      layer.style.height = canvas.style.height;
+
+      for (const ann of links) {
+        // ann.rect is [x1, y1, x2, y2] in PDF user space (origin bottom-left).
+        const [x1, y1, x2, y2] = ann.rect as [number, number, number, number];
+        const cssScale = zoom;
+        const pageHeight = pv.height;
+
+        // Convert PDF coordinates (bottom-left origin) to CSS (top-left origin).
+        const left = x1 * cssScale;
+        const top = pageHeight - y2 * cssScale;
+        const width = (x2 - x1) * cssScale;
+        const height = (y2 - y1) * cssScale;
+
+        // log every variable use to compute left, top, width, height
+        console.debug(`Annotation ${ann.id}: rect=${ann.rect}, cssScale=${cssScale}, pageHeight=${pageHeight}, computed left=${left}, top=${top}, width=${width}, height=${height}`);
+
+        const a = document.createElement('a');
+        a.href = ann.url as string;
+        a.target = '_blank';
+        a.rel = 'noreferrer';
+        a.className = 'ar__link';
+        a.style.left = `${left}px`;
+        a.style.top = `${top}px`;
+        a.style.width = `${width}px`;
+        a.style.height = `${height}px`;
+        layer.appendChild(a);
+      }
+
+      // Insert the layer inside the wrapper, after the canvas.
+      canvas.parentElement!.appendChild(layer);
     }
 
     function sizeAllCanvases() {
