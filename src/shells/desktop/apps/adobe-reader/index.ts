@@ -296,9 +296,6 @@ const mod: AppModule = {
         const width = (x2 - x1) * cssScale;
         const height = (y2 - y1) * cssScale;
 
-        // log every variable use to compute left, top, width, height
-        console.debug(`Annotation ${ann.id}: rect=${ann.rect}, cssScale=${cssScale}, pageHeight=${pageHeight}, computed left=${left}, top=${top}, width=${width}, height=${height}`);
-
         const a = document.createElement('a');
         a.href = ann.url as string;
         a.target = '_blank';
