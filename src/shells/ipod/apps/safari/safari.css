@@ -235,3 +235,55 @@
 .ipod-safari__page tr:nth-child(even) td {
   background: #f5f6f8;
 }
+
+/* --- Download button in URL bar --- */
+
+.ipod-safari__download {
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 4px;
+  border: 1px solid #6b7280;
+  background: linear-gradient(to bottom, #f3f5f9 0%, #c9cfda 100%);
+  color: #1a56aa;
+  font-size: 13px;
+  line-height: 22px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.ipod-safari__download[hidden] {
+  display: none;
+}
+.ipod-safari__download:active {
+  filter: brightness(0.9);
+}
+
+/* --- PDF viewer inside Safari --- */
+
+/* Gray viewport background so the white PDF pages are visually distinct.
+   touch-action: pan-x pan-y tells the browser to handle one-finger scroll
+   natively in both directions (needed once zoomed past fit-width) but to
+   surrender pinch-zoom to our JS handler. */
+.ipod-safari__viewport {
+  touch-action: pan-x pan-y;
+}
+
+.ipod-safari .ar__viewport {
+  background: #808080;
+}
+
+/* When zoomed past fit-width, page-container needs to grow horizontally so
+   the viewport can scroll it; min-width:100% keeps centering when fit-width. */
+.ipod-safari .ar__page-container {
+  padding: 8px;
+  gap: 8px;
+  align-items: center;
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Subtle shadow so each page lifts off the gray background */
+.ipod-safari .ar__page {
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+}

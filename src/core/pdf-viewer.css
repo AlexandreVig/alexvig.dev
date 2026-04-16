@@ -1,0 +1,55 @@
+/*
+ * Shared PDF viewer styles — used by both the desktop Adobe Reader and the
+ * iPod Safari PDF branch. All rules use the `ar__` prefix (Adobe Reader
+ * origin) which is kept for stability.
+ */
+
+.ar__viewport {
+  flex: 1;
+  overflow: auto;
+  background: #808080;
+}
+
+.ar__page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  gap: 8px;
+}
+
+.ar__page-wrapper {
+  position: relative;
+  line-height: 0;
+}
+
+.ar__page {
+  background: #fff;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+/* ---- Link overlay ---- */
+.ar__link-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.ar__link {
+  position: absolute;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* ---- Loading state ---- */
+.ar__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #fff;
+  font-family: 'Tahoma', sans-serif;
+  font-size: 12px;
+}

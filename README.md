@@ -1,4 +1,4 @@
-# computer-portfolio
+# Portfolio [avigneau.dev](https://avigneau.dev)
 
 An interactive portfolio with two fully-themed shells that swap based on viewport:
 
@@ -12,7 +12,8 @@ Built with Astro, hand-crafted CSS, vanilla TypeScript for window management and
 - Astro 6 (static + Cloudflare adapter)
 - TypeScript, vanilla DOM (no UI framework)
 - Vitest, ESLint, Prettier
-- `marked` + `highlight.js` for Notepad/markdown rendering, `pdfjs-dist` for Adobe Reader
+- `marked` + `highlight.js` for markdown rendering, `pdfjs-dist` for pdf viewing
+- Cloudflare Pages for hosting
 
 ## Project layout
 

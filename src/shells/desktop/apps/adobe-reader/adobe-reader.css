@@ -1,3 +1,5 @@
+@import '../../../../core/pdf-viewer.css';
+
 .adobe-reader {
   display: flex;
   flex-direction: column;
@@ -100,48 +102,4 @@
   flex: 1;
   overflow: auto;
   background: #808080;
-}
-
-.ar__page-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px;
-  gap: 8px;
-}
-
-.ar__page {
-  background: #fff;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
-  display: block;
-}
-
-/* ---- Link overlay ---- */
-.ar__link-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-}
-
-.ar__link {
-  position: absolute;
-  pointer-events: all;
-  cursor: pointer;
-}
-
-.ar__page-wrapper {
-  position: relative;
-  line-height: 0;
-}
-
-/* ---- Loading state ---- */
-.ar__loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #fff;
-  font-family: 'Tahoma', sans-serif;
-  font-size: 12px;
 }

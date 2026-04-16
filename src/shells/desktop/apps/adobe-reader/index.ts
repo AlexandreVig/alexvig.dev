@@ -1,15 +1,10 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { createPdfViewer } from '../../../../core/pdf-viewer';
 import { openAbout } from '../about/launch';
 import type { AppModule, AppInstance } from '../types';
 import { createMenu } from './menu';
 import { createToolbar } from './toolbar';
 import './adobe-reader.css';
 import { t } from '../../../../i18n';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-
-const ZOOM_PRESETS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
 const mod: AppModule = {
   async mount({ root, file, host, signal }) {
@@ -27,31 +22,9 @@ const mod: AppModule = {
 
     host.setTitle(`${file.name} — Adobe Reader`);
 
-    // State
-    let currentPage = 1;
-    let totalPages = 0;
-    let currentZoom = 1.0;
-    let zoomMode: number | 'fit-width' | 'fit-page' = 1.0;
-    let pdfDoc: pdfjsLib.PDFDocumentProxy | null = null;
-    const rendered = new Set<number>();
-    const rendering = new Set<number>();
-    const canvases: HTMLCanvasElement[] = [];
-    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-    let observer: IntersectionObserver | null = null;
-    let zoomGeneration = 0;
-
-    // Viewport
-    const viewport = document.createElement('div');
-    viewport.className = 'ar__viewport';
-
-    const pageContainer = document.createElement('div');
-    pageContainer.className = 'ar__page-container';
-    viewport.appendChild(pageContainer);
-
-    // PDF URL for save/print
     const pdfUrl = await file.read();
 
-    // Helper functions used by both menu and toolbar
+    // ── Helper actions ──────────────────────────────────────────────────────
     function printPdf() {
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
@@ -70,7 +43,37 @@ const mod: AppModule = {
       a.click();
     }
 
-    // Menu bar
+    // ── Toolbar ─────────────────────────────────────────────────────────────
+    // Viewer is created after toolbar so callbacks can reference it via closure.
+    let viewer: Awaited<ReturnType<typeof createPdfViewer>> | null = null;
+
+    const toolbar = createToolbar({
+      onPrint: printPdf,
+      onSave: savePdf,
+      onPrevPage() {
+        viewer?.scrollToPage(Math.max(1, currentPage - 1));
+      },
+      onNextPage() {
+        viewer?.scrollToPage(currentPage + 1);
+      },
+      onGoToPage(page) {
+        viewer?.scrollToPage(page);
+      },
+      onZoomChange(val) {
+        viewer?.setZoom(val);
+      },
+      onZoomIn() {
+        viewer?.zoomIn();
+      },
+      onZoomOut() {
+        viewer?.zoomOut();
+      },
+    });
+
+    // Track current page for toolbar prev/next buttons
+    let currentPage = 1;
+
+    // ── Menu ─────────────────────────────────────────────────────────────────
     const menuBar = createMenu(
       {
         onAction(action) {
@@ -85,18 +88,16 @@ const mod: AppModule = {
               printPdf();
               break;
             case 'fit-page':
-              zoomMode = 'fit-page';
-              void applyZoom();
+              viewer?.setZoom('fit-page');
               break;
             case 'fit-width':
-              zoomMode = 'fit-width';
-              void applyZoom();
+              viewer?.setZoom('fit-width');
               break;
             case 'zoom-in':
-              toolbarControls.onZoomIn();
+              viewer?.zoomIn();
               break;
             case 'zoom-out':
-              toolbarControls.onZoomOut();
+              viewer?.zoomOut();
               break;
             case 'about':
               openAbout('adobe-reader', {
@@ -115,301 +116,40 @@ const mod: AppModule = {
       signal,
     );
 
-    // Toolbar actions exposed for menu reuse
-    const toolbarControls = {
-      onZoomIn() {
-        const idx = ZOOM_PRESETS.findIndex((z) => z > currentZoom + 0.01);
-        const next = ZOOM_PRESETS[idx];
-        if (idx !== -1 && next !== undefined) {
-          zoomMode = next;
-          void applyZoom();
-        }
-      },
-      onZoomOut() {
-        const candidates = ZOOM_PRESETS.filter((z) => z < currentZoom - 0.01);
-        const last = candidates[candidates.length - 1];
-        if (last !== undefined) {
-          zoomMode = last;
-          void applyZoom();
-        }
-      },
-    };
-
-    // Toolbar
-    const toolbar = createToolbar({
-      onPrint: printPdf,
-      onSave: savePdf,
-      onPrevPage() {
-        if (currentPage > 1) scrollToPage(currentPage - 1);
-      },
-      onNextPage() {
-        if (currentPage < totalPages) scrollToPage(currentPage + 1);
-      },
-      onGoToPage(page) {
-        const clamped = Math.max(1, Math.min(page, totalPages));
-        scrollToPage(clamped);
-      },
-      onZoomChange(val) {
-        zoomMode = val;
-        void applyZoom();
-      },
-      onZoomIn: toolbarControls.onZoomIn,
-      onZoomOut: toolbarControls.onZoomOut,
-    });
+    // ── Viewport ─────────────────────────────────────────────────────────────
+    const viewport = document.createElement('div');
+    viewport.className = 'ar__viewport';
 
     root.appendChild(menuBar);
     root.appendChild(toolbar.element);
     root.appendChild(viewport);
 
-    // Show loading
-    pageContainer.innerHTML = '<div class="ar__loading">Loading PDF...</div>';
-
-    // Load PDF
-    const loadingTask = pdfjsLib.getDocument(pdfUrl);
-    signal.addEventListener('abort', () => loadingTask.destroy(), { once: true });
-
-    // Always return an AppInstance so appHost can tear us down even if the
-    // user closes the window while the PDF is still loading. Previous code
-    // did a bare `return` on abort, which dropped the reference to
-    // loadingTask and left the DOM/worker alive until GC.
+    // ── AppInstance (returned before viewer loads so host can tear down) ─────
     const instance: AppInstance = {
       unmount() {
-        observer?.disconnect();
-        if (resizeTimer) clearTimeout(resizeTimer);
-        loadingTask.destroy();
+        viewer?.destroy();
         root.classList.remove('adobe-reader');
         root.innerHTML = '';
-        pdfDoc = null;
       },
       onResize() {
-        if (resizeTimer) clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          if (zoomMode === 'fit-width' || zoomMode === 'fit-page') {
-            void applyZoom();
-          }
-        }, 100);
+        viewer?.onResize();
       },
     };
 
-    try {
-      pdfDoc = await loadingTask.promise;
-    } catch {
-      // Destroyed by signal abort, or genuine load failure. Return the
-      // instance so appHost can still call unmount() if the window lingers.
-      return instance;
-    }
-    if (signal.aborted) return instance;
-    totalPages = pdfDoc.numPages;
-
-    pageContainer.innerHTML = '';
-    toolbar.setPage(1, totalPages);
-
-    // Create canvas placeholders, each wrapped so the link overlay
-    // can be positioned relative to its own page.
-    for (let i = 1; i <= totalPages; i++) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'ar__page-wrapper';
-
-      const canvas = document.createElement('canvas');
-      canvas.className = 'ar__page';
-      canvas.dataset.page = String(i);
-
-      wrapper.appendChild(canvas);
-      pageContainer.appendChild(wrapper);
-      canvases.push(canvas);
-    }
-
-    // Size canvases based on first page dimensions
-    const firstPage = await pdfDoc.getPage(1);
-    const baseViewport = firstPage.getViewport({ scale: 1 });
-    const pageAspect = baseViewport.width / baseViewport.height;
-
-    function computeScale(): number {
-      if (zoomMode === 'fit-width') {
-        const availWidth = viewport.clientWidth - 24; // padding
-        return availWidth / baseViewport.width;
-      }
-      if (zoomMode === 'fit-page') {
-        const availWidth = viewport.clientWidth - 24;
-        const availHeight = viewport.clientHeight - 24;
-        const scaleW = availWidth / baseViewport.width;
-        const scaleH = availHeight / baseViewport.height;
-        return Math.min(scaleW, scaleH);
-      }
-      return zoomMode as number;
-    }
-
-    async function renderPage(pageNum: number) {
-      if (!pdfDoc || rendering.has(pageNum)) return;
-      rendering.add(pageNum);
-      try {
-        const page = await pdfDoc.getPage(pageNum);
-        const dpr = window.devicePixelRatio || 1;
-        const pv = page.getViewport({ scale: currentZoom * dpr });
-        const canvas = canvases[pageNum - 1];
-        if (!canvas) return;
-
-        canvas.width = Math.floor(pv.width);
-        canvas.height = Math.floor(pv.height);
-        canvas.style.width = `${Math.floor(pv.width / dpr)}px`;
-        canvas.style.height = `${Math.floor(pv.height / dpr)}px`;
-
-        await page.render({ canvas, viewport: pv }).promise;
-        rendered.add(pageNum);
-
-        // Overlay clickable links on top of the canvas.
-        await overlayLinks(page, canvas, currentZoom);
-      } finally {
-        rendering.delete(pageNum);
-      }
-    }
-
-    async function overlayLinks(
-      page: pdfjsLib.PDFPageProxy,
-      canvas: HTMLCanvasElement,
-      zoom: number,
-    ) {
-      // Remove any previously rendered link layer for this canvas.
-      canvas.parentElement?.querySelectorAll(`.ar__link-layer[data-page="${canvas.dataset.page}"]`)
-        .forEach((el) => el.remove());
-
-      const annotations = await page.getAnnotations();
-      const links = annotations.filter((a) => a.subtype === 'Link' && a.url);
-      if (links.length === 0) return;
-
-      const pv = page.getViewport({ scale: zoom });
-      const layer = document.createElement('div');
-      layer.className = 'ar__link-layer';
-      layer.dataset.page = canvas.dataset.page;
-      layer.style.width = canvas.style.width;
-      layer.style.height = canvas.style.height;
-
-      for (const ann of links) {
-        // ann.rect is [x1, y1, x2, y2] in PDF user space (origin bottom-left).
-        const [x1, y1, x2, y2] = ann.rect as [number, number, number, number];
-        const cssScale = zoom;
-        const pageHeight = pv.height;
-
-        // Convert PDF coordinates (bottom-left origin) to CSS (top-left origin).
-        const left = x1 * cssScale;
-        const top = pageHeight - y2 * cssScale;
-        const width = (x2 - x1) * cssScale;
-        const height = (y2 - y1) * cssScale;
-
-        const a = document.createElement('a');
-        a.href = ann.url as string;
-        a.target = '_blank';
-        a.rel = 'noreferrer';
-        a.className = 'ar__link';
-        a.style.left = `${left}px`;
-        a.style.top = `${top}px`;
-        a.style.width = `${width}px`;
-        a.style.height = `${height}px`;
-        layer.appendChild(a);
-      }
-
-      // Insert the layer inside the wrapper, after the canvas.
-      canvas.parentElement!.appendChild(layer);
-    }
-
-    function sizeAllCanvases() {
-      const cssWidth = Math.floor(baseViewport.width * currentZoom);
-      const cssHeight = Math.floor(cssWidth / pageAspect);
-
-      for (const canvas of canvases) {
-        canvas.style.width = `${cssWidth}px`;
-        canvas.style.height = `${cssHeight}px`;
-      }
-    }
-
-    async function applyZoom() {
-      const gen = ++zoomGeneration;
-      currentZoom = computeScale();
-      toolbar.setZoom(currentZoom);
-      rendered.clear();
-      rendering.clear();
-      sizeAllCanvases();
-
-      // Re-render all visible pages
-      for (const canvas of canvases) {
-        if (gen !== zoomGeneration || signal.aborted) return;
-        if (isVisible(canvas)) {
-          const pageNum = parseInt(canvas.dataset.page!, 10);
-          await renderPage(pageNum);
-        }
-      }
-    }
-
-    function isVisible(el: HTMLElement): boolean {
-      const rect = el.getBoundingClientRect();
-      const vpRect = viewport.getBoundingClientRect();
-      return rect.bottom > vpRect.top && rect.top < vpRect.bottom;
-    }
-
-    function scrollToPage(page: number) {
-      const canvas = canvases[page - 1];
-      if (canvas) {
-        canvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // ── Create viewer ─────────────────────────────────────────────────────────
+    viewer = await createPdfViewer({
+      url: pdfUrl,
+      container: viewport,
+      signal,
+      initialZoom: 'fit-width',
+      onPageChange(page, total) {
         currentPage = page;
-        toolbar.setPage(currentPage, totalPages);
-      }
-    }
-
-    // IntersectionObserver for lazy rendering + page tracking
-    observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          const pageNum = parseInt((entry.target as HTMLElement).dataset.page!, 10);
-          if (entry.isIntersecting) {
-            if (!rendered.has(pageNum)) {
-              void renderPage(pageNum);
-            }
-            // Update current page to the topmost visible
-            if (entry.intersectionRatio > 0.3 || entry.boundingClientRect.top >= 0) {
-              if (pageNum !== currentPage) {
-                currentPage = pageNum;
-                toolbar.setPage(currentPage, totalPages);
-              }
-            }
-          }
-        }
+        toolbar.setPage(page, total);
       },
-      { root: viewport, threshold: [0, 0.3, 0.5] },
-    );
-
-    for (const canvas of canvases) {
-      observer.observe(canvas);
-    }
-
-    // Initial render
-    currentZoom = computeScale();
-    toolbar.setZoom(currentZoom);
-    sizeAllCanvases();
-    await renderPage(1);
-
-    // Track scroll for page indicator
-    viewport.addEventListener(
-      'scroll',
-      () => {
-        // Find the page closest to the top of the viewport
-        let bestPage = 1;
-        let bestDist = Infinity;
-        const vpTop = viewport.getBoundingClientRect().top;
-        for (let i = 0; i < canvases.length; i++) {
-          const rect = canvases[i]!.getBoundingClientRect();
-          const dist = Math.abs(rect.top - vpTop);
-          if (dist < bestDist) {
-            bestDist = dist;
-            bestPage = i + 1;
-          }
-        }
-        if (bestPage !== currentPage) {
-          currentPage = bestPage;
-          toolbar.setPage(currentPage, totalPages);
-        }
+      onZoomChange(zoom) {
+        toolbar.setZoom(zoom);
       },
-      { signal, passive: true },
-    );
+    });
 
     return instance;
   },
