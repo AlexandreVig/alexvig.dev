@@ -45,3 +45,7 @@ Each shell owns its own components, apps registry, and bootstrap entry.
 | `npm run format`  | Prettier                             |
 
 Requires Node `>=22.12.0`.
+
+## License
+
+[MIT](./LICENSE) © Alexandre Vigneau

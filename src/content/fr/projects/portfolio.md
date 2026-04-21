@@ -219,3 +219,5 @@ téléchargé.
 ## Source
 
 [github.com/AlexandreVig/avigneau.dev](https://github.com/AlexandreVig/avigneau.dev)
+
+Distribué sous la [licence MIT](https://github.com/AlexandreVig/avigneau.dev/blob/main/LICENSE).

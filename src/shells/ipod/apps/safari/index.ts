@@ -288,8 +288,7 @@ function attachPinchZoom(el: HTMLElement, viewer: PdfViewerHandle, signal: Abort
       pageContainer.style.transformOrigin = '';
 
       const rawZoom = startZoom * (lastDist / startDist);
-      const target: ZoomMode =
-        rawZoom <= fitWidthScale ? 'fit-width' : Math.min(rawZoom, ZOOM_MAX);
+      const target: ZoomMode = rawZoom <= fitWidthScale ? 'fit-width' : Math.min(rawZoom, ZOOM_MAX);
 
       viewer.setZoom(target);
       // setZoom resizes canvases synchronously before the first await inside

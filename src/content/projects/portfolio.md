@@ -210,3 +210,5 @@ The unused shell's entire JS bundle is never downloaded at all.
 ## Source
 
 [github.com/AlexandreVig/avigneau.dev](https://github.com/AlexandreVig/avigneau.dev)
+
+Released under the [MIT License](https://github.com/AlexandreVig/avigneau.dev/blob/main/LICENSE).
