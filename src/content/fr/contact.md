@@ -4,7 +4,7 @@ Envie de me contacter ? Ouvrez **Outlook** sur le bureau pour m'envoyer un messa
 
 Vous pouvez aussi me retrouver ici :
 
-- **Email** : alexandre.vigneau@gmail.com
+- **Email** : alexandre.vigneau@epitech.eu
 - **GitHub** : [github.com/AlexandreVig](https://github.com/AlexandreVig)
 - **LinkedIn** : [linkedin.com/in/alexandre-vigneau-228812253](https://www.linkedin.com/in/alexandre-vigneau-228812253/)
 
