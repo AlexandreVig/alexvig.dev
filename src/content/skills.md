@@ -18,7 +18,7 @@
 
 - **Node.js**, **Bun**
 - **PostgreSQL**, **MongoDB**, **Redis**, **SQLite**
-- Low-code stack: **WeWeb** + **Xano** — shipped to production at Finmoove
+- Low-code stack: **WeWeb** + **Xano** — shipped to production at Nertmo
 
 ## Infra, cloud & devops
 

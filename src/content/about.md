@@ -17,13 +17,13 @@ a lot about architecture and optimisation.
 
 ## Experience
 
-- **Finmoove** : _Freelance full-stack developer_ · Sep 2025 → present
+- **Netmo** : _Freelance full-stack developer_ · Sep 2025 → present
 
   Still shipping features to [Netmo](https://www.netmo.com/), a SaaS
   platform that helps French companies optimise their mobility procurement
   by minimising total cost of ownership inside the French tax framework.
 
-- **Finmoove** : _Full-stack web development intern_ · Mar → Aug 2025
+- **Netmo** : _Full-stack web development intern_ · Mar → Aug 2025
 
   Built the Netmo platform on **WeWeb** with custom **Vue** components,
   wired it to a **Xano** backend, and shipped a handful of **Python**

@@ -18,14 +18,14 @@ peuvent résoudre presque tout. L'architecture et l'optimisation me tiennent
 
 ## Expérience
 
-- **Finmoove** : _Développeur full-stack freelance_ · Sep 2025 → présent
+- **Netmo** : _Développeur full-stack freelance_ · Sep 2025 → présent
 
   Je continue à développer des fonctionnalités pour [Netmo](https://www.netmo.com/),
   une plateforme SaaS qui aide les entreprises françaises à optimiser leurs
   achats de mobilité en minimisant le coût total de possession dans le cadre
   fiscal français.
 
-- **Finmoove** : _Stage développeur full-stack_ · Mar → Août 2025
+- **Netmo** : _Stage développeur full-stack_ · Mar → Août 2025
 
   Développement de la plateforme Netmo sur **WeWeb** avec des composants
   **Vue** personnalisés, connectée à un backend **Xano**, et déploiement
